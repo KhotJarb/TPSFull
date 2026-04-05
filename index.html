@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Thailand Political Simulation (TPS) — A premium browser-based political strategy game. Lead your party through elections, build coalitions, and govern the Kingdom of Thailand.">
+  <meta name="keywords" content="Thailand, political simulation, strategy game, election, coalition, browser game, TPS">
+  <meta name="author" content="TPS Development Team">
+  <title>TPS — Thailand Political Simulation</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Animated Background Layer                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-gradient"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-noise"></div>
+    <div class="bg-vignette"></div>
+    <!-- Floating gold particles -->
+    <div class="particles" id="particles"></div>
+    <!-- Ambient light orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Main Menu Container                                              -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="menu-container" id="menu-container">
+
+    <!-- Top decorative accent bar -->
+    <div class="top-accent" id="top-accent">
+      <div class="accent-line"></div>
+      <div class="accent-diamond">◆</div>
+      <div class="accent-line"></div>
+    </div>
+
+    <!-- Emblem / Crest -->
+    <div class="emblem-wrapper" id="emblem-wrapper">
+      <div class="emblem-glow"></div>
+      <div class="emblem-ring-outer"></div>
+      <div class="emblem" id="emblem">
+        <svg viewBox="0 0 140 140" class="emblem-svg">
+          <!-- Outer decorative rings -->
+          <circle cx="70" cy="70" r="66" fill="none" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.4" stroke-dasharray="4,6"/>
+          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#goldGradient)" stroke-width="2" opacity="0.6"/>
+          <circle cx="70" cy="70" r="54" fill="none" stroke="url(#goldGradient)" stroke-width="0.8" opacity="0.3"/>
+          <!-- Inner decorative circle fill -->
+          <circle cx="70" cy="70" r="48" fill="rgba(212,175,55,0.04)" stroke="url(#goldGradient)" stroke-width="0.5" opacity="0.5"/>
+          <!-- Garuda-inspired radial star -->
+          <path d="M70 22 L78 42 L92 32 L84 50 L104 48 L88 60 L106 68 L86 72 L96 88 L78 78 L70 100 L62 78 L44 88 L54 72 L34 68 L52 60 L36 48 L56 50 L48 32 L62 42 Z"
+                fill="url(#goldGradient)" opacity="0.85" class="emblem-star"/>
+          <!-- Center circle with TPS text -->
+          <circle cx="70" cy="70" r="16" fill="rgba(10,14,26,0.7)" stroke="url(#goldGradient)" stroke-width="1.5"/>
+          <text x="70" y="75" text-anchor="middle" fill="url(#goldGradient)" font-size="14" font-family="Cinzel, serif" font-weight="700">TPS</text>
+          <!-- Corner accents (cardinal directions) -->
+          <circle cx="70" cy="8" r="2" fill="url(#goldGradient)" opacity="0.5"/>
+          <circle cx="132" cy="70" r="2" fill="url(#goldGradient)" opacity="0.5"/>
+          <circle cx="70" cy="132" r="2" fill="url(#goldGradient)" opacity="0.5"/>
+          <circle cx="8" cy="70" r="2" fill="url(#goldGradient)" opacity="0.5"/>
+          <!-- Gradient definitions -->
+          <defs>
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#d4af37"/>
+              <stop offset="40%" style="stop-color:#f5d778"/>
+              <stop offset="70%" style="stop-color:#d4af37"/>
+              <stop offset="100%" style="stop-color:#b8941f"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Game Title -->
+    <h1 class="game-title" id="game-title">
+      <span class="title-thai">ราชอาณาจักรไทย</span>
+      <span class="title-line title-main">Thailand</span>
+      <span class="title-line title-sub">Political Simulation</span>
+    </h1>
+
+    <!-- Subtitle -->
+    <p class="game-subtitle" id="game-subtitle">
+      Lead your party to victory. Build coalitions. Govern a nation.
+    </p>
+
+    <!-- Decorative divider -->
+    <div class="divider" id="divider">
+      <span class="divider-wing">━━━━━━━━━━━</span>
+      <span class="divider-icon">⬥</span>
+      <span class="divider-wing">━━━━━━━━━━━</span>
+    </div>
+
+    <!-- ═══════════ Main Action Buttons ═══════════ -->
+    <nav class="menu-buttons" id="menu-buttons" aria-label="Game modes">
+
+      <!-- PRIMARY: Start Election Campaign -->
+      <a href="./campaign/index.html" class="menu-btn menu-btn-primary" id="btn-campaign">
+        <div class="btn-shine"></div>
+        <div class="btn-glow"></div>
+        <div class="btn-content">
+          <div class="btn-icon-wrap">
+            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"/>
+              <path d="M5 21V7l8-4v18"/>
+              <path d="M13 21V3l6 4v14"/>
+              <circle cx="9" cy="10" r="0.5" fill="currentColor"/>
+              <circle cx="9" cy="14" r="0.5" fill="currentColor"/>
+              <circle cx="17" cy="10" r="0.5" fill="currentColor"/>
+              <circle cx="17" cy="14" r="0.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="btn-text">
+            <span class="btn-label">Start Election Campaign</span>
+            <span class="btn-desc">Build your party, rally support across 400 districts, and win 251+ seats</span>
+          </div>
+          <div class="btn-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+      </a>
+
+      <!-- SECONDARY: Quick Start — Form Government -->
+      <a href="./main-game/index.html" class="menu-btn menu-btn-secondary" id="btn-quickstart">
+        <div class="btn-shine"></div>
+        <div class="btn-content">
+          <div class="btn-icon-wrap">
+            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="btn-text">
+            <span class="btn-label">Quick Start: Form Government</span>
+            <span class="btn-desc">Skip elections — jump straight into governing the Kingdom of Thailand</span>
+          </div>
+          <div class="btn-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </div>
+      </a>
+
+    </nav>
+
+    <!-- Info strip — key game stats -->
+    <div class="info-strip" id="info-strip">
+      <div class="info-item">
+        <span class="info-icon">🗳️</span>
+        <span class="info-text">500 Seats</span>
+      </div>
+      <div class="info-sep"></div>
+      <div class="info-item">
+        <span class="info-icon">🏛️</span>
+        <span class="info-text">251 to Govern</span>
+      </div>
+      <div class="info-sep"></div>
+      <div class="info-item">
+        <span class="info-icon">📊</span>
+        <span class="info-text">8-Week Campaign</span>
+      </div>
+      <div class="info-sep"></div>
+      <div class="info-item">
+        <span class="info-icon">⚔️</span>
+        <span class="info-text">48-Month Term</span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="menu-footer" id="menu-footer">
+      <p class="footer-text">A Browser-Based Political Strategy Experience</p>
+      <p class="footer-version">v1.0 — 2027 Election Cycle</p>
+    </footer>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- Scripts                                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <script>
+    // ─── Generate floating gold particles ──────────────────────────
+    (function createParticles() {
+      const container = document.getElementById('particles');
+      if (!container) return;
+      const count = 50;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        const x = Math.random() * 100;
+        const delay = Math.random() * 25;
+        const duration = Math.random() * 25 + 18;
+        const drift = (Math.random() - 0.5) * 80;
+        const opacity = Math.random() * 0.35 + 0.05;
+        p.style.cssText = `
+          width: ${size}px;
+          height: ${size}px;
+          left: ${x}%;
+          bottom: -5%;
+          opacity: 0;
+          --drift: ${drift}px;
+          --particle-opacity: ${opacity};
+          animation: floatUp ${duration}s linear ${delay}s infinite;
+        `;
+        container.appendChild(p);
+      }
+    })();
+
+    // ─── Subtle parallax on emblem ──────────────────────────────────
+    document.addEventListener('mousemove', (e) => {
+      const emblem = document.getElementById('emblem');
+      if (!emblem) return;
+      const rect = emblem.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (e.clientX - cx) / 50;
+      const dy = (e.clientY - cy) / 50;
+      emblem.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+
+    // ─── Staggered entrance animation ───────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      const elements = document.querySelectorAll(
+        '#top-accent, #emblem-wrapper, #game-title, #game-subtitle, #divider, .menu-btn, #info-strip, #menu-footer'
+      );
+      elements.forEach((el, i) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        setTimeout(() => {
+          el.style.transition = 'opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, 150 + i * 100);
+      });
+    });
+  </script>
+
+</body>
+</html>

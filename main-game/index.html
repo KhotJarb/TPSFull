@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Thailand Political Simulation — Govern the Kingdom of Thailand. Manage a fragile coalition, survive crisis after crisis, and keep the generals in their barracks for 48 months.">
+  <title>TPS — Governing Thailand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- START SCREEN (shown before game begins)                    -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="start-screen" class="screen active">
+    <div class="start-bg-pattern"></div>
+    <div class="start-content">
+      <div class="start-emblem">🇹🇭</div>
+      <h1 class="start-title">Thailand Political Simulation</h1>
+      <p class="start-subtitle">Navigate the most volatile democracy in Southeast Asia</p>
+      <p class="start-desc">
+        You are the newly elected Prime Minister. Manage a fragile coalition, 
+        survive crisis after crisis, and keep the generals in their barracks — 
+        for 48 months. Can you complete your term?
+      </p>
+      <div class="start-buttons">
+        <button id="btn-new-game" class="btn btn-primary btn-lg">
+          <span class="btn-icon">🏛️</span> New Game
+        </button>
+        <button id="btn-load-game" class="btn btn-secondary btn-lg" style="display:none;">
+          <span class="btn-icon">💾</span> Continue Saved Game
+        </button>
+        <a href="../index.html" class="btn btn-ghost btn-md" style="margin-top:0.5rem;">
+          ← Back to Main Menu
+        </a>
+      </div>
+      <div class="start-footer">
+        <span>Step into Government House. Every decision matters.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- GAME SCREEN                                                -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="game-screen" class="screen">
+
+    <!-- ─── TOP HEADER BAR ──────────────────────────────────── -->
+    <header id="game-header">
+      <div class="header-left">
+        <div class="header-logo">TPS</div>
+        <div class="header-title">Thailand Political Simulation</div>
+      </div>
+      <div class="header-center">
+        <div id="turn-display" class="turn-badge">
+          <span class="turn-label">Month</span>
+          <span id="turn-number" class="turn-number">1</span>
+          <span id="turn-date" class="turn-date">January, Year 1</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="btn-save" class="btn btn-ghost btn-sm" title="Save Game">💾 Save</button>
+        <button id="btn-menu" class="btn btn-ghost btn-sm" title="Menu">☰</button>
+      </div>
+    </header>
+
+    <!-- ─── RESOURCE STATUS BAR ─────────────────────────────── -->
+    <div id="status-bar">
+      <div class="stat-card" id="stat-popularity">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <span class="stat-label">Approval Rating</span>
+          <span class="stat-value" id="val-popularity">50%</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill popularity-bar" id="bar-popularity" style="width:50%"></div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-budget">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <span class="stat-label">National Budget</span>
+          <span class="stat-value" id="val-budget">฿1,000B</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill budget-bar" id="bar-budget" style="width:50%"></div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-growth">
+        <div class="stat-icon">📈</div>
+        <div class="stat-info">
+          <span class="stat-label">GDP Growth</span>
+          <span class="stat-value" id="val-growth">3.2%</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill growth-bar" id="bar-growth" style="width:32%"></div>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-unrest">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-info">
+          <span class="stat-label">Social Unrest</span>
+          <span class="stat-value" id="val-unrest">20%</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill unrest-bar" id="bar-unrest" style="width:20%"></div>
+        </div>
+      </div>
+      <div class="stat-card stat-hidden" id="stat-military">
+        <div class="stat-icon">🎖️</div>
+        <div class="stat-info">
+          <span class="stat-label">Military Patience</span>
+          <span class="stat-value" id="val-military">70</span>
+        </div>
+        <div class="stat-bar-track">
+          <div class="stat-bar-fill military-bar" id="bar-military" style="width:70%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MAIN CONTENT AREA ───────────────────────────────── -->
+    <div id="game-layout">
+
+      <!-- LEFT SIDEBAR: Parliament & Coalition -->
+      <aside id="sidebar-left" class="sidebar">
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading">
+            <span class="heading-icon">🏛️</span> Parliament
+            <span id="coalition-seats-badge" class="seats-badge">358 / 500</span>
+          </h2>
+          <div id="parliament-chart" class="parliament-chart"></div>
+          <div id="party-list" class="party-list"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading">
+            <span class="heading-icon">📋</span> Coalition Stability
+          </h2>
+          <div class="coalition-meter">
+            <div class="coalition-bar-track">
+              <div class="coalition-bar-fill" id="bar-coalition" style="width:75%"></div>
+            </div>
+            <span class="coalition-value" id="val-coalition">75%</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER: Main Event Area -->
+      <main id="main-content">
+        <!-- Warning Ticker -->
+        <div id="warning-ticker" class="warning-ticker" style="display:none;">
+          <div class="ticker-icon">🚨</div>
+          <div id="warning-text" class="ticker-text"></div>
+        </div>
+
+        <!-- Crisis Event Panel -->
+        <div id="crisis-panel" class="crisis-panel" style="display:none;">
+          <div class="crisis-header">
+            <div class="crisis-badge">BREAKING — CRISIS EVENT</div>
+            <div id="crisis-turn" class="crisis-turn"></div>
+          </div>
+          <h2 id="crisis-title" class="crisis-title"></h2>
+          <p id="crisis-description" class="crisis-description"></p>
+          <div id="crisis-choices" class="crisis-choices"></div>
+        </div>
+
+        <!-- Outcome Panel -->
+        <div id="outcome-panel" class="outcome-panel" style="display:none;">
+          <div class="outcome-header">
+            <span class="outcome-badge">SITUATION REPORT</span>
+          </div>
+          <p id="outcome-text" class="outcome-text"></p>
+          <div id="outcome-effects" class="outcome-effects"></div>
+          <button id="btn-end-turn" class="btn btn-primary btn-lg">
+            <span class="btn-icon">⏭️</span> End Month & Proceed
+          </button>
+        </div>
+
+        <!-- Turn Report Panel -->
+        <div id="report-panel" class="report-panel" style="display:none;">
+          <div class="report-header">
+            <span class="report-badge">📋 MONTHLY REPORT</span>
+            <span id="report-turn" class="report-turn"></span>
+          </div>
+          <div id="report-stats" class="report-stats"></div>
+          <div id="report-laws" class="report-laws"></div>
+          <div id="report-warnings" class="report-warnings"></div>
+          <button id="btn-next-month" class="btn btn-primary btn-lg">
+            <span class="btn-icon">📰</span> Next Month — Face New Crisis
+          </button>
+        </div>
+
+        <!-- Idle / Waiting State -->
+        <div id="idle-panel" class="idle-panel">
+          <div class="idle-content">
+            <div class="idle-icon">🏛️</div>
+            <h2>Government House</h2>
+            <p>Your coalition awaits your leadership, Prime Minister.</p>
+            <button id="btn-start-month" class="btn btn-primary btn-lg pulse-animation">
+              <span class="btn-icon">📰</span> Begin This Month
+            </button>
+          </div>
+        </div>
+
+        <!-- Vote Result Panel -->
+        <div id="vote-panel" class="vote-panel" style="display:none;">
+          <div class="vote-header">
+            <span class="vote-badge" id="vote-result-badge">PARLIAMENTARY VOTE</span>
+          </div>
+          <h3 id="vote-law-name" class="vote-law-name"></h3>
+          <div id="vote-tally" class="vote-tally">
+            <div class="tally-bar">
+              <div class="tally-yes" id="tally-yes"></div>
+              <div class="tally-no" id="tally-no"></div>
+            </div>
+            <div class="tally-labels">
+              <span class="tally-yes-label" id="tally-yes-label">0 Yes</span>
+              <span class="tally-threshold">251 needed</span>
+              <span class="tally-no-label" id="tally-no-label">0 No</span>
+            </div>
+          </div>
+          <div id="vote-party-breakdown" class="vote-party-breakdown"></div>
+          <p id="vote-message" class="vote-message"></p>
+          <button id="btn-close-vote" class="btn btn-secondary">Close</button>
+        </div>
+      </main>
+
+      <!-- RIGHT SIDEBAR: Laws & Policies -->
+      <aside id="sidebar-right" class="sidebar">
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading">
+            <span class="heading-icon">📜</span> Legislation
+          </h2>
+          <div id="laws-list" class="laws-list"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading">
+            <span class="heading-icon">📖</span> Event Log
+          </h2>
+          <div id="event-log" class="event-log">
+            <div class="log-empty">No events yet.</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- GAME OVER SCREEN                                           -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="gameover-screen" class="screen">
+    <div class="gameover-overlay"></div>
+    <div class="gameover-content">
+      <div id="gameover-icon" class="gameover-icon">💥</div>
+      <h1 id="gameover-title" class="gameover-title">GAME OVER</h1>
+      <p id="gameover-reason" class="gameover-reason"></p>
+
+      <!-- Victory Score -->
+      <div id="victory-score" class="victory-score" style="display:none;">
+        <div id="victory-grade" class="victory-grade">B</div>
+        <div id="victory-title-text" class="victory-title-text"></div>
+        <div id="score-breakdown" class="score-breakdown"></div>
+      </div>
+
+      <div class="gameover-stats">
+        <div class="go-stat">
+          <span class="go-stat-label">Months Survived</span>
+          <span class="go-stat-value" id="go-months">0</span>
+        </div>
+        <div class="go-stat">
+          <span class="go-stat-label">Laws Passed</span>
+          <span class="go-stat-value" id="go-laws">0</span>
+        </div>
+        <div class="go-stat">
+          <span class="go-stat-label">Final Approval</span>
+          <span class="go-stat-value" id="go-approval">0%</span>
+        </div>
+      </div>
+
+      <button id="btn-restart" class="btn btn-primary btn-lg">
+        <span class="btn-icon">🔄</span> New Game
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- MODAL OVERLAY                                               -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none;">
+    <div id="modal-box" class="modal-box">
+      <button id="modal-close" class="modal-close">&times;</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts (order matters: data first, then engine, then main) -->
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="main.js"></script>
+
+  <script>
+    // Show continue button if saved game exists
+    if (typeof hasSavedGame === 'function' && hasSavedGame()) {
+      document.getElementById('btn-load-game').style.display = 'inline-flex';
+    }
+  </script>
+</body>
+</html>
