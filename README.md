@@ -1,4 +1,34 @@
-# Thailand Political Simulation (TPS)
+# 🏛️ Thailand Political Simulation (TPS)
+
+> **A browser-based political strategy game where you lead a Thai political party from election campaign to governing the Kingdom of Thailand.**
+
+![Version](https://img.shields.io/badge/version-1.0-gold)
+![Tech](https://img.shields.io/badge/tech-HTML%2FCSS%2FJS%2FD3.js-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+---
+
+## 🎮 Overview
+
+Thailand Political Simulation is a deep, replayable political strategy game built entirely with **vanilla HTML5, CSS3, JavaScript, and D3.js** — zero dependencies, zero build tools, zero installation required. Deploy to GitHub Pages and play instantly.
+
+You will:
+1. **Choose a political party** from 5 fictionalized factions spanning Thailand's political spectrum
+2. **Campaign for 8 weeks** — hold rallies, run IO campaigns, deploy local boss networks (Ban Yai), and manage your 500-candidate roster
+3. **Win 251+ seats** out of 500 in a mixed-member election (400 constituency + 100 party-list)
+4. **Form a coalition government** by negotiating with rival parties who demand ministries and policy concessions
+5. **Govern Thailand** for a 48-month term — pass laws, handle crises, and maintain your parliamentary majority
+
+---
+
+## 🎮 Play Now
+
+👉 **[Play Thailand Political Simulation](https://khotjarb.github.io/TPSFull/)**
+
+No downloads. No installs. Just click and play.
+
+---
+
 ## Module 2: High-Stakes Election Campaign
 
 A deep, data-driven political strategy simulation module architectured with Vanilla JS, D3.js, and CSS. This module challenges you to navigate the ruthless complexity of the Thai electoral system.
@@ -82,9 +112,3 @@ TPSREAL/
 └── main-game/        (Governing & Coalition Phase / POST WIN)
     └── index.html 
 ```
-
-**To Deploy to GitHub Pages:**
-1. Push the entire `TPSREAL` folder setup to your GitHub Repository.
-2. In your GitHub Repo, navigate to **Settings > Pages**.
-3. Under "Build and deployment", point the Source branch to `main`, root `/` folder.
-4. Hit Save. Your election simulator is now live worldwide. All `.js` files operate smoothly via ES6 Modules (`type="module"`) over the browser.
