@@ -1,265 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="TPS Campaign — Build your party, rally support across 400 districts, and win 251+ seats to form the government of Thailand.">
-  <title>TPS — Election Campaign</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://d3js.org/topojson.v3.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPS: Election War Room</title>
+    <!-- Dark, glowing neon aesthetic expected in CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- D3 and TopoJSON included -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
 </head>
 <body>
+    <div id="war-room">
+        <!-- HEADER Resource Bars -->
+        <header class="top-nav">
+            <div class="brand">THAI POL-SIM: WAR ROOM (<span id="party-name-ui">MFP</span>)</div>
+            <div id="resource-bars">
+                <div class="resource-pill funds">
+                    <span class="label">Funds</span>
+                    <span class="val" id="funds-val">0</span>
+                </div>
+                <div class="resource-pill popularity">
+                    <span class="label">Popularity</span>
+                    <span class="val" id="pop-val">0%</span>
+                </div>
+                <div class="resource-pill ec-risk">
+                    <span class="label">EC Scrutiny Risk</span>
+                    <span class="val" id="ec-val">0/100</span>
+                </div>
+                <div class="resource-pill ap">
+                    <span class="label">Action Points</span>
+                    <span class="val" id="ap-val">0</span>
+                </div>
+                <div class="resource-pill time">
+                    <span class="label">Week</span>
+                    <span class="val" id="week-val">1/8</span>
+                </div>
+            </div>
+        </header>
 
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- SCREEN 1: PARTY SELECT                                      -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div id="screen-party-select" class="screen active">
-    <div class="select-bg"></div>
-    <div class="select-content">
-      <a href="../index.html" class="back-link">← Main Menu</a>
-      <div class="select-header">
-        <div class="select-emblem">🗳️</div>
-        <h1 class="select-title">Choose Your Party</h1>
-        <p class="select-subtitle">Select the political party you will lead to victory in the <span id="election-year-display">2027</span> general election.</p>
-      </div>
-      <div id="party-cards" class="party-cards"></div>
-      <button id="btn-start-campaign" class="btn btn-gold btn-lg" disabled>
-        Begin Campaign →
-      </button>
+        <!-- MAIN LAYOUT -->
+        <main class="dashboard-grid">
+            <!-- Left Panel: D3 Electoral Map -->
+            <section id="map-panel" class="panel">
+                <div class="panel-header">
+                    <h2>Electoral Map Command</h2>
+                    <div id="map-target-status" class="status-indicator">TARGETING: OFF</div>
+                </div>
+                <div id="map-container">
+                    <!-- D3 Map Injection Point -->
+                </div>
+            </section>
+
+            <!-- Right Panel: Commands and Controls -->
+            <section id="controls-panel" class="panel">
+                <div class="panel-header">
+                    <h2>Active Campaign Commands</h2>
+                </div>
+                
+                <!-- Action Grid for the 10 Actions -->
+                <div id="action-grid" class="action-grid">
+                    <!-- Buttons will be dynamically mapped to PlayerActions in main.js -->
+                </div>
+                
+                <hr class="divider">
+
+                <!-- Management & Operations -->
+                <div class="management-controls">
+                    <h3>Strategic Planning</h3>
+                    <div class="btn-group">
+                        <button id="btn-party-list" class="secondary-btn">Rearrange Party-List</button>
+                        <button id="btn-end-turn" class="tertiary-btn">End Turn</button>
+                    </div>
+                </div>
+
+                <!-- Run Election Trigger -->
+                <div class="election-trigger">
+                    <button id="btn-run-election" class="primary-btn pulse" disabled>INITIATE ELECTION NIGHT</button>
+                </div>
+
+                <!-- Command Feedback Log -->
+                <div id="log-panel">
+                    <h3>Intelligence Log</h3>
+                    <ul id="action-log">
+                        <li>System Initialized. Welcome to the War Room.</li>
+                    </ul>
+                </div>
+            </section>
+        </main>
     </div>
-  </div>
 
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- SCREEN 2: CAMPAIGN DASHBOARD                                -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div id="screen-campaign" class="screen">
-    <!-- Top Bar -->
-    <header id="campaign-header">
-      <div class="ch-left">
-        <span class="ch-logo">TPS</span>
-        <span class="ch-title">Campaign HQ</span>
-      </div>
-      <div class="ch-center">
-        <div class="week-badge">
-          <span class="week-label">WEEK</span>
-          <span id="week-number" class="week-num">1</span>
-          <span class="week-sep">/</span>
-          <span class="week-max">8</span>
+    <!-- MODAL: Party-List Management -->
+    <div id="party-list-modal" class="modal hidden">
+        <div class="modal-content glass">
+            <h2>Select Leading Faction for Party-List</h2>
+            <p>Your base list strategy determines weekly passive resource loops.</p>
+            <div class="faction-options">
+                <button class="faction-select-btn tycoons" data-faction="Tycoons">
+                    <strong>Tycoons/Ban Yai</strong>
+                    <span>Generates +Funds, bleeds -Popularity</span>
+                </button>
+                <button class="faction-select-btn activists" data-faction="Activists">
+                    <strong>Activists/Youth</strong>
+                    <span>Generates +Popularity, burns -Funds</span>
+                </button>
+            </div>
+            <button id="close-modal" class="close-btn">Cancel Order</button>
         </div>
-        <span id="year-badge" class="year-badge">2027 Election</span>
-      </div>
-      <div class="ch-right">
-        <div class="resource" title="Campaign Funds">
-          <span class="res-icon">💰</span>
-          <span id="val-funds" class="res-val">1000</span>
-          <span class="res-unit">M฿</span>
-        </div>
-        <div class="resource" title="Media Scrutiny">
-          <span class="res-icon">🔍</span>
-          <span id="val-scrutiny" class="res-val">0</span>
-          <span class="res-unit">%</span>
-        </div>
-        <div class="resource" title="Action Points">
-          <span class="res-icon">⚡</span>
-          <span id="val-ap" class="res-val">3</span>
-          <span class="res-unit">AP</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Dashboard Body -->
-    <div id="campaign-body">
-      <!-- LEFT: Map + Polls -->
-      <div class="dash-left">
-        <div class="panel map-panel">
-          <div class="panel-head">
-            <h2><span class="hi">🗺️</span> Thailand Electoral Map</h2>
-            <div class="map-legend" id="map-legend"></div>
-          </div>
-          <div id="map-container" class="map-container">
-            <svg id="thailand-map"></svg>
-          </div>
-          <div id="map-tooltip" class="map-tooltip"></div>
-        </div>
-
-        <div class="panel poll-panel">
-          <div class="panel-head"><h2><span class="hi">📊</span> National Polls</h2></div>
-          <div id="poll-bars" class="poll-bars"></div>
-        </div>
-      </div>
-
-      <!-- CENTER: Actions + Log -->
-      <div class="dash-center">
-        <div class="panel actions-panel">
-          <div class="panel-head"><h2><span class="hi">⚡</span> Campaign Actions</h2></div>
-          <div id="action-buttons" class="action-grid">
-            <button class="action-btn" id="act-rally" data-action="rally">
-              <div class="act-icon">📢</div>
-              <div class="act-label">Hold Rally</div>
-              <div class="act-cost">-50M฿ · -1 AP</div>
-            </button>
-            <button class="action-btn" id="act-io" data-action="io">
-              <div class="act-icon">📱</div>
-              <div class="act-label">IO Campaign</div>
-              <div class="act-cost">-80M฿ · -1 AP</div>
-            </button>
-            <button class="action-btn" id="act-banyai" data-action="banyai">
-              <div class="act-icon">🏘️</div>
-              <div class="act-label">Deploy Ban Yai</div>
-              <div class="act-cost">-120M฿ · -1 AP</div>
-            </button>
-            <button class="action-btn" id="act-fundraise" data-action="fundraise">
-              <div class="act-icon">💵</div>
-              <div class="act-label">Fundraise</div>
-              <div class="act-cost">-1 AP</div>
-            </button>
-          </div>
-          <!-- Province/Region/District Selector (shown when relevant) -->
-          <div id="target-selector" class="target-selector" style="display:none;">
-            <label id="target-label" class="target-label">Select Target:</label>
-            <select id="target-dropdown" class="target-dropdown"></select>
-            <button id="btn-confirm-action" class="btn btn-gold btn-md">Confirm</button>
-            <button id="btn-cancel-action" class="btn btn-ghost btn-md">Cancel</button>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-head"><h2><span class="hi">📖</span> Campaign Log</h2></div>
-          <div id="campaign-log" class="campaign-log">
-            <div class="log-empty">Campaign begins. Choose your actions wisely.</div>
-          </div>
-        </div>
-
-        <div class="week-controls">
-          <button id="btn-end-week" class="btn btn-gold btn-lg">
-            End Week & Advance →
-          </button>
-          <button id="btn-hold-election" class="btn btn-danger btn-lg" style="display:none;">
-            🗳️ Hold General Election
-          </button>
-        </div>
-      </div>
-
-      <!-- RIGHT: Roster -->
-      <div class="dash-right">
-        <div class="panel roster-panel">
-          <div class="panel-head">
-            <h2><span class="hi">👔</span> MP Roster</h2>
-            <span id="roster-count" class="badge">0 / 500</span>
-          </div>
-          <div class="roster-search">
-            <input type="text" id="roster-search-input" placeholder="Search MPs..." class="search-input">
-          </div>
-          <div id="roster-list" class="roster-list"></div>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- SCREEN 3: ELECTION NIGHT                                    -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div id="screen-election" class="screen">
-    <div class="election-bg"></div>
-    <div class="election-content">
-      <div class="election-header">
-        <div class="breaking-badge">🔴 LIVE — ELECTION NIGHT</div>
-        <h1 id="election-title" class="election-title">2027 General Election Results</h1>
-      </div>
-      <div id="seat-counter" class="seat-counter">
-        <div class="counter-ring">
-          <svg id="seat-donut" viewBox="0 0 200 200"></svg>
-        </div>
-        <div class="counter-legend" id="counter-legend"></div>
-      </div>
-      <div id="results-table" class="results-table"></div>
-      <button id="btn-to-coalition" class="btn btn-gold btn-lg">
-        Proceed to Coalition Formation →
-      </button>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- SCREEN 4: COALITION NEGOTIATION                             -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div id="screen-coalition" class="screen">
-    <div class="coalition-content">
-      <div class="coalition-header">
-        <h1>🤝 Coalition Formation</h1>
-        <p class="coalition-sub">You need <strong id="seats-needed">251</strong> seats to form a government. You currently have <strong id="player-seats-display">0</strong>.</p>
-        <div class="coalition-meter-wrap">
-          <div class="coalition-track">
-            <div id="coalition-fill" class="coalition-fill" style="width:0%"></div>
-            <div class="coalition-marker" style="left:50.2%"><span>251</span></div>
-          </div>
-          <div class="coalition-count"><span id="coalition-total">0</span> / 500</div>
-        </div>
-      </div>
-      <div id="coalition-offers" class="coalition-offers"></div>
-      <div class="coalition-actions">
-        <button id="btn-finalize-coalition" class="btn btn-gold btn-lg">
-          Finalize Coalition & Check Result
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- SCREEN 5: RESULT (Victory / Opposition)                     -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div id="screen-result" class="screen">
-    <div class="result-bg"></div>
-    <div class="result-content">
-      <div id="result-icon" class="result-icon">🏛️</div>
-      <h1 id="result-title" class="result-title">VICTORY</h1>
-      <p id="result-message" class="result-message"></p>
-      <div id="result-stats" class="result-stats"></div>
-      <button id="btn-result-action" class="btn btn-gold btn-lg">
-        Enter Government House →
-      </button>
-    </div>
-  </div>
-
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <!-- MP EDIT MODAL                                                -->
-  <!-- ════════════════════════════════════════════════════════════ -->
-  <div id="mp-modal" class="modal-overlay" style="display:none;">
-    <div class="modal-box mp-modal-box">
-      <button id="mp-modal-close" class="modal-close">&times;</button>
-      <div class="mp-modal-content">
-        <div class="mp-portrait-wrap">
-          <img id="mp-portrait" class="mp-portrait" src="" alt="MP Portrait">
-        </div>
-        <div class="mp-edit-fields">
-          <h3 id="mp-edit-title">Edit MP</h3>
-          <label class="field-label">Full Name</label>
-          <input type="text" id="mp-name-input" class="field-input" placeholder="Enter name...">
-          <label class="field-label">Portrait URL</label>
-          <input type="text" id="mp-portrait-input" class="field-input" placeholder="Paste image URL...">
-          <div class="mp-stats-row">
-            <span class="mp-stat">Age: <strong id="mp-age">-</strong></span>
-            <span class="mp-stat">Influence: <strong id="mp-influence">-</strong></span>
-            <span class="mp-stat">Charisma: <strong id="mp-charisma">-</strong></span>
-          </div>
-          <div class="mp-btn-row">
-            <button id="btn-save-mp" class="btn btn-gold btn-md">Save Changes</button>
-            <button id="btn-reset-mp" class="btn btn-ghost btn-md">Reset to Default</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast -->
-  <div id="toast-container" class="toast-container"></div>
-
-  <!-- Scripts -->
-  <script src="data.js"></script>
-  <script src="engine.js"></script>
-  <script src="main.js"></script>
+    <!-- Application Wiring -->
+    <script type="module" src="data.js"></script>
+    <script type="module" src="engine.js"></script>
+    <script type="module" src="map.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>
