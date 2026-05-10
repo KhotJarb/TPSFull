@@ -100,8 +100,46 @@ const DOM = {
   modalClose: document.getElementById("modal-close"),
 
   // Toast
-  toastContainer: document.getElementById("toast-container")
+  toastContainer: document.getElementById("toast-container"),
+
+  // Cabinet Room (v1.0.2)
+  cabinetOverlay: document.getElementById("cabinet-modal-overlay"),
+  cabinetSlotsA: document.getElementById("cabinet-slots-a"),
+  cabinetSlotsB: document.getElementById("cabinet-slots-b"),
+  cabinetSlotsC: document.getElementById("cabinet-slots-c"),
+  cabinetPartyList: document.getElementById("cabinet-party-list"),
+  cabinetSatisfaction: document.getElementById("cabinet-satisfaction-preview"),
+  cabinetUnassignedCount: document.getElementById("cabinet-unassigned-count"),
+  btnCabinetAuto: document.getElementById("btn-cabinet-auto"),
+  btnCabinetReset: document.getElementById("btn-cabinet-reset"),
+  btnCabinetForm: document.getElementById("btn-cabinet-form"),
+
+  // Diplomacy (v1.0.2)
+  diplomacyContacts: document.getElementById("diplomacy-contacts"),
+
+  // PM Actions (v1.0.2 Step 9)
+  powerDecayIndicator: document.getElementById("power-decay-indicator"),
+  decayPhaseIcon: document.getElementById("decay-phase-icon"),
+  decayPhaseName: document.getElementById("decay-phase-name"),
+  decayPhaseMult: document.getElementById("decay-phase-mult"),
+  pmActionsGrid: document.getElementById("pm-actions-grid"),
+
+  // STEP 34: Pre-Month Lock targets
+  pmActionsPanel: document.getElementById("pm-actions-panel"),
+  legislationSection: document.getElementById("legislation-section"),
+  idleDescription: document.getElementById("idle-description")
 };
+
+// ─── STEP 34: MONTH STATE FLAG ──────────────────────────────
+let isMonthActive = false;
+
+// ─── STEP 38: ACTIVE PANEL STATE TRACKER ────────────────────
+// Tracks which panel is currently showing so we can restore after interruption.
+// Values: 'idle' | 'crisis' | 'outcome' | 'report' | 'vote'
+let activePanelState = 'idle';
+
+// Cache the unresolved crisis event data for re-rendering
+let cachedCrisisEvent = null;
 
 // ─── SCREEN MANAGEMENT ──────────────────────────────────────
 
@@ -295,13 +333,13 @@ function handleLawClick(lawId) {
 
   const monthlyHtml = law.monthlyEffects
     ? Object.entries(law.monthlyEffects)
-        .map(([key, val]) => {
-          const sign = val > 0 ? "+" : "";
-          const cls = val > 0 ? "effect-positive" : "effect-negative";
-          const label = key.charAt(0).toUpperCase() + key.slice(1);
-          return `<span class="effect-chip ${cls}">${label}: ${sign}${val}/mo</span>`;
-        })
-        .join(" ")
+      .map(([key, val]) => {
+        const sign = val > 0 ? "+" : "";
+        const cls = val > 0 ? "effect-positive" : "effect-negative";
+        const label = key.charAt(0).toUpperCase() + key.slice(1);
+        return `<span class="effect-chip ${cls}">${label}: ${sign}${val}/mo</span>`;
+      })
+      .join(" ")
     : "";
 
   const action = law.passed ? "Repeal" : "Propose";
@@ -349,6 +387,13 @@ function executeVote(lawId) {
     return;
   }
 
+  // ── STEP 44: Intercept gridlock — redirect to Amendment Phase ──
+  if (result.isGridlock && typeof showAmendmentPhase === 'function') {
+    hideModal(); // Close the law proposal modal first
+    showAmendmentPhase(result);
+    return; // Do NOT show the standard vote result screen
+  }
+
   showVoteResult(result);
   updateStatusBar();
   renderParliament();
@@ -366,6 +411,13 @@ function executeRepeal(lawId) {
 }
 
 function showVoteResult(result) {
+  // STEP 38: Remember what panel was active before the vote
+  // so we can restore it when the vote panel closes
+  const preVoteState = activePanelState;
+  activePanelState = 'vote';
+  // Store pre-vote state on the DOM for the close handler
+  DOM.votePanel.dataset.preVoteState = preVoteState;
+
   // Hide other panels
   hideAllMainPanels();
   DOM.votePanel.style.display = "block";
@@ -397,9 +449,16 @@ function showVoteResult(result) {
       const party = getPartyById(pv.partyId);
       const row = document.createElement("div");
       row.className = "vote-party-row";
+      row.title = pv.voteReason || '';
+
+      // STEP 43: Show loyalty-based vote reason for coalition partners
+      const reasonTag = (pv.voteReason && pv.inCoalition)
+        ? `<span style="font-size:0.55rem;color:var(--text-muted);margin-left:0.3rem;font-style:italic">${pv.voteReason}</span>`
+        : '';
+
       row.innerHTML = `
         <div class="vote-party-dot" style="background:${party ? party.color : '#666'}"></div>
-        <span class="vote-party-name">${pv.shortName || pv.partyName}</span>
+        <span class="vote-party-name">${pv.shortName || pv.partyName}${reasonTag}</span>
         <span class="vote-party-seats">${pv.seats} seats</span>
         <span class="vote-party-verdict ${pv.votedYes ? "verdict-yes" : "verdict-no"}">${pv.votedYes ? "YES" : "NO"}</span>
       `;
@@ -429,19 +488,40 @@ function showCrisisEvent() {
   const event = triggerCrisisEvent();
   if (!event) return;
 
+  // STEP 38: Cache crisis event for restoration after interruption
+  cachedCrisisEvent = event;
+  activePanelState = 'crisis';
+
+  _renderCrisisPanel(event);
+}
+
+/**
+ * _renderCrisisPanel(event) — STEP 38: Renders a crisis event to the DOM.
+ * Separated from showCrisisEvent() so it can be called for initial render
+ * AND for restoring an interrupted crisis.
+ */
+function _renderCrisisPanel(event) {
   hideAllMainPanels();
   DOM.crisisPanel.style.display = "block";
 
-  DOM.crisisTurn.textContent = getTurnLabel(gameState.turn);
-  DOM.crisisTitle.textContent = event.title;
-  DOM.crisisDescription.textContent = event.description;
+  // STEP 47: Bilingual rendering — pick correct language strings
+  const currentLang = (typeof getCurrentLang === 'function') ? getCurrentLang() : 'EN';
+  const isTH = currentLang === 'TH';
 
-  // Render choice buttons
+  const eventTitle = isTH ? (event.titleTH || event.title) : (event.titleEN || event.title);
+  const eventDesc = isTH ? (event.descTH || event.description) : (event.descEN || event.description);
+
+  DOM.crisisTurn.textContent = getTurnLabel(gameState.turn);
+  DOM.crisisTitle.textContent = eventTitle;
+  DOM.crisisDescription.textContent = eventDesc;
+
+  // Render choice buttons with bilingual labels
   DOM.crisisChoices.innerHTML = "";
   event.choices.forEach((choice, index) => {
+    const buttonText = isTH ? (choice.labelTH || choice.label) : (choice.labelEN || choice.label);
     const btn = document.createElement("button");
     btn.className = "btn btn-choice";
-    btn.textContent = choice.label;
+    btn.textContent = buttonText;
     btn.addEventListener("click", () => handleCrisisChoice(index));
     DOM.crisisChoices.appendChild(btn);
   });
@@ -453,17 +533,30 @@ function handleCrisisChoice(choiceIndex) {
   const result = resolveCrisisChoice(choiceIndex);
   if (!result) return;
 
+  // STEP 38: Crisis resolved — clear cached event
+  cachedCrisisEvent = null;
+  activePanelState = 'outcome';
+
   hideAllMainPanels();
   DOM.outcomePanel.style.display = "block";
 
   // Outcome text
   DOM.outcomeText.textContent = result.outcome;
 
-  // Effect chips
+  // Effect chips (STEP 48: bilingual stat labels)
   DOM.outcomeEffects.innerHTML = "";
 
   if (result.effects) {
-    const labelMap = {
+    const currentLang = (typeof getCurrentLang === 'function') ? getCurrentLang() : 'EN';
+    const isTH = currentLang === 'TH';
+    const labelMap = isTH ? {
+      popularity: "คะแนนนิยม",
+      budget: "งบประมาณ",
+      unrest: "ความไม่สงบ",
+      growth: "เศรษฐกิจ",
+      militaryPatience: "กองทัพ",
+      coalitionStability: "เสถียรภาพ"
+    } : {
       popularity: "Approval",
       budget: "Budget",
       unrest: "Unrest",
@@ -475,8 +568,8 @@ function handleCrisisChoice(choiceIndex) {
     Object.entries(result.effects).forEach(([key, val]) => {
       const sign = val > 0 ? "+" : "";
       // For unrest, positive is bad; for others positive is good
-      const isGood = key === "unrest" || key === "militaryPatience" 
-        ? val < 0 
+      const isGood = key === "unrest" || key === "militaryPatience"
+        ? val < 0
         : (key === "budget" ? val > 0 : val > 0);
       // Special: militaryPatience going up is good
       const goodCheck = key === "militaryPatience" ? val > 0 : isGood;
@@ -523,6 +616,7 @@ function handleEndTurn() {
   // Show monthly report
   hideAllMainPanels();
   DOM.reportPanel.style.display = "block";
+  activePanelState = 'report'; // STEP 38
 
   DOM.reportTurn.textContent = getTurnLabel(gameState.turn - 1);
 
@@ -572,30 +666,306 @@ function handleEndTurn() {
     DOM.reportWarnings.appendChild(line);
   });
 
+  // ── STEP 43: Loyalty crisis section in monthly report ──
+  if (report.loyaltyCrises && report.loyaltyCrises.length > 0) {
+    const crisisSection = document.createElement("div");
+    crisisSection.style.cssText = `
+      margin-top: 0.75rem; padding: 0.75rem; border-radius: 8px;
+      background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25);
+    `;
+
+    const crisisTitle = document.createElement("div");
+    crisisTitle.style.cssText = "font-weight:800; color:var(--red-400); font-size:0.85rem; margin-bottom:0.4rem;";
+    crisisTitle.textContent = "🚨 COALITION CRISIS — Partner Threatens Withdrawal";
+    crisisSection.appendChild(crisisTitle);
+
+    report.loyaltyCrises.forEach(crisis => {
+      const crisisLine = document.createElement("div");
+      crisisLine.style.cssText = `
+        display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0;
+        font-size:0.78rem; color:var(--text-secondary);
+      `;
+      crisisLine.innerHTML = `
+        <span style="width:4px;height:20px;border-radius:2px;background:${crisis.color};flex-shrink:0"></span>
+        <strong style="color:var(--text-primary)">${crisis.partyName}</strong>
+        <span style="color:var(--red-400);font-weight:700">${crisis.loyalty}% loyalty</span>
+        <span style="color:var(--text-muted)">(${crisis.seats} seats at risk)</span>
+      `;
+      crisisSection.appendChild(crisisLine);
+    });
+
+    // War Room button
+    const warRoomBtn = document.createElement("button");
+    warRoomBtn.className = "btn btn-primary btn-sm";
+    warRoomBtn.style.cssText = "margin-top:0.5rem; font-size:0.72rem;";
+    warRoomBtn.innerHTML = "⚔️ Open War Room";
+    warRoomBtn.addEventListener("click", () => {
+      if (typeof openWarRoom === 'function') openWarRoom();
+    });
+    crisisSection.appendChild(warRoomBtn);
+
+    DOM.reportWarnings.appendChild(crisisSection);
+  }
+
   // Update all UI
   updateStatusBar();
   updateHeader();
   renderParliament();
   renderLaws();
+  renderDiplomacyContacts(); // v1.0.2
+
+  // v1.0.2: Tick diplomacy cooldowns
+  if (typeof tickDiplomacyCooldowns === 'function') {
+    tickDiplomacyCooldowns();
+  }
+  // v1.0.2: Tick PM action cooldowns
+  if (typeof tickPMActionCooldowns === 'function') {
+    tickPMActionCooldowns();
+  }
+
+  // STEP 40: Update phase badge immediately when the month advances
+  updatePowerDecayIndicator();
+  renderPMActions();
 }
 
 // ─── HANDLE NEXT MONTH ─────────────────────────────────────
 
 function handleNextMonth() {
+  // STEP 34: Re-lock dashboard for the new month before showing crisis
+  relockMonth();
+  // Then immediately unlock + trigger crisis (player sees the unlock briefly)
+  unlockMonth();
   showCrisisEvent();
+
+  // STEP 40: Ensure phase badge reflects the new month immediately
+  updatePowerDecayIndicator();
 }
 
 // ─── HANDLE START MONTH ─────────────────────────────────────
 
 function handleStartMonth() {
+  // STEP 34: Unlock the dashboard before triggering the crisis
+  unlockMonth();
   showCrisisEvent();
+}
+
+
+// ─── STEP 34: MONTH STATE TRANSITION ────────────────────────
+
+/**
+ * unlockMonth() — Transitions the dashboard from "Pre-Month" to "Active Month".
+ * Removes lock classes, plays unlock animation, updates idle text,
+ * hides the Begin button, and reveals the Honeymoon badge.
+ */
+function unlockMonth() {
+  isMonthActive = true;
+  console.log('[main.js] STEP 34 — Month unlocked.');
+
+  // 1. Unlock PM Actions panel
+  if (DOM.pmActionsPanel) {
+    DOM.pmActionsPanel.classList.remove('locked-pre-month');
+    DOM.pmActionsPanel.classList.add('month-unlocked');
+  }
+
+  // 2. Unlock Legislation section
+  if (DOM.legislationSection) {
+    DOM.legislationSection.classList.remove('locked-pre-month');
+    DOM.legislationSection.classList.add('month-unlocked');
+  }
+
+  // 3. Reveal Power Decay / Honeymoon badge
+  if (DOM.powerDecayIndicator) {
+    DOM.powerDecayIndicator.classList.remove('hidden-pre-month');
+  }
+
+  // 4. Hide the "Begin This Month" button
+  if (DOM.btnStartMonth) {
+    DOM.btnStartMonth.style.display = 'none';
+  }
+
+  // 5. Change idle description text
+  if (DOM.idleDescription) {
+    DOM.idleDescription.innerHTML = `
+      <span class="month-active-badge">
+        <span class="pulse-dot"></span>
+        Month is Active
+      </span>
+      Manage your actions or propose legislation.
+    `;
+  }
+
+  // STEP 40: Sync phase badge data when it becomes visible
+  updatePowerDecayIndicator();
+}
+
+/**
+ * relockMonth() — Transitions the dashboard back to "Pre-Month" state.
+ * Re-applies lock classes, shows the Begin button, resets idle text.
+ * Called when returning to idle after the monthly report.
+ */
+function relockMonth() {
+  isMonthActive = false;
+  console.log('[main.js] STEP 34 — Month re-locked for next turn.');
+
+  // 1. Re-lock PM Actions panel
+  if (DOM.pmActionsPanel) {
+    DOM.pmActionsPanel.classList.remove('month-unlocked');
+    DOM.pmActionsPanel.classList.add('locked-pre-month');
+  }
+
+  // 2. Re-lock Legislation section
+  if (DOM.legislationSection) {
+    DOM.legislationSection.classList.remove('month-unlocked');
+    DOM.legislationSection.classList.add('locked-pre-month');
+  }
+
+  // 3. Hide Power Decay badge again
+  if (DOM.powerDecayIndicator) {
+    DOM.powerDecayIndicator.classList.add('hidden-pre-month');
+  }
+
+  // 4. Show the "Begin This Month" button again
+  if (DOM.btnStartMonth) {
+    DOM.btnStartMonth.style.display = '';
+  }
+
+  // 5. Reset idle description text
+  if (DOM.idleDescription) {
+    DOM.idleDescription.textContent = 'Your coalition awaits your leadership, Prime Minister.';
+  }
+}
+
+// ─── PM ACTIONS UI CONTROLLER (v1.0.2 — Step 9) ───────────────
+
+/**
+ * updatePowerDecayIndicator() — Updates the phase badge in the idle panel.
+ */
+function updatePowerDecayIndicator() {
+  if (!DOM.decayPhaseIcon || typeof getPowerDecayPhase !== 'function') return;
+
+  const phase = getPowerDecayPhase();
+  const mult = getPowerDecayMultiplier();
+
+  DOM.decayPhaseIcon.textContent = phase.icon;
+  DOM.decayPhaseName.textContent = phase.name;
+  DOM.decayPhaseName.style.color = phase.color;
+  DOM.decayPhaseMult.textContent = `×${mult.toFixed(2)}`;
+
+  if (DOM.powerDecayIndicator) {
+    DOM.powerDecayIndicator.title = phase.desc || '';
+    DOM.powerDecayIndicator.style.borderColor = phase.color;
+  }
+}
+
+/**
+ * renderPMActions() — Renders the PM exclusive action cards in the idle panel.
+ */
+function renderPMActions() {
+  if (!DOM.pmActionsGrid || typeof PM_ACTIONS === 'undefined') return;
+
+  DOM.pmActionsGrid.innerHTML = '';
+
+  const actionIds = ['tvAddress', 'overseasDiplomacy', 'emergencyDecree'];
+
+  actionIds.forEach(actionId => {
+    const status = getPMActionStatus(actionId);
+    if (!status) return;
+
+    const isOnCooldown = status.cooldown > 0;
+    const isDisabled = !status.canUse;
+
+    const card = document.createElement('div');
+    card.className = `pm-action-card ${isDisabled ? 'disabled' : ''} ${isOnCooldown ? 'cooldown' : ''}`;
+
+    // Build effect chips
+    const effectChips = Object.entries(status.effects).map(([key, val]) => {
+      const sign = val > 0 ? '+' : '';
+      const isGood = (key === 'unrest' || key === 'militaryPatience')
+        ? (key === 'militaryPatience' ? val > 0 : val < 0)
+        : val > 0;
+      const cls = isGood ? 'positive' : 'negative';
+      const labels = { popularity: 'Pop', budget: 'Budget', unrest: 'Unrest', growth: 'GDP', militaryPatience: 'Military', coalitionStability: 'Stab' };
+      return `<span class="pm-effect-chip ${cls}">${labels[key] || key} ${sign}${val}</span>`;
+    }).join('');
+
+    card.innerHTML = `
+      <span class="pm-action-card__icon">${status.icon}</span>
+      <div class="pm-action-card__name">${status.name}</div>
+      <div class="pm-action-card__thai">${status.nameThai}</div>
+      <div class="pm-action-card__desc">${status.description}</div>
+      <div class="pm-action-card__effects">${effectChips}</div>
+      <div class="pm-action-card__footer">
+        ${status.cost > 0
+        ? `<span class="pm-action-card__cost budget">฿${status.cost}B</span>`
+        : `<span class="pm-action-card__cost free">FREE</span>`
+      }
+        ${isOnCooldown
+        ? `<span class="pm-action-card__cooldown-badge">${status.cooldown}mo CD</span>`
+        : ''
+      }
+      </div>
+    `;
+
+    if (!isDisabled) {
+      card.addEventListener('click', () => handlePMAction(actionId));
+    }
+
+    DOM.pmActionsGrid.appendChild(card);
+  });
+}
+
+/**
+ * handlePMAction() — Executes a PM action and shows the result modal.
+ */
+function handlePMAction(actionId) {
+  const result = executePMAction(actionId);
+
+  if (!result.success) {
+    showToast(result.message, 'warning');
+    return;
+  }
+
+  // Build effect chips
+  let effectsHtml = '';
+  if (result.effects) {
+    const entries = Object.entries(result.effects).filter(([k, v]) => typeof v === 'number' && v !== 0);
+    effectsHtml = entries.map(([key, val]) => {
+      const sign = val > 0 ? '+' : '';
+      const isGood = (key === 'unrest') ? val < 0
+        : (key === 'militaryPatience' || key === 'coalitionStability') ? val > 0
+          : val > 0;
+      const cls = isGood ? 'effect-positive' : 'effect-negative';
+      const labels = { budget: 'Budget', popularity: 'Approval', unrest: 'Unrest', growth: 'GDP Growth', militaryPatience: 'Military', coalitionStability: 'Stability' };
+      return `<span class="effect-chip ${cls}">${labels[key] || key}: ${sign}${val}</span>`;
+    }).join(' ');
+  }
+
+  const html = `
+    <h3 style="margin-bottom:0.5rem; font-size:1.1rem; color:var(--gold-400)">${result.message}</h3>
+    ${effectsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.75rem;">${effectsHtml}</div>` : ''}
+    ${result.narrative ? `<div class="diplo-narrative">${result.narrative}</div>` : ''}
+  `;
+
+  showModal(html);
+
+  // Refresh UI
+  updateStatusBar();
+  updateEventLog();
+  renderPMActions();
+  updatePowerDecayIndicator();
 }
 
 // ─── UPDATE EVENT LOG ───────────────────────────────────────
 
 function updateEventLog() {
+  // STEP 48: Bilingual event log
+  const currentLang = (typeof getCurrentLang === 'function') ? getCurrentLang() : 'EN';
+  const isTH = currentLang === 'TH';
+  const emptyMsg = isTH ? 'ยังไม่มีเหตุการณ์' : 'No events yet.';
+  const monthLabel = isTH ? 'เดือน' : 'Month';
+
   if (gameState.eventHistory.length === 0) {
-    DOM.eventLog.innerHTML = '<div class="log-empty">No events yet.</div>';
+    DOM.eventLog.innerHTML = `<div class="log-empty">${emptyMsg}</div>`;
     return;
   }
 
@@ -603,11 +973,12 @@ function updateEventLog() {
   // Show most recent events first, limit to 15
   const recent = [...gameState.eventHistory].reverse().slice(0, 15);
   recent.forEach(entry => {
+    const title = isTH ? (entry.eventTitleTH || entry.eventTitle) : (entry.eventTitleEN || entry.eventTitle);
     const div = document.createElement("div");
     div.className = "log-entry";
     div.innerHTML = `
-      <div class="log-entry-turn">Month ${entry.turn}</div>
-      <div class="log-entry-title">${entry.eventTitle}</div>
+      <div class="log-entry-turn">${monthLabel} ${entry.turn}</div>
+      <div class="log-entry-title">${title}</div>
     `;
     DOM.eventLog.appendChild(div);
   });
@@ -696,6 +1067,15 @@ function initGame(loadSave = false) {
     showToast("Game loaded successfully!", "success");
   } else {
     initializeGameState();
+    resetCabinet(); // v1.0.2: Reset cabinet for new game
+    if (typeof resetDiplomacy === 'function') resetDiplomacy(); // v1.0.2
+    if (typeof resetPMActions === 'function') resetPMActions(); // v1.0.2
+
+    // STEP 28: Generate dynamic seat allocations based on entry mode
+    const coreId = getPlayerCorePartyId();
+    if (coreId && typeof generateCabinetSeats === 'function') {
+      generateCabinetSeats(coreId);
+    }
   }
 
   showScreen("game-screen");
@@ -710,16 +1090,96 @@ function initGame(loadSave = false) {
   renderParliament();
   renderLaws();
   updateEventLog();
+  renderDiplomacyContacts(); // v1.0.2
+  renderPMActions(); // v1.0.2
+  updatePowerDecayIndicator(); // v1.0.2
+
+  // ── STEP 25: Populate Active Party Identity Indicator ──
+  _populateMainGamePartyIndicator();
+
+  // v1.0.2: On new game, show Cabinet Formation before gameplay
+  if (!loadSave && !getCabinetState().isFormed) {
+    openCabinetRoom();
+    return; // Don't show idle panel yet — cabinet first
+  }
 
   // Show idle panel to start
   hideAllMainPanels();
   DOM.idlePanel.style.display = "flex";
 }
 
+// ─── STEP 25: ACTIVE PARTY IDENTITY INDICATOR ───────────────
+
+/**
+ * _populateMainGamePartyIndicator() — Reads the player's party from
+ * localStorage and fills the header identity display.
+ *
+ * STEP 30: Now uses getPlayerCorePartyId() for robust ID resolution
+ * instead of a duplicate inline map (which had wrong IDs for STK/PTR).
+ */
+function _populateMainGamePartyIndicator() {
+  // Use the robust resolver from cabinet.js (handles all 5 parties + edge cases)
+  const mainGameId = (typeof getPlayerCorePartyId === 'function')
+    ? getPlayerCorePartyId()
+    : localStorage.getItem('campaign_party_id');
+
+  if (!mainGameId) return;
+
+  const party = (typeof PARTIES !== 'undefined') ? PARTIES.find(p => p.id === mainGameId) : null;
+
+  const dot = document.getElementById('player-party-color-dot');
+  const nameEl = document.getElementById('player-party-name');
+
+  if (party) {
+    if (dot) {
+      dot.style.background = party.color;
+      dot.style.boxShadow = `0 0 8px ${party.color}`;
+    }
+    if (nameEl) nameEl.textContent = party.name;
+    console.log(`[main-game/main.js] Party indicator: "${party.name}" (${party.color})`);
+  } else {
+    // Fallback: show the raw ID
+    if (nameEl) nameEl.textContent = mainGameId.replace(/_/g, ' ');
+    console.warn(`[main-game/main.js] Could not find party for indicator: "${mainGameId}"`);
+  }
+}
+
+// ─── STEP 49: LIVE LANGUAGE TOGGLE SYNC ─────────────────────
+// When the user toggles language while a crisis event is on screen,
+// re-render the active panel so text switches instantly.
+window.addEventListener('tpsLangChanged', () => {
+  console.log('[main.js] STEP 49 — Language changed, refreshing dynamic panels...');
+
+  // 1. If a crisis event is currently displayed, re-render it in the new language
+  if (activePanelState === 'crisis' && cachedCrisisEvent) {
+    _renderCrisisPanel(cachedCrisisEvent);
+  }
+
+  // 2. Always refresh the event log sidebar (it uses stored bilingual titles)
+  if (typeof updateEventLog === 'function') {
+    updateEventLog();
+  }
+
+  // 3. Refresh status bar labels (they use data-i18n handled by applyTranslations)
+  if (typeof updateStatusBar === 'function') {
+    updateStatusBar();
+  }
+
+  // 4. Refresh header
+  if (typeof updateHeader === 'function') {
+    updateHeader();
+  }
+});
+
 // ─── EVENT LISTENERS ────────────────────────────────────────
 
 // Start screen
-DOM.btnNewGame.addEventListener("click", () => initGame(false));
+// STEP 23: "New Game" redirects to campaign party selection, then returns
+DOM.btnNewGame.addEventListener("click", () => {
+  console.log('[main-game/main.js] STEP 23 — Redirecting to Campaign for party selection...');
+  // Redirect to campaign with return_to=cabinet so campaign knows to bounce back
+  window.location.href = '../campaign/index.html?return_to=cabinet';
+});
 DOM.btnLoadGame.addEventListener("click", () => initGame(true));
 
 // Game buttons
@@ -727,8 +1187,28 @@ DOM.btnStartMonth.addEventListener("click", handleStartMonth);
 DOM.btnEndTurn.addEventListener("click", handleEndTurn);
 DOM.btnNextMonth.addEventListener("click", handleNextMonth);
 DOM.btnCloseVote.addEventListener("click", () => {
+  // STEP 38: Restore the panel that was active before the vote
+  const preVoteState = DOM.votePanel.dataset.preVoteState || 'idle';
+  console.log(`[main.js] STEP 38 — Vote closed, restoring: "${preVoteState}"`);
+
   hideAllMainPanels();
-  DOM.idlePanel.style.display = "flex";
+
+  if (preVoteState === 'crisis' && cachedCrisisEvent) {
+    // Restore the interrupted crisis event with working buttons
+    _renderCrisisPanel(cachedCrisisEvent);
+    activePanelState = 'crisis';
+  } else if (preVoteState === 'outcome') {
+    // Outcome was showing — re-show outcome panel
+    DOM.outcomePanel.style.display = "block";
+    activePanelState = 'outcome';
+  } else {
+    // Default: return to idle
+    DOM.idlePanel.style.display = "flex";
+    activePanelState = 'idle';
+  }
+
+  renderPMActions();
+  updatePowerDecayIndicator();
 });
 
 // Save
@@ -813,13 +1293,979 @@ function showHowToPlay() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════
+// STEP 41: DIPLOMACY WAR ROOM
+// Full-screen modal for coalition partner management with loyalty bars.
+// ═══════════════════════════════════════════════════════════════════
+
+let _expandedWarroomPartyId = null;
+
+/**
+ * openWarRoom() — Opens the Diplomacy War Room modal.
+ */
+function openWarRoom() {
+  const overlay = document.getElementById('diplomacy-war-room');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  renderWarRoomCards();
+  console.log('[main.js] STEP 41 — War Room opened.');
+}
+
+/**
+ * closeWarRoom() — Closes the Diplomacy War Room modal.
+ */
+function closeWarRoom() {
+  const overlay = document.getElementById('diplomacy-war-room');
+  if (overlay) overlay.style.display = 'none';
+  _expandedWarroomPartyId = null;
+}
+
+/**
+ * _getLoyaltyColor(loyalty) — Returns the color class for a loyalty value.
+ * Red < 30%, Yellow 30-60%, Green > 60%
+ */
+function _getLoyaltyColor(loyalty) {
+  if (loyalty >= 60) return 'green';
+  if (loyalty >= 30) return 'yellow';
+  return 'red';
+}
+
+/**
+ * renderWarRoomCards() — Renders the War Room coalition stats and party cards.
+ */
+function renderWarRoomCards() {
+  const statsContainer = document.getElementById('warroom-coalition-stats');
+  const cardsContainer = document.getElementById('warroom-party-cards');
+  if (!statsContainer || !cardsContainer) return;
+
+  // Get the player's core party ID
+  const corePartyId = localStorage.getItem('selectedPartyId') || '';
+
+  // Filter: coalition partners only (exclude player's core party)
+  const coalitionPartners = parties.filter(p =>
+    p.inCoalition && p.id !== corePartyId
+  );
+
+  // ── Coalition Stats Summary ──
+  const totalCoalitionSeats = parties
+    .filter(p => p.inCoalition)
+    .reduce((sum, p) => sum + p.seats, 0);
+  const avgLoyalty = coalitionPartners.length > 0
+    ? Math.round(coalitionPartners.reduce((sum, p) => sum + (p.coalitionLoyalty || 50), 0) / coalitionPartners.length)
+    : 0;
+  const dangerCount = coalitionPartners.filter(p => (p.coalitionLoyalty || 50) < 30).length;
+
+  const loyaltyColorClass = _getLoyaltyColor(avgLoyalty);
+  const seatsClass = totalCoalitionSeats >= MAJORITY_THRESHOLD ? 'good' : 'danger';
+
+  statsContainer.innerHTML = `
+    <div class="warroom-stat">
+      🏛️ Coalition Seats:
+      <span class="warroom-stat__value ${seatsClass}">${totalCoalitionSeats} / ${PARLIAMENT_TOTAL_SEATS}</span>
+    </div>
+    <div class="warroom-stat">
+      🎯 Majority: <span class="warroom-stat__value ${seatsClass}">${totalCoalitionSeats >= MAJORITY_THRESHOLD ? '✅ YES' : '❌ NO'}</span>
+    </div>
+    <div class="warroom-stat">
+      💛 Avg Loyalty:
+      <span class="warroom-stat__value ${loyaltyColorClass === 'green' ? 'good' : loyaltyColorClass === 'yellow' ? 'warning' : 'danger'}">${avgLoyalty}%</span>
+    </div>
+    ${dangerCount > 0 ? `
+    <div class="warroom-stat">
+      🚨 At Risk: <span class="warroom-stat__value danger">${dangerCount} partner${dangerCount > 1 ? 's' : ''}</span>
+    </div>` : ''}
+    <div class="warroom-stat">
+      💰 Budget: <span class="warroom-stat__value">${gameState.budget}B</span>
+    </div>
+  `;
+
+  // ── Party Cards ──
+  cardsContainer.innerHTML = '';
+
+  if (coalitionPartners.length === 0) {
+    cardsContainer.innerHTML = `
+      <div class="warroom-empty">
+        <span class="warroom-empty__icon">🏚️</span>
+        No coalition partners to negotiate with.
+      </div>
+    `;
+    return;
+  }
+
+  coalitionPartners.forEach(party => {
+    const loyalty = party.coalitionLoyalty || 50;
+    const loyaltyColor = _getLoyaltyColor(loyalty);
+    const isExpanded = _expandedWarroomPartyId === party.id;
+    const isDanger = loyalty < 30;
+    const status = typeof getPartyDiplomacyStatus === 'function'
+      ? getPartyDiplomacyStatus(party.id) : null;
+
+    // Build card
+    const card = document.createElement('div');
+    card.className = `warroom-card ${isExpanded ? 'expanded' : ''} ${isDanger ? 'danger-card' : ''}`;
+
+    // Threat badge
+    let threatBadge = '';
+    if (status && status.threatCount > 0) {
+      const isCritical = status.threatDanger;
+      threatBadge = `<span class="diplo-threat-badge ${isCritical ? 'critical' : ''}">${status.threatCount}/${status.threatMax} ⚡</span>`;
+    }
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'warroom-card__header';
+    header.innerHTML = `
+      <div class="warroom-card__color-bar" style="background:${party.color}"></div>
+      <div class="warroom-card__info">
+        <div class="warroom-card__name">${party.name} ${threatBadge}</div>
+        <div class="warroom-card__leader">
+          ${party.leader || 'Unknown Leader'} — ${party.leaderTitle || 'Leader'} · ${party.ideology}
+        </div>
+      </div>
+      <div class="warroom-card__seats">${party.seats} seats</div>
+      <div class="warroom-card__chevron">▼</div>
+    `;
+
+    header.addEventListener('click', () => {
+      _expandedWarroomPartyId = isExpanded ? null : party.id;
+      renderWarRoomCards();
+    });
+
+    // Loyalty Bar
+    const loyaltySection = document.createElement('div');
+    loyaltySection.className = 'warroom-card__loyalty';
+    loyaltySection.innerHTML = `
+      <div class="warroom-loyalty">
+        <span class="warroom-loyalty__label">Loyalty</span>
+        <div class="warroom-loyalty__track">
+          <div class="warroom-loyalty__fill loyalty-${loyaltyColor}"
+               style="width:${Math.max(2, loyalty)}%"></div>
+        </div>
+        <span class="warroom-loyalty__value loyalty-value-${loyaltyColor}">${loyalty}%</span>
+      </div>
+    `;
+
+    // Actions panel (uses existing diplomacy buttons)
+    const actions = document.createElement('div');
+    actions.className = 'warroom-card__actions';
+
+    if (status) {
+      // ── STEP 42: New War Room Actions ──
+
+      // Action A: Pork Barrel Funding
+      const porkBtn = _createDiploButton({
+        action: 'placate', icon: '💰',
+        label: 'จัดสรรงบลงพื้นที่ (Pork Barrel)',
+        cost: `฿${status.porkBarrelCost}B`,
+        enabled: status.canPorkBarrel,
+        cooldown: status.porkBarrelCooldown,
+        meta: 'Loyalty +25%, Unrest +8'
+      });
+      porkBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _handleWarRoomAction('porkBarrel', party.id);
+      });
+
+      // Action B: Demand Whip Compliance
+      const whipBtn = _createDiploButton({
+        action: 'threaten', icon: '🗳️',
+        label: 'ขอคำมั่นสัญญาโหวต (Whip Vote)',
+        cost: status.isWhipped ? '✅ WHIPPED' : 'FREE',
+        enabled: status.canWhipCompliance,
+        cooldown: status.whipComplianceCooldown,
+        meta: status.isWhipped ? '✅ Will vote YES' : 'Loyalty -10%'
+      });
+      whipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _handleWarRoomAction('whipCompliance', party.id);
+      });
+
+      // Action C: Coalition Gala Dinner
+      const galaBtn = _createDiploButton({
+        action: 'renegotiate', icon: '🍽️',
+        label: 'งานเลี้ยงกระชับมิตร (Gala Dinner)',
+        cost: `฿${status.galaDinnerCost}B`,
+        enabled: status.canGalaDinner,
+        cooldown: status.galaDinnerCooldown,
+        meta: `RNG — ${gameState.popularity >= 40 ? '85%' : '30%'} success`
+      });
+      galaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        _handleWarRoomAction('galaDinner', party.id);
+      });
+
+      actions.appendChild(porkBtn);
+      actions.appendChild(whipBtn);
+      actions.appendChild(galaBtn);
+    }
+
+    card.appendChild(header);
+    card.appendChild(loyaltySection);
+    card.appendChild(actions);
+    cardsContainer.appendChild(card);
+  });
+}
+
+/**
+ * _handleWarRoomAction() — Executes a STEP 42 War Room diplomacy action,
+ * shows the result in a modal, and refreshes all relevant UI.
+ */
+function _handleWarRoomAction(action, partyId) {
+  let result;
+
+  // Route to the correct STEP 42 function
+  switch (action) {
+    case 'porkBarrel':
+      result = porkBarrelFunding(partyId);
+      break;
+    case 'whipCompliance':
+      result = demandWhipCompliance(partyId);
+      break;
+    case 'galaDinner':
+      result = coalitionGalaDinner(partyId);
+      break;
+    default:
+      // Fall back to original sidebar actions
+      _handleDiplomacyAction(action, partyId);
+      setTimeout(() => renderWarRoomCards(), 100);
+      return;
+  }
+
+  // Handle failure
+  if (!result.success) {
+    showToast(result.message, 'warning');
+    return;
+  }
+
+  // Build result modal
+  const actionLabels = {
+    porkBarrel:      { title: '💰 Pork Barrel Funding', color: 'var(--green-400)' },
+    whipCompliance:  { title: '🗳️ Whip Compliance Demanded', color: 'var(--amber-400)' },
+    galaDinner:      {
+      title: result.galaSuccess ? '🍽️ Gala Dinner — Success!' : '🍽️ Gala Dinner — Backfired',
+      color: result.galaSuccess ? 'var(--green-400)' : 'var(--red-400)'
+    }
+  };
+
+  const label = actionLabels[action] || { title: action, color: 'var(--text-primary)' };
+
+  // Effect chips
+  let effectsHtml = '';
+  if (result.effects) {
+    const effectEntries = Object.entries(result.effects).filter(([k, v]) => typeof v === 'number');
+    effectsHtml = effectEntries.map(([key, val]) => {
+      const sign = val > 0 ? '+' : '';
+      const isGood = (key === 'coalitionLoyalty' || key === 'relation' || key === 'coalitionStability') ? val > 0 :
+        (key === 'budget') ? val > 0 :
+          (key === 'unrest') ? val < 0 : val > 0;
+      const cls = isGood ? 'effect-positive' : 'effect-negative';
+      const labelMap = {
+        budget: 'Budget', coalitionLoyalty: 'Loyalty', relation: 'Relation',
+        coalitionStability: 'Stability', unrest: 'Unrest'
+      };
+      return `<span class="effect-chip ${cls}">${labelMap[key] || key}: ${sign}${val}</span>`;
+    }).join(' ');
+
+    // Special whip status chip
+    if (result.effects.whipStatus) {
+      effectsHtml += ` <span class="effect-chip effect-positive">${result.effects.whipStatus}</span>`;
+    }
+  }
+
+  const html = `
+    <h3 style="margin-bottom:0.5rem; font-size:1.1rem; color:${label.color}">${label.title}</h3>
+    <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:0.75rem;">${result.message}</p>
+    ${effectsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.75rem;">${effectsHtml}</div>` : ''}
+    ${result.warning ? `<div style="font-size:0.8rem;color:var(--amber-400);margin-bottom:0.5rem;">${result.warning}</div>` : ''}
+    ${result.narrative ? `<div class="diplo-narrative">${result.narrative}</div>` : ''}
+  `;
+
+  showModal(html);
+
+  // Refresh all UI
+  updateStatusBar();
+  renderParliament();
+  renderDiplomacyContacts();
+  renderWarRoomCards();
+}
+
+// War Room DOM refs & listeners (attached at bottom of file)
+document.getElementById('btn-close-warroom')?.addEventListener('click', closeWarRoom);
+
+// ═══════════════════════════════════════════════════════════════════
+// COALITION DIPLOMACY UI CONTROLLER (v1.0.2 — Step 8)
+// Renders contact cards and handles diplomatic actions.
+// ═══════════════════════════════════════════════════════════════════
+
+let _expandedDiploPartyId = null;
+
+/**
+ * renderDiplomacyContacts() — Renders the coalition contacts sidebar.
+ */
+function renderDiplomacyContacts() {
+  if (!DOM.diplomacyContacts || typeof getPartyDiplomacyStatus !== 'function') return;
+  if (!parties) return;
+
+  const coalitionParties = parties.filter(p => p.inCoalition);
+  DOM.diplomacyContacts.innerHTML = '';
+
+  if (coalitionParties.length === 0) {
+    DOM.diplomacyContacts.innerHTML = '<div style="font-size:0.72rem;color:var(--text-muted);padding:0.5rem;font-style:italic">No coalition partners.</div>';
+    return;
+  }
+
+  coalitionParties.forEach(party => {
+    const status = getPartyDiplomacyStatus(party.id);
+    if (!status) return;
+
+    const isExpanded = _expandedDiploPartyId === party.id;
+    const relationSign = party.relation > 0 ? '+' : '';
+    const relationClass = party.relation > 10 ? 'positive' : party.relation < -10 ? 'negative' : 'neutral';
+    const isDanger = party.relation < -20 || status.threatDanger;
+
+    const card = document.createElement('div');
+    card.className = `diplo-contact ${isExpanded ? 'expanded' : ''} ${isDanger ? 'danger' : ''}`;
+
+    // Threat badge HTML
+    let threatBadge = '';
+    if (status.threatCount > 0) {
+      const isCritical = status.threatDanger;
+      threatBadge = `<span class="diplo-threat-badge ${isCritical ? 'critical' : ''}">${status.threatCount}/${status.threatMax} ⚡</span>`;
+    }
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'diplo-contact__header';
+    header.innerHTML = `
+      <div class="diplo-contact__dot" style="background:${party.color}"></div>
+      <div class="diplo-contact__info">
+        <div class="diplo-contact__name">${party.shortName} ${threatBadge}</div>
+        <div class="diplo-contact__meta">${party.seats} seats · ${party.ideology}</div>
+      </div>
+      <div class="diplo-contact__relation ${relationClass}">${relationSign}${party.relation}</div>
+      <div class="diplo-contact__chevron">▼</div>
+    `;
+
+    header.addEventListener('click', () => {
+      _expandedDiploPartyId = isExpanded ? null : party.id;
+      renderDiplomacyContacts();
+    });
+
+    // Actions panel
+    const actions = document.createElement('div');
+    actions.className = 'diplo-contact__actions';
+
+    // Placate button
+    const placateBtn = _createDiploButton({
+      action: 'placate',
+      icon: '🎁',
+      label: 'Placate Leader',
+      cost: `฿${status.placateCost}B`,
+      enabled: status.canPlacate,
+      cooldown: status.placateCooldown,
+      meta: status.placateUses >= status.placateMaxUses ? 'Exhausted' : `${status.placateUses}/${status.placateMaxUses} used`
+    });
+    placateBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _handleDiplomacyAction('placate', party.id);
+    });
+
+    // Renegotiate button
+    const renegBtn = _createDiploButton({
+      action: 'renegotiate',
+      icon: '🔄',
+      label: 'Renegotiate Deal',
+      cost: `฿${status.renegotiateCost}B`,
+      enabled: status.canRenegotiate,
+      cooldown: status.renegotiateCooldown,
+      meta: 'Swap ministries'
+    });
+    renegBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _handleDiplomacyAction('renegotiate', party.id);
+    });
+
+    // Threaten button
+    const threatBtn = _createDiploButton({
+      action: 'threaten',
+      icon: '⚡',
+      label: 'Threaten Expulsion',
+      cost: 'FREE',
+      enabled: status.canThreaten,
+      cooldown: status.threatCooldown,
+      meta: status.threatDanger ? '🚨 FINAL WARNING' : `${status.threatCount}/${status.threatMax} used`
+    });
+    threatBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _handleDiplomacyAction('threaten', party.id);
+    });
+
+    actions.appendChild(placateBtn);
+    actions.appendChild(renegBtn);
+    actions.appendChild(threatBtn);
+
+    card.appendChild(header);
+    card.appendChild(actions);
+    DOM.diplomacyContacts.appendChild(card);
+  });
+}
+
+/**
+ * _createDiploButton() — Creates a styled diplomacy action button.
+ */
+function _createDiploButton({ action, icon, label, cost, enabled, cooldown, meta }) {
+  const btn = document.createElement('button');
+  btn.className = `diplo-action-btn ${action}`;
+  btn.disabled = !enabled;
+
+  if (cooldown > 0) {
+    btn.innerHTML = `
+      <span class="diplo-action-btn__icon">${icon}</span>
+      <span class="diplo-action-btn__label">${label}</span>
+      <span class="diplo-action-btn__cooldown">${cooldown}mo CD</span>
+    `;
+  } else {
+    btn.innerHTML = `
+      <span class="diplo-action-btn__icon">${icon}</span>
+      <span class="diplo-action-btn__label">${label}</span>
+      <span class="diplo-action-btn__cost">${cost}</span>
+    `;
+  }
+
+  btn.title = meta || '';
+  return btn;
+}
+
+/**
+ * _handleDiplomacyAction() — Executes a diplomacy action and shows the result.
+ */
+function _handleDiplomacyAction(action, partyId) {
+  let result;
+
+  switch (action) {
+    case 'placate':
+      result = placateLeader(partyId);
+      break;
+    case 'renegotiate':
+      result = renegotiateDeal(partyId);
+      break;
+    case 'threaten':
+      result = threatenExpulsion(partyId);
+      break;
+    default:
+      return;
+  }
+
+  if (!result.success && !result.isDefection) {
+    showToast(result.message, 'warning');
+    return;
+  }
+
+  // Build result modal
+  const actionLabels = {
+    placate: { title: '🎁 Leader Placated', color: 'var(--green-400)' },
+    renegotiate: { title: '🔄 Deal Renegotiated', color: 'var(--amber-400)' },
+    threaten: { title: result.isDefection ? '🚨 COALITION CRISIS' : '⚡ Expulsion Threatened', color: 'var(--red-400)' }
+  };
+
+  const label = actionLabels[action];
+
+  // Effect chips
+  let effectsHtml = '';
+  if (result.effects) {
+    const effectEntries = Object.entries(result.effects).filter(([k, v]) => typeof v === 'number');
+    effectsHtml = effectEntries.map(([key, val]) => {
+      const sign = val > 0 ? '+' : '';
+      const isGood = (key === 'relation' || key === 'coalitionStability' || key === 'complianceBonus') ? val > 0 :
+        (key === 'budget') ? val > 0 :
+          (key === 'unrest') ? val < 0 : val > 0;
+      const cls = isGood ? 'effect-positive' : 'effect-negative';
+      const labelMap = {
+        budget: 'Budget', relation: 'Relation', coalitionStability: 'Stability',
+        unrest: 'Unrest', complianceBonus: 'Vote Compliance',
+        otherPartyRelation: 'Other Allies'
+      };
+      return `<span class="effect-chip ${cls}">${labelMap[key] || key}: ${sign}${val}</span>`;
+    }).join(' ');
+  }
+
+  const html = `
+    <h3 style="margin-bottom:0.5rem; font-size:1.1rem; color:${label.color}">${label.title}</h3>
+    <p style="color:var(--text-secondary); font-size:0.85rem; margin-bottom:0.75rem;">${result.message}</p>
+    ${effectsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.75rem;">${effectsHtml}</div>` : ''}
+    ${result.warning ? `<div style="font-size:0.8rem;color:var(--amber-400);margin-bottom:0.5rem;">${result.warning}</div>` : ''}
+    ${result.narrative ? `<div class="diplo-narrative">${result.narrative}</div>` : ''}
+  `;
+
+  showModal(html);
+
+  // Refresh everything
+  updateStatusBar();
+  renderParliament();
+  renderDiplomacyContacts();
+
+  // If defection occurred, check game over
+  if (result.isDefection && !hasCoalitionMajority()) {
+    setTimeout(() => {
+      hideModal();
+      showGameOver("VOTE OF NO CONFIDENCE — Your coalition has fractured below the 251-seat majority. Opposition parties file a no-confidence motion. It passes overwhelmingly. The Speaker dissolves Parliament.");
+    }, 4000);
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// CABINET ROOM UI CONTROLLER (v1.0.2 — Step 7)
+// Manages the ministry allocation interface.
+// ═══════════════════════════════════════════════════════════════════
+
+let _selectedCabinetPartyId = null; // Currently selected party for assignment
+
+/**
+ * openCabinetRoom() — Opens the Cabinet Formation modal.
+ * STEP 25: Resolves Core Party and locks it as the dominant partner.
+ */
+function openCabinetRoom() {
+  if (!DOM.cabinetOverlay) return;
+
+  // STEP 25: Resolve the Core Party from localStorage
+  const corePartyId = getPlayerCorePartyId();
+  console.log(`[main.js] Cabinet Room opened. Core Party: "${corePartyId || 'none'}"`);
+
+  // Auto-select the player's party for assignment
+  _selectedCabinetPartyId = corePartyId || null;
+  DOM.cabinetOverlay.style.display = "flex";
+
+  const coalitionParties = parties.filter(p => p.inCoalition);
+
+  // STEP 25: Display Core Party identity in the cabinet header
+  _renderCorePartyBanner(corePartyId, coalitionParties);
+
+  renderCabinetSlots();
+  renderCabinetRoster(coalitionParties);
+  updateSatisfactionPreview(coalitionParties);
+  _updateCabinetFooter();
+}
+
+/**
+ * _renderCorePartyBanner() — STEP 29: Dynamically injects the PM's Party
+ * identity banner into #pm-party-banner-container. Uses currentParliamentSeats
+ * for accurate seat counts. Falls back to a generic message if no party is set.
+ */
+function _renderCorePartyBanner(corePartyId, coalitionParties) {
+  const container = document.getElementById('pm-party-banner-container');
+  if (!container) return;
+
+  // Fallback: no core party selected
+  if (!corePartyId) {
+    container.innerHTML = `
+      <span style="color:var(--text-muted);font-size:0.82rem">
+        Allocate ministries to your coalition partners. Their satisfaction determines coalition loyalty.
+      </span>
+    `;
+    return;
+  }
+
+  // Find the core party from the live parties array (name/color)
+  let coreParty = coalitionParties.find(p => p.id === corePartyId);
+
+  // STEP 31: Fallback — search full PARTIES array (party may not be in coalition yet)
+  if (!coreParty && typeof PARTIES !== 'undefined') {
+    coreParty = PARTIES.find(p => p.id === corePartyId);
+    if (coreParty) console.log(`[main.js] STEP 31 — Core party found in PARTIES (not yet in coalition): "${corePartyId}"`);
+  }
+
+  // STEP 31: Second fallback — search currentParliamentSeats
+  if (!coreParty && typeof getCurrentParliamentSeats === 'function') {
+    const seatEntry = getCurrentParliamentSeats()?.find(p => p.id === corePartyId || p.isPlayer);
+    if (seatEntry) {
+      coreParty = { id: seatEntry.id, name: seatEntry.name, shortName: seatEntry.shortName, color: seatEntry.color, seats: seatEntry.seats };
+      console.log(`[main.js] STEP 31 — Core party recovered from currentParliamentSeats: "${coreParty.name}"`);
+    }
+  }
+
+  if (!coreParty) {
+    console.error(`[main.js] ⛔ STEP 31 — Core party "${corePartyId}" not found anywhere!`);
+    container.innerHTML = `
+      <span style="color:var(--text-muted);font-size:0.82rem">
+        Core Party not found in coalition. Allocate ministries below.
+      </span>
+    `;
+    return;
+  }
+
+  // Get the dynamic seat count from currentParliamentSeats
+  const seatData = (typeof getCurrentParliamentSeats === 'function') ? getCurrentParliamentSeats() : null;
+  const playerSeatEntry = seatData ? seatData.find(p => p.id === corePartyId) : null;
+  const seatCount = playerSeatEntry ? playerSeatEntry.seats : coreParty.seats;
+
+  // Calculate total coalition seats
+  const totalCoalitionSeats = coalitionParties.reduce((sum, p) => sum + p.seats, 0);
+
+  container.innerHTML = `
+    <div class="pm-banner" style="border-left:4px solid ${coreParty.color};padding:10px 14px;background:rgba(0,0,0,0.2);border-radius:0 8px 8px 0;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${coreParty.color};box-shadow:0 0 10px ${coreParty.color}88;flex-shrink:0"></span>
+        <strong style="color:#fff;font-size:0.95rem">Prime Minister's Party: ${coreParty.name}</strong>
+        <span class="cabinet-core-badge">🔒 CORE PARTY</span>
+      </div>
+      <div style="display:flex;gap:16px;font-size:0.78rem;color:var(--text-muted);margin-top:2px">
+        <span>🪑 <strong style="color:#fff">${seatCount}</strong> seats</span>
+        <span>📊 <strong style="color:#fff">${Math.round((seatCount / 500) * 100)}%</strong> of parliament</span>
+        <span>🏛️ Coalition: <strong style="color:#fff">${totalCoalitionSeats}</strong>/500</span>
+      </div>
+    </div>
+    <span style="color:var(--text-muted);font-size:0.78rem">
+      Allocate ministries to your coalition partners. Their satisfaction determines coalition loyalty.
+    </span>
+  `;
+}
+
+/**
+ * closeCabinetRoom() — Hides the cabinet modal.
+ */
+function closeCabinetRoom() {
+  if (DOM.cabinetOverlay) {
+    DOM.cabinetOverlay.style.display = "none";
+  }
+  // Show idle panel after cabinet
+  hideAllMainPanels();
+  DOM.idlePanel.style.display = "flex";
+  renderPMActions(); // v1.0.2
+  updatePowerDecayIndicator(); // v1.0.2
+}
+
+/**
+ * renderCabinetSlots() — Renders all ministry slots grouped by tier.
+ * STEP 25: Core Party slots show a lock icon.
+ */
+function renderCabinetSlots() {
+  const tiers = {
+    A: DOM.cabinetSlotsA,
+    B: DOM.cabinetSlotsB,
+    C: DOM.cabinetSlotsC
+  };
+
+  const corePartyId = getPlayerCorePartyId();
+
+  Object.entries(tiers).forEach(([tier, container]) => {
+    if (!container) return;
+    container.innerHTML = '';
+
+    getMinistriesByTier(tier).forEach(ministry => {
+      const holder = getMinistryHolder(ministry.id);
+      const holderParty = holder ? parties.find(p => p.id === holder) : null;
+      const isAssigned = !!holderParty;
+      const isCoreHeld = holder === corePartyId;
+
+      const slot = document.createElement('div');
+      slot.className = `cabinet-slot ${isAssigned ? 'assigned' : ''} ${isCoreHeld ? 'core-locked' : ''}`;
+      slot.dataset.ministryId = ministry.id;
+
+      // STEP 25: Core Party slots get a lock icon
+      const lockIcon = isCoreHeld ? '🔒 ' : '';
+
+      slot.innerHTML = `
+        <div class="cabinet-slot__header">
+          <span class="cabinet-slot__icon">${ministry.icon}</span>
+          <span class="cabinet-slot__name">${ministry.name}</span>
+          <span class="cabinet-slot__tier-badge tier-${tier.toLowerCase()}">${tier}</span>
+        </div>
+        <div class="cabinet-slot__thai">${ministry.nameThai}</div>
+        <div class="cabinet-slot__holder ${isAssigned ? 'filled' : 'empty'}" ${isAssigned ? `style="background:${holderParty.color}22; border:1px solid ${holderParty.color}44"` : ''}>
+          ${isAssigned
+          ? `<span class="cabinet-slot__holder-dot" style="background:${holderParty.color}"></span>${lockIcon}${holderParty.shortName}`
+          : 'Click to assign'
+        }
+        </div>
+      `;
+
+      slot.addEventListener('click', () => _handleSlotClick(ministry.id));
+      container.appendChild(slot);
+    });
+  });
+}
+
+/**
+ * renderCabinetRoster() — STEP 29: Renders the coalition party list in the right panel.
+ * Uses dynamic seat data from currentParliamentSeats (STEP 28).
+ * Core Party pinned to top, all others sorted by seat count (high → low).
+ */
+function renderCabinetRoster(coalitionParties) {
+  if (!DOM.cabinetPartyList) return;
+  DOM.cabinetPartyList.innerHTML = '';
+
+  const corePartyId = getPlayerCorePartyId();
+  const demands = computePartyDemands(coalitionParties);
+
+  // STEP 28/29: Get dynamic seat data for accurate counts
+  const seatData = (typeof getCurrentParliamentSeats === 'function') ? getCurrentParliamentSeats() : null;
+
+  // STEP 29: Sort — Core Party first, then by dynamic seats (highest to lowest)
+  demands.sort((a, b) => {
+    if (a.partyId === corePartyId) return -1;
+    if (b.partyId === corePartyId) return 1;
+    // Use dynamic seat data for sorting if available
+    const aSeats = seatData ? (seatData.find(p => p.id === a.partyId)?.seats ?? a.seats) : a.seats;
+    const bSeats = seatData ? (seatData.find(p => p.id === b.partyId)?.seats ?? b.seats) : b.seats;
+    return bSeats - aSeats;
+  });
+
+  demands.forEach(demand => {
+    const isCore = demand.partyId === corePartyId;
+    const isSelected = _selectedCabinetPartyId === demand.partyId;
+
+    // STEP 29: Get real seat count from dynamic data
+    const dynamicEntry = seatData ? seatData.find(p => p.id === demand.partyId) : null;
+    const realSeats = dynamicEntry ? dynamicEntry.seats : demand.seats;
+    const realSeatShare = Math.round((realSeats / 500) * 100);
+
+    const chip = document.createElement('div');
+    chip.className = `cabinet-party-chip ${isSelected ? 'active' : ''} ${isCore ? 'core-party' : ''}`;
+    chip.dataset.partyId = demand.partyId;
+
+    const portfolio = getPartyPortfolio(demand.partyId);
+    const portfolioText = portfolio.length > 0
+      ? portfolio.map(m => m.icon).join(' ')
+      : 'None';
+
+    // STEP 25: Core Party gets a lock badge
+    const coreBadge = isCore
+      ? '<span class="cabinet-core-badge">🔒 YOUR PARTY</span>'
+      : '';
+
+    chip.innerHTML = `
+      <div class="cabinet-party-chip__dot" style="background:${demand.color}"></div>
+      <div class="cabinet-party-chip__info">
+        <div class="cabinet-party-chip__name">${demand.partyName} ${coreBadge}</div>
+        <div class="cabinet-party-chip__meta">
+          ${realSeatShare}% seats · Wants ${demand.minTierA}× Tier A · ${portfolioText}
+        </div>
+      </div>
+      <div class="cabinet-party-chip__seats">${realSeats}</div>
+    `;
+
+    chip.addEventListener('click', () => {
+      _selectedCabinetPartyId = demand.partyId;
+      renderCabinetRoster(coalitionParties);
+    });
+
+    DOM.cabinetPartyList.appendChild(chip);
+  });
+}
+
+/**
+ * updateSatisfactionPreview() — Shows live satisfaction meters.
+ */
+function updateSatisfactionPreview(coalitionParties) {
+  if (!DOM.cabinetSatisfaction) return;
+
+  const satisfaction = calculateCabinetSatisfaction(coalitionParties);
+
+  let html = '<div class="satisfaction-preview__title">📊 Predicted Satisfaction</div>';
+
+  coalitionParties.forEach(party => {
+    const score = satisfaction[party.id] || 0;
+    const level = score >= 65 ? 'high' : score >= 40 ? 'medium' : 'low';
+    const color = score >= 65 ? 'var(--green-400)' : score >= 40 ? 'var(--gold-400)' : 'var(--red-400)';
+
+    html += `
+      <div class="satisfaction-row">
+        <span class="satisfaction-row__name">${party.shortName}</span>
+        <div class="satisfaction-row__bar">
+          <div class="satisfaction-row__fill ${level}" style="width:${score}%"></div>
+        </div>
+        <span class="satisfaction-row__value" style="color:${color}">${score}</span>
+      </div>
+    `;
+  });
+
+  DOM.cabinetSatisfaction.innerHTML = html;
+}
+
+/**
+ * _handleSlotClick() — Assigns the selected party to a ministry slot.
+ * STEP 25: Prevents unassigning ministries from the Core Party.
+ */
+function _handleSlotClick(ministryId) {
+  if (!_selectedCabinetPartyId) {
+    showToast("Select a party first from the right panel.", "warning");
+    return;
+  }
+
+  const currentHolder = getMinistryHolder(ministryId);
+  const corePartyId = getPlayerCorePartyId();
+
+  // If clicking same assignment, unassign instead
+  if (currentHolder === _selectedCabinetPartyId) {
+    // STEP 25: Prevent unassigning the Core Party's ministries
+    if (currentHolder === corePartyId) {
+      showToast("Cannot remove your own party from a ministry. Assign another party to replace.", "warning");
+      return;
+    }
+    unassignMinistry(ministryId);
+  } else {
+    assignMinistry(_selectedCabinetPartyId, ministryId);
+  }
+
+  const coalitionParties = parties.filter(p => p.inCoalition);
+  renderCabinetSlots();
+  renderCabinetRoster(coalitionParties);
+  updateSatisfactionPreview(coalitionParties);
+  _updateCabinetFooter();
+}
+
+/**
+ * _updateCabinetFooter() — Updates unassigned count and enables/disables form button.
+ */
+function _updateCabinetFooter() {
+  const unassigned = getUnallocatedMinistries().length;
+  if (DOM.cabinetUnassignedCount) {
+    DOM.cabinetUnassignedCount.textContent = unassigned;
+  }
+
+  // Enable form button when at least half are assigned
+  if (DOM.btnCabinetForm) {
+    const assigned = MINISTRIES.length - unassigned;
+    DOM.btnCabinetForm.disabled = assigned < Math.ceil(MINISTRIES.length * 0.5);
+  }
+}
+
+/**
+ * autoAssignCabinet() — AI auto-assigns ministries based on party demands.
+ * Greedy algorithm: largest party picks first from their preferred list.
+ */
+function autoAssignCabinet() {
+  resetCabinet();
+
+  const coalitionParties = parties.filter(p => p.inCoalition);
+  const demands = computePartyDemands(coalitionParties)
+    .sort((a, b) => b.seats - a.seats); // Largest party picks first
+
+  const assigned = new Set();
+
+  // Round 1: Each party gets their top preferred ministry
+  demands.forEach(demand => {
+    for (const mId of demand.idealMinistries) {
+      if (!assigned.has(mId)) {
+        assignMinistry(demand.partyId, mId);
+        assigned.add(mId);
+        break;
+      }
+    }
+  });
+
+  // Round 2: Distribute remaining by seat share
+  demands.forEach(demand => {
+    const targetCount = Math.max(1, Math.round(
+      (demand.seatShare / 100) * MINISTRIES.length
+    ));
+    const currentCount = getPartyPortfolio(demand.partyId).length;
+
+    for (let i = currentCount; i < targetCount; i++) {
+      // Try preferred first
+      for (const mId of demand.idealMinistries) {
+        if (!assigned.has(mId)) {
+          assignMinistry(demand.partyId, mId);
+          assigned.add(mId);
+          break;
+        }
+      }
+    }
+  });
+
+  // Round 3: Assign remaining ministries to largest party
+  MINISTRIES.forEach(m => {
+    if (!assigned.has(m.id) && demands.length > 0) {
+      // Give to largest party with fewest ministries
+      const sorted = [...demands].sort((a, b) => {
+        const aCount = getPartyPortfolio(a.partyId).length;
+        const bCount = getPartyPortfolio(b.partyId).length;
+        return aCount - bCount;
+      });
+      assignMinistry(sorted[0].partyId, m.id);
+      assigned.add(m.id);
+    }
+  });
+
+  // Refresh UI
+  renderCabinetSlots();
+  renderCabinetRoster(coalitionParties);
+  updateSatisfactionPreview(coalitionParties);
+  _updateCabinetFooter();
+
+  showToast("Ministries auto-assigned based on party demands.", "info");
+}
+
+/**
+ * handleCabinetFormation() — Finalizes cabinet and applies effects.
+ */
+function handleCabinetFormation() {
+  const coalitionParties = parties.filter(p => p.inCoalition);
+  const result = finalizeCabinet(coalitionParties);
+
+  // Close cabinet
+  closeCabinetRoom();
+
+  // Show formation results
+  result.warnings.forEach(w => showToast(w, "warning"));
+
+  // Show summary toast
+  if (result.avgSatisfaction >= 65) {
+    showToast(`Cabinet formed! Avg satisfaction: ${result.avgSatisfaction}%. Coalition stable. ✅`, "success");
+  } else if (result.avgSatisfaction >= 40) {
+    showToast(`Cabinet formed. Avg satisfaction: ${result.avgSatisfaction}%. Some partners are unhappy. ⚠️`, "warning");
+  } else {
+    showToast(`Cabinet formed under protest! Avg satisfaction: ${result.avgSatisfaction}%. Defections likely! 🚨`, "error");
+  }
+
+  // Update all UI
+  updateStatusBar();
+  renderParliament();
+}
+
+// Cabinet button listeners
+if (DOM.btnCabinetAuto) {
+  DOM.btnCabinetAuto.addEventListener('click', autoAssignCabinet);
+}
+if (DOM.btnCabinetReset) {
+  DOM.btnCabinetReset.addEventListener('click', () => {
+    resetCabinet();
+    _selectedCabinetPartyId = null;
+    const coalitionParties = parties.filter(p => p.inCoalition);
+    renderCabinetSlots();
+    renderCabinetRoster(coalitionParties);
+    updateSatisfactionPreview(coalitionParties);
+    _updateCabinetFooter();
+    showToast("All assignments cleared.", "info");
+  });
+}
+if (DOM.btnCabinetForm) {
+  DOM.btnCabinetForm.addEventListener('click', handleCabinetFormation);
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
 // BOOT SEQUENCE — Determines which screen to show on page load.
-// Priority: 1) Saved UI state = 'dashboard' → restore game
-//           2) STRICT FALLBACK → Start Screen (default/wipe)
+// Priority: 1) cabinet_formation → STEP 23: Return from party selection
+//           2) Saved UI state = 'dashboard' → restore game
+//           3) STRICT FALLBACK → Start Screen (default/wipe)
 // ═══════════════════════════════════════════════════════════════════
 (function onPageLoad() {
+  const uiState = localStorage.getItem('maingame_ui_state');
+
+  // ── STEP 23: Returning from Campaign party selection ──
+  // campaign/main.js sets this state before redirecting back here
+  if (uiState === 'cabinet_formation') {
+    console.log('[main-game/main.js] STEP 23 — Returning from party selection → launching New Game + Cabinet Formation');
+    localStorage.removeItem('maingame_ui_state');
+    // initGame(false) will reset state, then openCabinetRoom() fires because cabinet isn't formed
+    initGame(false);
+    return;
+  }
+
   // Check if we were on the dashboard (language-change reload)
-  if (localStorage.getItem('maingame_ui_state') === 'dashboard') {
+  if (uiState === 'dashboard') {
     try {
       console.log('[main-game/main.js] Restoring dashboard after reload...');
       initGame(hasSavedGame());
@@ -849,3 +2295,4 @@ function showHowToPlay() {
   // Explicitly force start screen
   showScreen("start-screen");
 })();
+

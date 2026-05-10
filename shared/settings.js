@@ -518,7 +518,7 @@ function _buildSettingsHTML() {
         </button>
       </div>
 
-      <div class="tps-sm-version">TPS v1.0.1 — Thailand Political Simulation</div>
+      <div class="tps-sm-version">TPS v1.0.2 — Thailand Political Simulation</div>
     </div>
   `;
 }

@@ -185,6 +185,9 @@ const tps_dict = {
     toast_mp_reset:           'MP reset to default',
     toast_action_complete:    'Action completed!',
     toast_raised:             'Raised',
+
+    // ── Active Party Indicator ─────────────────────────────
+    current_party_label:      'Affiliation:',
   },
 
 
@@ -365,6 +368,9 @@ const tps_dict = {
     toast_mp_reset:           'รีเซ็ต ส.ส. เป็นค่าเริ่มต้น',
     toast_action_complete:    'ปฏิบัติการสำเร็จ!',
     toast_raised:             'ระดมทุนได้',
+
+    // ── Active Party Indicator ─────────────────────────────
+    current_party_label:      'สังกัด:',
   }
 };
 

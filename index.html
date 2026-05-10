@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Thailand Political Simulation (TPS) — A premium browser-based political strategy game. Lead your party through elections, build coalitions, and govern the Kingdom of Thailand.">
+  <meta name="description"
+    content="Thailand Political Simulation (TPS) — A premium browser-based political strategy game. Lead your party through elections, build coalitions, and govern the Kingdom of Thailand.">
   <meta name="keywords" content="Thailand, political simulation, strategy game, election, coalition, browser game, TPS">
   <meta name="author" content="TPS Development Team">
   <title>TPS — Thailand Political Simulation</title>
@@ -11,10 +13,13 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -52,29 +57,33 @@
       <div class="emblem" id="emblem">
         <svg viewBox="0 0 140 140" class="emblem-svg">
           <!-- Outer decorative rings -->
-          <circle cx="70" cy="70" r="66" fill="none" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.4" stroke-dasharray="4,6"/>
-          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#goldGradient)" stroke-width="2" opacity="0.6"/>
-          <circle cx="70" cy="70" r="54" fill="none" stroke="url(#goldGradient)" stroke-width="0.8" opacity="0.3"/>
+          <circle cx="70" cy="70" r="66" fill="none" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.4"
+            stroke-dasharray="4,6" />
+          <circle cx="70" cy="70" r="60" fill="none" stroke="url(#goldGradient)" stroke-width="2" opacity="0.6" />
+          <circle cx="70" cy="70" r="54" fill="none" stroke="url(#goldGradient)" stroke-width="0.8" opacity="0.3" />
           <!-- Inner decorative circle fill -->
-          <circle cx="70" cy="70" r="48" fill="rgba(212,175,55,0.04)" stroke="url(#goldGradient)" stroke-width="0.5" opacity="0.5"/>
+          <circle cx="70" cy="70" r="48" fill="rgba(212,175,55,0.04)" stroke="url(#goldGradient)" stroke-width="0.5"
+            opacity="0.5" />
           <!-- Garuda-inspired radial star -->
-          <path d="M70 22 L78 42 L92 32 L84 50 L104 48 L88 60 L106 68 L86 72 L96 88 L78 78 L70 100 L62 78 L44 88 L54 72 L34 68 L52 60 L36 48 L56 50 L48 32 L62 42 Z"
-                fill="url(#goldGradient)" opacity="0.85" class="emblem-star"/>
+          <path
+            d="M70 22 L78 42 L92 32 L84 50 L104 48 L88 60 L106 68 L86 72 L96 88 L78 78 L70 100 L62 78 L44 88 L54 72 L34 68 L52 60 L36 48 L56 50 L48 32 L62 42 Z"
+            fill="url(#goldGradient)" opacity="0.85" class="emblem-star" />
           <!-- Center circle with TPS text -->
-          <circle cx="70" cy="70" r="16" fill="rgba(10,14,26,0.7)" stroke="url(#goldGradient)" stroke-width="1.5"/>
-          <text x="70" y="75" text-anchor="middle" fill="url(#goldGradient)" font-size="14" font-family="Cinzel, serif" font-weight="700">TPS</text>
+          <circle cx="70" cy="70" r="16" fill="rgba(10,14,26,0.7)" stroke="url(#goldGradient)" stroke-width="1.5" />
+          <text x="70" y="75" text-anchor="middle" fill="url(#goldGradient)" font-size="14" font-family="Cinzel, serif"
+            font-weight="700">TPS</text>
           <!-- Corner accents (cardinal directions) -->
-          <circle cx="70" cy="8" r="2" fill="url(#goldGradient)" opacity="0.5"/>
-          <circle cx="132" cy="70" r="2" fill="url(#goldGradient)" opacity="0.5"/>
-          <circle cx="70" cy="132" r="2" fill="url(#goldGradient)" opacity="0.5"/>
-          <circle cx="8" cy="70" r="2" fill="url(#goldGradient)" opacity="0.5"/>
+          <circle cx="70" cy="8" r="2" fill="url(#goldGradient)" opacity="0.5" />
+          <circle cx="132" cy="70" r="2" fill="url(#goldGradient)" opacity="0.5" />
+          <circle cx="70" cy="132" r="2" fill="url(#goldGradient)" opacity="0.5" />
+          <circle cx="8" cy="70" r="2" fill="url(#goldGradient)" opacity="0.5" />
           <!-- Gradient definitions -->
           <defs>
             <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#d4af37"/>
-              <stop offset="40%" style="stop-color:#f5d778"/>
-              <stop offset="70%" style="stop-color:#d4af37"/>
-              <stop offset="100%" style="stop-color:#b8941f"/>
+              <stop offset="0%" style="stop-color:#d4af37" />
+              <stop offset="40%" style="stop-color:#f5d778" />
+              <stop offset="70%" style="stop-color:#d4af37" />
+              <stop offset="100%" style="stop-color:#b8941f" />
             </linearGradient>
           </defs>
         </svg>
@@ -109,23 +118,26 @@
         <div class="btn-glow"></div>
         <div class="btn-content">
           <div class="btn-icon-wrap">
-            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 21h18"/>
-              <path d="M5 21V7l8-4v18"/>
-              <path d="M13 21V3l6 4v14"/>
-              <circle cx="9" cy="10" r="0.5" fill="currentColor"/>
-              <circle cx="9" cy="14" r="0.5" fill="currentColor"/>
-              <circle cx="17" cy="10" r="0.5" fill="currentColor"/>
-              <circle cx="17" cy="14" r="0.5" fill="currentColor"/>
+            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18" />
+              <path d="M5 21V7l8-4v18" />
+              <path d="M13 21V3l6 4v14" />
+              <circle cx="9" cy="10" r="0.5" fill="currentColor" />
+              <circle cx="9" cy="14" r="0.5" fill="currentColor" />
+              <circle cx="17" cy="10" r="0.5" fill="currentColor" />
+              <circle cx="17" cy="14" r="0.5" fill="currentColor" />
             </svg>
           </div>
           <div class="btn-text">
             <span class="btn-label" data-i18n="menu_btn_campaign">Start Election Campaign</span>
-            <span class="btn-desc" data-i18n="menu_btn_campaign_desc">Build your party, rally support across 400 districts, and win 251+ seats</span>
+            <span class="btn-desc" data-i18n="menu_btn_campaign_desc">Build your party, rally support across 400
+              districts, and win 251+ seats</span>
           </div>
           <div class="btn-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </div>
         </div>
@@ -136,19 +148,49 @@
         <div class="btn-shine"></div>
         <div class="btn-content">
           <div class="btn-icon-wrap">
-            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
+            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="currentColor" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
             </svg>
           </div>
           <div class="btn-text">
             <span class="btn-label" data-i18n="menu_btn_quickstart">Quick Start: Form Government</span>
-            <span class="btn-desc" data-i18n="menu_btn_quickstart_desc">Skip elections — jump straight into governing the Kingdom of Thailand</span>
+            <span class="btn-desc" data-i18n="menu_btn_quickstart_desc">Skip elections — jump straight into governing
+              the Kingdom of Thailand</span>
           </div>
           <div class="btn-arrow">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </a>
+
+      <!-- TERTIARY: Quick Start — Lead Opposition (Red Theme) -->
+      <a href="./opposition/intro.html" class="menu-btn menu-btn-secondary" id="btn-opposition"
+         style="--btn-accent: #ef4444; --btn-accent-dim: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.25); background: linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.02) 100%);"
+         onmouseover="this.style.borderColor='rgba(239,68,68,0.5)';this.style.background='linear-gradient(135deg, rgba(239,68,68,0.1) 0%, rgba(239,68,68,0.04) 100%)'"
+         onmouseout="this.style.borderColor='rgba(239,68,68,0.25)';this.style.background='linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.02) 100%)'">
+        <div class="btn-shine"></div>
+        <div class="btn-content">
+          <div class="btn-icon-wrap" style="background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.25);">
+            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="#ef4444" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </div>
+          <div class="btn-text">
+            <span class="btn-label" data-i18n="menu_btn_opposition" style="color: #ef4444;">Quick Start: Lead Opposition</span>
+            <span class="btn-desc" data-i18n="menu_btn_opposition_desc" style="color: #fca5a5;">Skip elections — jump straight into the Shadow Cabinet to investigate the government</span>
+          </div>
+          <div class="btn-arrow" style="color: #ef4444;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </div>
         </div>
@@ -182,7 +224,7 @@
     <!-- Footer -->
     <footer class="menu-footer" id="menu-footer">
       <p class="footer-text" data-i18n="menu_footer_line1">A Browser-Based Political Strategy Experience</p>
-      <p class="footer-version" data-i18n="menu_footer_line2">v1.0 — 2027 Election Cycle</p>
+      <p class="footer-version" data-i18n="menu_footer_line2">v1.0.2 — 2027 Election Cycle</p>
     </footer>
 
   </div>
@@ -253,4 +295,5 @@
   </script>
 
 </body>
+
 </html>

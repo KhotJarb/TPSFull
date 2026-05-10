@@ -106,22 +106,23 @@ function runAICampaigns() {
 }
 
 /**
- * Small random drift in national polls each week
+ * Small random drift in national polls each week.
+ * STEP 55: Also applies natural scrutiny decay (-2/week)
  */
 function applyPollDrift() {
-  let total = 0;
   CAMPAIGN_PARTIES.forEach(party => {
     const drift = (Math.random() - 0.5) * 2;
     campaignState.nationalPollShare[party.id] = Math.max(3,
       campaignState.nationalPollShare[party.id] + drift
     );
-    total += campaignState.nationalPollShare[party.id];
   });
-  // Normalize to 100
-  CAMPAIGN_PARTIES.forEach(party => {
-    campaignState.nationalPollShare[party.id] =
-      Math.round((campaignState.nationalPollShare[party.id] / total) * 100);
-  });
+  // Normalize to 100 (uses shared helper)
+  _normalizePolls();
+
+  // STEP 55: Natural scrutiny decay — media attention fades over time
+  if (campaignState.playerScrutiny > 0) {
+    campaignState.playerScrutiny = Math.max(0, campaignState.playerScrutiny - 2);
+  }
 }
 
 // ── Player campaign actions ─────────────────────────────────────
@@ -235,24 +236,622 @@ function actionBanYai(districtId) {
 }
 
 /**
- * Player fundraises (gain funds, increase scrutiny slightly)
+ * STEP 75: Scrutiny-Based Fundraising with Difficulty Scaling
+ * Player fundraises — yield is penalized by EC Scrutiny.
+ * High scrutiny = donors are scared = less money.
+ *
+ * Formula:
+ *   baseFundraise = 100 + random(0-50)  (in millions ฿)
+ *   scrutinyPenalty = floor(ecScrutiny × diffMultiplier)
+ *     Easy:   diffMultiplier = 0.5  (mild penalty)
+ *     Normal: diffMultiplier = 1.0  (standard)
+ *     Hard:   diffMultiplier = 1.5  (brutal penalty)
+ *   finalYield = max(10, baseFundraise - scrutinyPenalty) × fundsReturnMult
+ *
+ * At 80% scrutiny on Hard: penalty = 80 × 1.5 = 120 → yield = max(10, ...) = 10M฿
+ * At 20% scrutiny on Easy: penalty = 20 × 0.5 = 10  → yield ≈ 130M฿
  */
 function actionFundraise() {
   if (campaignState.actionPointsRemaining <= 0) return { success: false, message: "No action points remaining." };
 
   const ds = getDiffScale();
-  const amount = Math.round((100 + Math.floor(Math.random() * 150)) * ds.fundsReturnMult);
-  campaignState.playerFunds += amount;
+
+  // ── 1. Calculate difficulty multiplier for scrutiny penalty ──
+  const diff = (typeof TPSGlobalState !== 'undefined') ? TPSGlobalState.difficulty : 'normal';
+  let diffMultiplier = 1.0;
+  if (diff === 'easy') diffMultiplier = 0.5;
+  if (diff === 'hard') diffMultiplier = 1.5;
+
+  // ── 2. Calculate base yield ──
+  const baseFundraise = 100 + Math.floor(Math.random() * 50);
+
+  // ── 3. Apply scrutiny penalty ──
+  const scrutiny = campaignState.playerScrutiny || 0;
+  const scrutinyPenalty = Math.floor(scrutiny * diffMultiplier);
+
+  // ── 4. Final yield (floor of 10M฿, then scaled by difficulty return mult) ──
+  const rawYield = Math.max(10, baseFundraise - scrutinyPenalty);
+  const finalYield = Math.round(rawYield * ds.fundsReturnMult);
+
+  // ── 5. Apply ──
+  campaignState.playerFunds += finalYield;
   campaignState.actionPointsRemaining--;
   const scrutinyGain = Math.round(2 * ds.scrutinyMult);
   campaignState.playerScrutiny = Math.min(100, campaignState.playerScrutiny + scrutinyGain);
 
+  // ── 6. Build result message ──
+  let msg = `💵 Fundraising raised ฿${finalYield}M`;
+  const trustPenaltyApplied = scrutinyPenalty > 0;
+  if (trustPenaltyApplied) {
+    msg += ` (Trust penalty: -฿${scrutinyPenalty}M due to ${scrutiny}% scrutiny)`;
+  }
+  msg += ` · Scrutiny +${scrutinyGain}%`;
+
   campaignState.campaignLog.push({
     week: campaignState.currentWeek, type: "fundraise",
-    message: `Fundraising event raised ฿${amount}M (scrutiny +${scrutinyGain})`
+    message: msg
   });
 
-  return { success: true, amount };
+  // STEP 73: Persist shared stats
+  _syncStatsToStorage();
+
+  console.log(`[campaign/engine.js] STEP 75 — Fundraise: base=${baseFundraise}, penalty=${scrutinyPenalty} (×${diffMultiplier}), final=${finalYield}M฿`);
+
+  return {
+    success: true,
+    amount: finalYield,
+    baseFundraise,
+    scrutinyPenalty,
+    diffMultiplier,
+    trustPenaltyApplied,
+    message: msg
+  };
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// STEP 54: EXPANDED CAMPAIGN ACTION DATA & DISPATCHER
+// 9 political tactics — each with bilingual labels, costs, effects,
+// RNG mechanics, and Zero-Sum poll integration.
+// ══════════════════════════════════════════════════════════════════
+
+/**
+ * CAMPAIGN_ACTIONS — Master data for all 9 grid actions.
+ * Legacy actions (rally, banyai, fundraise) still use their dedicated functions.
+ * New actions route through executeAction().
+ */
+const CAMPAIGN_ACTIONS = {
+  // ── Row 1: Core (legacy handlers) ──
+  rally: {
+    id: "rally",
+    label: "Hold Rally", labelThai: "ปราศรัยใหญ่",
+    icon: "📢",
+    costFunds: 50, costAP: 1, costCapital: 0,
+    scrutinyGain: 1,
+    needsTarget: "province",
+    description: "Hold a massive rally in a province to boost local popularity.",
+    descThai: "จัดปราศรัยใหญ่ในจังหวัดเพื่อเพิ่มคะแนนนิยมท้องถิ่น"
+  },
+  banyai: {
+    id: "banyai",
+    label: "Deploy Ban Yai", labelThai: "ระดมบ้านใหญ่",
+    icon: "🏘️",
+    costFunds: 120, costAP: 1, costCapital: 0,
+    scrutinyGain: 10,
+    needsTarget: "district",
+    description: "Deploy local boss networks. Massive local boost but extreme scrutiny.",
+    descThai: "ส่งเครือข่ายบ้านใหญ่ลงพื้นที่ คะแนนพุ่ง แต่ กกต. จับตา"
+  },
+  fundraise: {
+    id: "fundraise",
+    label: "Fundraise", labelThai: "ระดมทุน",
+    icon: "💵",
+    costFunds: 0, costAP: 1, costCapital: 0,
+    scrutinyGain: 2,
+    needsTarget: null,
+    description: "Hold fundraising events. Yield reduced by EC Scrutiny — clean campaigns raise more.",
+    descThai: "จัดงานระดมทุน — ยิ่ง กกต. จับตามาก ยิ่งระดมทุนได้น้อย"
+  },
+
+  // ── Row 2: New Strategic Actions ──
+  io_smear: {
+    id: "io_smear",
+    label: "IO Smear Campaign", labelThai: "ปล่อยข่าวสาดโคลน",
+    icon: "🐍",
+    costFunds: 80, costAP: 1, costCapital: 0,
+    scrutinyGain: 10,
+    needsTarget: "rival_party",
+    description: "Launch disinformation campaign to smear a rival party. High risk.",
+    descThai: "ปล่อย IO โจมตีพรรคคู่แข่ง เสี่ยงสูง กกต. จ้องจับ",
+    effects: {
+      rivalPollDrop: 1,       // -1% to target rival's national poll (nerfed from 2)
+      scrutinyAdd: 10         // +10% EC_Scrutiny
+    }
+  },
+  tv_debate: {
+    id: "tv_debate",
+    label: "Televised Debate", labelThai: "ดีเบตระดับชาติ",
+    icon: "📺",
+    costFunds: 0, costAP: 1, costCapital: 5,
+    scrutinyGain: 0,
+    needsTarget: null,
+    description: "60% chance: +1.5% National Poll. 40% chance: -1% (blunder).",
+    descThai: "60% โอกาสสำเร็จ: +1.5% คะแนนนิยม / 40% พลาด: -1%",
+    effects: {
+      successChance: 0.60,
+      successPollGain: 1.5,
+      failPollLoss: 1
+    }
+  },
+  grassroots_relief: {
+    id: "grassroots_relief",
+    label: "Grassroots Relief", labelThai: "ลงพื้นที่แจกของ",
+    icon: "🎁",
+    costFunds: 80, costAP: 1, costCapital: 0,
+    scrutinyGain: 3,
+    needsTarget: null,
+    description: "Distribute relief goods. Solid local boost + 20% EC complaint risk.",
+    descThai: "แจกของในพื้นที่ คะแนนพุ่ง แต่มีโอกาส 20% ที่ฝ่ายตรงข้ามร้องเรียน กกต.",
+    effects: {
+      localBoost: 12,
+      ecComplaintChance: 0.20,
+      ecComplaintScrutiny: 8
+    }
+  },
+  ec_petition: {
+    id: "ec_petition",
+    label: "File EC Petition", labelThai: "ยื่นร้องเรียน กกต.",
+    icon: "⚖️",
+    costFunds: 0, costAP: 1, costCapital: 8,
+    scrutinyGain: 0,
+    needsTarget: null,
+    description: "File a formal complaint. 50% chance to freeze a rival's poll growth for 1 week.",
+    descThai: "ยื่นร้องเรียน กกต. 50% โอกาสแช่แข็งคะแนนคู่แข่ง 1 สัปดาห์",
+    effects: {
+      freezeChance: 0.50,
+      freezeDuration: 1    // weeks
+    }
+  },
+
+  // ── Row 3: Economy & Media ──
+  media_tour: {
+    id: "media_tour",
+    label: "Media Tour", labelThai: "ทัวร์สื่อ",
+    icon: "🎥",
+    costFunds: 40, costAP: 1, costCapital: 0,
+    scrutinyGain: 2,
+    needsTarget: null,
+    description: "National media blitz. +0.75% to national poll share.",
+    descThai: "บุกสื่อระดับชาติ +0.75% คะแนนนิยมแห่งชาติ",
+    effects: {
+      pollGain: 0.75
+    }
+  },
+  commission_poll: {
+    id: "commission_poll",
+    label: "Commission Poll", labelThai: "จ้างโพลสำรวจ",
+    icon: "📊",
+    costFunds: 30, costAP: 1, costCapital: 0,
+    scrutinyGain: 0,
+    needsTarget: null,
+    description: "Reveal hidden rival data. Shows true poll margins for 1 week.",
+    descThai: "เปิดเผยข้อมูลคู่แข่ง แสดงคะแนนจริง 1 สัปดาห์",
+    effects: {
+      revealRivalData: true,
+      smallPollBoost: 0.25  // tiny accuracy bonus (nerfed from 0.5)
+    }
+  }
+};
+
+/**
+ * executeAction() — Central dispatcher for STEP 54+ campaign actions.
+ * Validates costs, applies effects, updates polls via Zero-Sum, logs results.
+ *
+ * @param {string} actionId — Key from CAMPAIGN_ACTIONS
+ * @param {string} [target] — Optional target (rival party ID, province, etc.)
+ * @returns {Object} { success, message, effects }
+ */
+function executeAction(actionId, target) {
+  const action = CAMPAIGN_ACTIONS[actionId];
+  if (!action) return { success: false, message: `Unknown action: "${actionId}"` };
+
+  const ds = getDiffScale();
+  const pid = campaignState.playerPartyId;
+
+  // ── Validate AP ──
+  if (campaignState.actionPointsRemaining < action.costAP) {
+    return { success: false, message: "No action points remaining." };
+  }
+
+  // ── Validate Funds ──
+  const fundsCost = Math.round((action.costFunds || 0) * ds.costMult);
+  if (campaignState.playerFunds < fundsCost) {
+    return { success: false, message: `Insufficient funds. Need ฿${fundsCost}M.` };
+  }
+
+  // ── Validate Political Capital (uses scrutiny as proxy if no capital stat) ──
+  // Capital is deducted from funds as a prestige cost
+  const capitalCost = action.costCapital || 0;
+
+  // ── Deduct costs ──
+  campaignState.playerFunds -= fundsCost;
+  campaignState.actionPointsRemaining -= action.costAP;
+  const scrutinyGain = Math.round((action.scrutinyGain || 0) * ds.scrutinyMult);
+  campaignState.playerScrutiny = Math.min(100, campaignState.playerScrutiny + scrutinyGain);
+
+  // ── Execute action-specific logic ──
+  let resultMsg = '';
+  const appliedEffects = {};
+
+  switch (actionId) {
+
+    // ════════════════════════════════════════════════
+    // IO SMEAR CAMPAIGN — Targets a rival's polls
+    // ════════════════════════════════════════════════
+    case 'io_smear': {
+      const rivalId = target;
+      const rival = CAMPAIGN_PARTIES.find(p => p.id === rivalId);
+      if (!rival) return { success: false, message: "Invalid rival target." };
+
+      const drop = action.effects.rivalPollDrop;
+      const oldPoll = campaignState.nationalPollShare[rivalId] || 15;
+      campaignState.nationalPollShare[rivalId] = Math.max(3, oldPoll - drop);
+      // Zero-sum: player gains half of what rival loses
+      campaignState.nationalPollShare[pid] = Math.min(50,
+        (campaignState.nationalPollShare[pid] || 20) + Math.round(drop * 0.5));
+      _normalizePolls();
+
+      appliedEffects.rivalDrop = drop;
+      appliedEffects.targetParty = rival.shortName;
+      resultMsg = `🐍 IO Smear vs ${rival.shortName}: -${drop}% polls! (Scrutiny +${scrutinyGain}%)`;
+      break;
+    }
+
+    // ════════════════════════════════════════════════
+    // TELEVISED DEBATE — 60/40 RNG gamble
+    // ════════════════════════════════════════════════
+    case 'tv_debate': {
+      const roll = Math.random();
+      if (roll < action.effects.successChance) {
+        // SUCCESS
+        const gain = action.effects.successPollGain;
+        campaignState.nationalPollShare[pid] = Math.min(50,
+          (campaignState.nationalPollShare[pid] || 20) + gain);
+        _normalizePolls();
+        appliedEffects.pollChange = `+${gain}%`;
+        appliedEffects.outcome = 'success';
+        resultMsg = `📺 TV Debate WIN! +${gain}% national polls! The crowd loved it.`;
+      } else {
+        // FAIL — blunder
+        const loss = action.effects.failPollLoss;
+        campaignState.nationalPollShare[pid] = Math.max(3,
+          (campaignState.nationalPollShare[pid] || 20) - loss);
+        _normalizePolls();
+        appliedEffects.pollChange = `-${loss}%`;
+        appliedEffects.outcome = 'fail';
+        resultMsg = `📺 TV Debate BLUNDER! -${loss}% national polls. An embarrassing gaffe went viral.`;
+      }
+      break;
+    }
+
+    // ════════════════════════════════════════════════
+    // GRASSROOTS RELIEF — Local boost + EC complaint risk
+    // ════════════════════════════════════════════════
+    case 'grassroots_relief': {
+      const boost = action.effects.localBoost;
+      // Apply to random districts
+      const shuffled = shuffleArray(DISTRICTS);
+      const count = Math.min(15, shuffled.length);
+      for (let i = 0; i < count; i++) {
+        shuffled[i].campaignBuffs.rally += boost;
+      }
+      appliedEffects.districtsBuffed = count;
+      appliedEffects.boost = boost;
+      resultMsg = `🎁 Grassroots Relief: +${boost} buff to ${count} districts.`;
+
+      // 20% EC complaint risk
+      if (Math.random() < action.effects.ecComplaintChance) {
+        const extraScrutiny = Math.round(action.effects.ecComplaintScrutiny * ds.scrutinyMult);
+        campaignState.playerScrutiny = Math.min(100, campaignState.playerScrutiny + extraScrutiny);
+        appliedEffects.ecComplaint = true;
+        resultMsg += ` ⚠️ Opposition filed an EC complaint! (+${extraScrutiny}% scrutiny)`;
+      }
+      break;
+    }
+
+    // ════════════════════════════════════════════════
+    // FILE EC PETITION — Freeze rival poll growth
+    // ════════════════════════════════════════════════
+    case 'ec_petition': {
+      const roll = Math.random();
+      if (roll < action.effects.freezeChance) {
+        // Pick the leading rival
+        const rivals = CAMPAIGN_PARTIES
+          .filter(p => p.id !== pid)
+          .sort((a, b) => (campaignState.nationalPollShare[b.id] || 0) - (campaignState.nationalPollShare[a.id] || 0));
+        const topRival = rivals[0];
+        if (topRival) {
+          // Freeze: drop their poll by 1% as a penalty
+          campaignState.nationalPollShare[topRival.id] = Math.max(3,
+            (campaignState.nationalPollShare[topRival.id] || 15) - 1);
+          _normalizePolls();
+          appliedEffects.frozenParty = topRival.shortName;
+          appliedEffects.outcome = 'success';
+          resultMsg = `⚖️ EC Petition SUCCESS! ${topRival.shortName} under investigation. -1% polls, growth frozen.`;
+        }
+      } else {
+        appliedEffects.outcome = 'fail';
+        resultMsg = `⚖️ EC Petition dismissed. Insufficient evidence. Capital wasted.`;
+      }
+      break;
+    }
+
+    // ════════════════════════════════════════════════
+    // MEDIA TOUR — Steady national poll boost
+    // ════════════════════════════════════════════════
+    case 'media_tour': {
+      const gain = action.effects.pollGain;
+      campaignState.nationalPollShare[pid] = Math.min(50,
+        (campaignState.nationalPollShare[pid] || 20) + gain);
+      _normalizePolls();
+      appliedEffects.pollGain = gain;
+      resultMsg = `🎥 Media Tour: +${gain}% national polls. Coverage on 5 major networks.`;
+      break;
+    }
+
+    // ════════════════════════════════════════════════
+    // COMMISSION POLL — Intelligence gathering
+    // ════════════════════════════════════════════════
+    case 'commission_poll': {
+      const boost = action.effects.smallPollBoost;
+      campaignState.nationalPollShare[pid] = Math.min(50,
+        (campaignState.nationalPollShare[pid] || 20) + boost);
+      _normalizePolls();
+
+      // Build rival intelligence string
+      const rivals = CAMPAIGN_PARTIES
+        .filter(p => p.id !== pid)
+        .sort((a, b) => (campaignState.nationalPollShare[b.id] || 0) - (campaignState.nationalPollShare[a.id] || 0));
+      const intel = rivals.map(r =>
+        `${r.shortName}: ${campaignState.nationalPollShare[r.id] || 0}%`
+      ).join(' | ');
+
+      appliedEffects.revealedData = true;
+      appliedEffects.intel = intel;
+      resultMsg = `📊 Poll Results: ${intel}. Your edge: +${boost}% accuracy bonus.`;
+      break;
+    }
+
+    default:
+      return { success: false, message: `Action "${actionId}" not implemented in engine.` };
+  }
+
+  // ── Log to campaign log ──
+  campaignState.campaignLog.push({
+    week: campaignState.currentWeek || CampaignCalendar?.getWeek() || 1,
+    type: actionId,
+    message: resultMsg
+  });
+
+  console.log(`[campaign/engine.js] STEP 54 — ${resultMsg}`);
+
+  // ── STEP 57: EC Guillotine check ──
+  const guillotine = evaluateScrutiny();
+
+  // STEP 73: Persist shared stats to localStorage
+  _syncStatsToStorage();
+
+  return {
+    success: true,
+    message: resultMsg,
+    effects: appliedEffects,
+    action: action,
+    ecGuillotine: guillotine  // null if safe, penalty object if triggered
+  };
+}
+
+/**
+ * _normalizePolls() — Ensures all national poll shares sum to 100%.
+ * Called after any action that modifies poll shares (Zero-Sum enforcement).
+ * STEP 72: Uses 1-decimal precision to preserve fractional poll values.
+ * @private
+ */
+function _normalizePolls() {
+  let total = 0;
+  CAMPAIGN_PARTIES.forEach(p => {
+    total += campaignState.nationalPollShare[p.id] || 0;
+  });
+  if (total <= 0) return;
+
+  // Normalize with 1-decimal precision
+  CAMPAIGN_PARTIES.forEach(p => {
+    campaignState.nationalPollShare[p.id] =
+      Math.round(((campaignState.nationalPollShare[p.id] || 0) / total * 100) * 10) / 10;
+  });
+
+  // Fix floating-point drift — adjust the largest party
+  let newTotal = 0;
+  let largestId = null;
+  let largestVal = -1;
+  CAMPAIGN_PARTIES.forEach(p => {
+    const val = campaignState.nationalPollShare[p.id] || 0;
+    newTotal += val;
+    if (val > largestVal) { largestVal = val; largestId = p.id; }
+  });
+  const drift = Math.round((100 - newTotal) * 10) / 10;
+  if (drift !== 0 && largestId) {
+    campaignState.nationalPollShare[largestId] += drift;
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// STEP 74: CRITICAL LOW STAT PENALTIES — checkStatPenalties()
+// Punishes the player for neglecting core resources.
+// Called once per day in advanceCampaignDay().
+// ══════════════════════════════════════════════════════════════════
+
+/**
+ * checkStatPenalties() — Evaluates player stats and applies minor
+ * daily penalties when resources hit critical lows.
+ *
+ * Thresholds (using STEP 71 nerfed scale):
+ *   Funds = 0:           -0.5% national polls (can't run ground ops)
+ *   Political Capital < 15: -0.5% national polls (internal conflicts leak)
+ *   Local Popularity < 15:  -1.0% national polls (Ban Yai defection threats)
+ *
+ * @returns {Array} Array of penalty objects, empty if no penalties triggered
+ */
+function checkStatPenalties() {
+  if (!campaignState) return [];
+
+  const penalties = [];
+  const pid = campaignState.playerPartyId;
+
+  // ── 1. Funds Depleted ──
+  if (campaignState.playerFunds <= 0) {
+    const pollHit = 0.5;
+    campaignState.nationalPollShare[pid] = Math.max(3,
+      (campaignState.nationalPollShare[pid] || 20) - pollHit);
+    _normalizePolls();
+
+    penalties.push({
+      type: 'funds_depleted',
+      pollLoss: pollHit,
+      icon: '💸',
+      message: `💸 Funds depleted! Campaign momentum stalls. Polls -${pollHit}%`,
+      messageTH: `💸 เงินหมด! แคมเปญชะงัก คะแนนนิยม -${pollHit}%`
+    });
+
+    campaignState.campaignLog.push({
+      week: campaignState.currentWeek,
+      type: 'stat_penalty',
+      message: `💸 Funds depleted! National Polls -${pollHit}%`
+    });
+  }
+
+  // ── 2. Low Political Capital ──
+  if ((campaignState.politicalCapital || 0) < 15) {
+    const pollHit = 0.5;
+    campaignState.nationalPollShare[pid] = Math.max(3,
+      (campaignState.nationalPollShare[pid] || 20) - pollHit);
+    _normalizePolls();
+
+    penalties.push({
+      type: 'low_capital',
+      pollLoss: pollHit,
+      icon: '🏛️',
+      message: `🏛️ Low Political Capital: Party infighting leaks to press. Polls -${pollHit}%`,
+      messageTH: `🏛️ ทุนการเมืองต่ำ: ความขัดแย้งภายในพรรคหลุดสู่สื่อ คะแนนนิยม -${pollHit}%`
+    });
+
+    campaignState.campaignLog.push({
+      week: campaignState.currentWeek,
+      type: 'stat_penalty',
+      message: `🏛️ Low Political Capital — internal conflicts leak to press. Polls -${pollHit}%`
+    });
+  }
+
+  // ── 3. Low Local Popularity ──
+  if ((campaignState.localPopularity || 0) < 15) {
+    const pollHit = 1.0;
+    campaignState.nationalPollShare[pid] = Math.max(3,
+      (campaignState.nationalPollShare[pid] || 20) - pollHit);
+    _normalizePolls();
+
+    penalties.push({
+      type: 'low_local_pop',
+      pollLoss: pollHit,
+      icon: '🏘️',
+      message: `🏘️ Low Local Popularity: Ban Yai factions threatening defection! Polls -${pollHit}%`,
+      messageTH: `🏘️ คะแนนนิยมท้องถิ่นต่ำ: บ้านใหญ่ขู่ย้ายพรรค! คะแนนนิยม -${pollHit}%`
+    });
+
+    campaignState.campaignLog.push({
+      week: campaignState.currentWeek,
+      type: 'stat_penalty',
+      message: `🏘️ Low Local Popularity — Ban Yai factions threatening defection! Polls -${pollHit}%`
+    });
+  }
+
+  if (penalties.length > 0) {
+    console.log(`[campaign/engine.js] STEP 74 — ${penalties.length} stat penalty/ies triggered:`);
+    penalties.forEach(p => console.log(`  ${p.message}`));
+  }
+
+  return penalties;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STEP 57: THE EC GUILLOTINE — evaluateScrutiny()
+// If EC Scrutiny hits 100%, the Election Commission drops the hammer.
+// ══════════════════════════════════════════════════════════════════
+
+/**
+ * evaluateScrutiny() — Called after every action and day advance.
+ * Checks if scrutiny has reached 100% (the "EC Red Line").
+ * If triggered, applies catastrophic penalties:
+ *
+ *   1. Scrutiny reset to 50%
+ *   2. -200M฿ legal fees
+ *   3. -5% player national polls → redistributed to rivals (Zero-Sum)
+ *   4. Logs the event in campaign log
+ *
+ * @returns {Object|null} — Penalty result if triggered, null if safe
+ */
+function evaluateScrutiny() {
+  if (!campaignState || campaignState.playerScrutiny < 100) return null;
+
+  console.log('[campaign/engine.js] ⚠⚠⚠ EC GUILLOTINE TRIGGERED ⚠⚠⚠');
+
+  const ds = getDiffScale();
+  const pid = campaignState.playerPartyId;
+  const playerParty = CAMPAIGN_PARTIES.find(p => p.id === pid);
+  const appliedPenalties = {};
+
+  // ── 1. Reset scrutiny to 50% ──
+  campaignState.playerScrutiny = 50;
+  appliedPenalties.scrutinyReset = 50;
+
+  // ── 2. Deduct legal fees (scaled by difficulty) ──
+  const legalFees = Math.round(200 * ds.costMult);
+  campaignState.playerFunds = Math.max(0, campaignState.playerFunds - legalFees);
+  appliedPenalties.legalFees = legalFees;
+
+  // ── 3. -5% player polls → distributed to rivals (Zero-Sum) ──
+  const pollPenalty = 2.5; // STEP 71: nerfed from 5
+  const oldPoll = campaignState.nationalPollShare[pid] || 20;
+  campaignState.nationalPollShare[pid] = Math.max(3, oldPoll - pollPenalty);
+  appliedPenalties.pollLoss = pollPenalty;
+
+  // Distribute the lost polls evenly to rival parties
+  const rivals = CAMPAIGN_PARTIES.filter(p => p.id !== pid);
+  const perRivalGain = Math.round(pollPenalty / rivals.length);
+  rivals.forEach(r => {
+    campaignState.nationalPollShare[r.id] = Math.min(50,
+      (campaignState.nationalPollShare[r.id] || 10) + perRivalGain);
+  });
+  _normalizePolls();
+
+  // ── 4. Log the catastrophic event ──
+  const week = campaignState.currentWeek || (typeof CampaignCalendar !== 'undefined' ? CampaignCalendar.getWeek() : 1);
+  campaignState.campaignLog.push({
+    week: week,
+    type: 'ec_guillotine',
+    message: `🚨 EC RED FLAG! ใบเหลือง กกต.! Party investigated — Lost ฿${legalFees}M in legal fees, -${pollPenalty}% national polls. Scrutiny reset to 50%.`
+  });
+
+  console.log(`[campaign/engine.js] EC Guillotine: -${legalFees}M฿, -${pollPenalty}% polls, scrutiny → 50%`);
+
+  return {
+    triggered: true,
+    penalties: appliedPenalties,
+    titleEN: 'EC Red Flag! — ใบเหลือง!',
+    titleTH: 'กกต. แจกใบเหลือง!',
+    messageEN: `Your party is under heavy investigation for campaign violations! The Election Commission has imposed sanctions.\n\n• Legal Fees: -฿${legalFees}M\n• National Polls: -${pollPenalty}%\n• Rival parties gain your lost support\n• Scrutiny reset to 50%`,
+    messageTH: `พรรคของคุณถูกสอบสวนหนักจากการทำผิดกฎเลือกตั้ง! กกต. สั่งลงโทษแล้ว\n\n• ค่าทนายความ: -฿${legalFees} ล้าน\n• คะแนนนิยม: -${pollPenalty}%\n• พรรคคู่แข่งได้คะแนนที่สูญเสีย\n• ค่าจับตา กกต. ลดเหลือ 50%`,
+    icon: '🚨'
+  };
 }
 
 
@@ -278,8 +877,8 @@ const LOBBYIST_EVENTS = [
     title: "📺 Prime-Time Interview Invitation",
     description: "A major TV network offers a live interview slot. Great exposure, but risky.",
     choices: [
-      { label: "Accept the interview", effects: { pollBoost: 3, scrutiny: 5 }, risk: "Scrutiny increase" },
-      { label: "Send a deputy instead", effects: { pollBoost: 1, scrutiny: 0 }, risk: "Smaller impact" }
+      { label: "Accept the interview", effects: { pollBoost: 1.5, scrutiny: 5 }, risk: "Scrutiny increase" },
+      { label: "Send a deputy instead", effects: { pollBoost: 0.5, scrutiny: 0 }, risk: "Smaller impact" }
     ]
   },
   {
@@ -349,14 +948,13 @@ function applyLobbyistChoice(choice) {
     results.scrutiny = effects.scrutiny;
   }
   if (effects.pollBoost) {
-    // Boost player's national poll share
     const pid = campaignState.playerPartyId;
     campaignState.nationalPollShare[pid] = Math.min(50,
       (campaignState.nationalPollShare[pid] || 20) + effects.pollBoost);
+    _normalizePolls();  // STEP 55: Zero-Sum enforcement
     results.pollBoost = effects.pollBoost;
   }
   if (effects.rallyBoost) {
-    // Apply rally boost to random districts
     const shuffled = shuffleArray(DISTRICTS);
     const count = Math.min(10, shuffled.length);
     for (let i = 0; i < count; i++) {
@@ -365,23 +963,141 @@ function applyLobbyistChoice(choice) {
     results.rallyBoost = effects.rallyBoost;
   }
   if (effects.rivalPenalty) {
-    // Reduce a random rival's poll share
     const rivals = CAMPAIGN_PARTIES.filter(p => p.id !== campaignState.playerPartyId);
     const target = rivals[Math.floor(Math.random() * rivals.length)];
     if (target) {
       campaignState.nationalPollShare[target.id] = Math.max(3,
         (campaignState.nationalPollShare[target.id] || 15) - effects.rivalPenalty);
+      _normalizePolls();  // STEP 55: Zero-Sum enforcement
       results.rivalPenalty = { target: target.shortName, amount: effects.rivalPenalty };
     }
   }
 
+  // STEP 55: Human-readable log instead of raw JSON
+  const logParts = [];
+  if (results.funds) logParts.push(`${results.funds > 0 ? '+' : ''}${results.funds}M฿`);
+  if (results.scrutiny) logParts.push(`Scrutiny ${results.scrutiny > 0 ? '+' : ''}${results.scrutiny}%`);
+  if (results.pollBoost) logParts.push(`Polls +${results.pollBoost}%`);
+  if (results.rallyBoost) logParts.push(`Rally +${results.rallyBoost}`);
+  if (results.rivalPenalty) logParts.push(`${results.rivalPenalty.target} -${results.rivalPenalty.amount}%`);
+
   campaignState.campaignLog.push({
     week: campaignState.currentWeek,
     type: "lobbyist",
-    message: `Event: ${choice.label} — ${JSON.stringify(results)}`
+    message: `🤝 ${choice.label}: ${logParts.join(' · ') || 'No effect'}`
   });
 
+  // STEP 73: Persist shared stats to localStorage
+  _syncStatsToStorage();
+
   return { success: true, applied: results };
+}
+
+// ──────────────────────────────────────────────────────────────────
+// SECTION 1B: calculatePerformanceIndex()  (STEP 68)
+// Computes the "Campaign Performance Index" for the 50/50 algorithm.
+//   - Player score: capital + funds + local popularity − scrutiny penalty
+//   - AI scores:    based on their poll share × random quality (0.7–1.3)
+//   - All scores normalized to sum = 100%
+// ──────────────────────────────────────────────────────────────────
+
+/**
+ * Calculates the Campaign Performance Index for all parties.
+ * This feeds into the 50/50 election algorithm (50% polls + 50% performance).
+ *
+ * @returns {{
+ *   playerRaw: number,
+ *   playerShare: number,
+ *   aiShares: Object.<string, number>,
+ *   aiRaws: Object.<string, number>,
+ *   breakdown: Object
+ * }}
+ */
+function calculatePerformanceIndex() {
+  const _ds = getDiffScale();
+  const playerId = campaignState.playerPartyId;
+
+  // ── Player Performance Score ──
+  let playerPerf = 0;
+
+  // 1. Political Capital (shows political clout)
+  const capital = campaignState.politicalCapital || 0;
+  const capitalBonus = capital * 1.5;
+  playerPerf += capitalBonus;
+
+  // 2. Leftover War Chest (กระสุน — funds management discipline)
+  const funds = campaignState.playerFunds || 0;
+  const fundsBonus = funds * 0.05;
+  playerPerf += fundsBonus;
+
+  // 3. Local Popularity / Ground Game
+  //    Sum of all campaign buffs across all districts the player touched
+  let localPopularity = 0;
+  DISTRICTS.forEach(d => {
+    const buffs = d.campaignBuffs || {};
+    localPopularity += (buffs.rally || 0);
+    localPopularity += (buffs.canvass || 0);
+    localPopularity += (buffs.io || 0);
+    localPopularity += (buffs.infrastructure || 0);
+    localPopularity += (buffs.policy || 0);
+  });
+  playerPerf += localPopularity;
+
+  // 4. EC Scrutiny Penalty (CRUCIAL — high scrutiny destroys performance)
+  const scrutiny = campaignState.playerScrutiny || 0;
+  let scrutinyPenalty = 0;
+  if (scrutiny > 50) {
+    scrutinyPenalty = scrutiny * 2 * _ds.electionScrutinyMult;
+  } else if (scrutiny > 25) {
+    scrutinyPenalty = scrutiny * 0.5;
+  }
+  playerPerf -= scrutinyPenalty;
+
+  // Floor at 10 to prevent negative/zero scores
+  playerPerf = Math.max(10, playerPerf);
+
+  console.log(`[STEP 68] Player Performance Index:`);
+  console.log(`  Capital: +${capitalBonus.toFixed(1)} | Funds: +${fundsBonus.toFixed(1)} | Local: +${localPopularity.toFixed(1)} | Scrutiny: -${scrutinyPenalty.toFixed(1)} | RAW: ${playerPerf.toFixed(1)}`);
+
+  // ── AI Performance Scores ──
+  // Simulated from their poll share × random "campaign quality" factor (0.7–1.3)
+  const aiRaws = {};
+  let totalPerf = playerPerf;
+
+  CAMPAIGN_PARTIES.forEach(party => {
+    if (party.id === playerId) return; // skip player
+
+    const currentPoll = campaignState.nationalPollShare[party.id] || 15;
+    const qualityFactor = 0.7 + (Math.random() * 0.6); // 0.7 to 1.3
+    const aiScore = currentPoll * qualityFactor;
+    aiRaws[party.id] = Math.max(5, aiScore); // floor at 5
+    totalPerf += aiRaws[party.id];
+  });
+
+  // ── Normalize to 100% ──
+  const playerShare = (playerPerf / totalPerf) * 100;
+  const aiShares = {};
+  CAMPAIGN_PARTIES.forEach(party => {
+    if (party.id === playerId) return;
+    aiShares[party.id] = (aiRaws[party.id] / totalPerf) * 100;
+  });
+
+  console.log(`[STEP 68] Performance Shares: Player=${playerShare.toFixed(1)}%`, 
+    Object.entries(aiShares).map(([k,v]) => `${k}=${v.toFixed(1)}%`).join(' '));
+
+  return {
+    playerRaw: playerPerf,
+    playerShare,
+    aiShares,
+    aiRaws,
+    breakdown: {
+      capital: capitalBonus,
+      funds: fundsBonus,
+      localPopularity,
+      scrutinyPenalty,
+      totalRaw: totalPerf
+    }
+  };
 }
 
 
@@ -404,15 +1120,36 @@ function applyLobbyistChoice(choice) {
  * @returns {Object} Full election results
  */
 function runElection() {
+  // ── STEP 69: Calculate Performance Index for 50/50 algorithm ──
+  const perfIndex = calculatePerformanceIndex();
+  const playerId = campaignState.playerPartyId;
+
   const results = {
     constituency: {},    // partyId → { seats, districtWins[] }
     partyList: {},       // partyId → { seats, votes, quota, remainder }
     total: {},           // partyId → total seats
     districtDetails: [], // per-district breakdown
     banYaiPenalties: {}, // partyId → total ban yai penalty
+    performanceIndex: perfIndex, // STEP 69: stored for UI/debug
     playerSeats: 0,
     timestamp: Date.now()
   };
+
+  // Build per-party perfShare lookup for quick access
+  const perfShareMap = {};
+  CAMPAIGN_PARTIES.forEach(p => {
+    if (p.id === playerId) {
+      perfShareMap[p.id] = perfIndex.playerShare;
+    } else {
+      perfShareMap[p.id] = perfIndex.aiShares[p.id] || 15;
+    }
+  });
+
+  console.log('[STEP 69] Performance shares wired into runElection:', 
+    JSON.stringify(Object.fromEntries(
+      Object.entries(perfShareMap).map(([k,v]) => [k, +v.toFixed(1)])
+    ))
+  );
 
   // Initialize result containers
   CAMPAIGN_PARTIES.forEach(p => {
@@ -463,9 +1200,14 @@ function runElection() {
         }
       }
 
-      // 6. National poll share influence
+      // 6. National poll share influence (50% of the 50/50 algo)
       const nationShare = campaignState.nationalPollShare[party.id] || 15;
       score += nationShare * 0.2;
+
+      // 6b. STEP 69: Campaign Performance Index (the other 50%)
+      //     Disciplined campaign → surge; sloppy campaign → underperform
+      const perfShare = perfShareMap[party.id] || 15;
+      score += perfShare * 0.3;
 
       // 7. Random variance (election uncertainty, ±8)
       score += (Math.random() - 0.5) * 16;
@@ -514,7 +1256,10 @@ function runElection() {
     // Base votes from national poll share and party-list strength
     const pollShare = campaignState.nationalPollShare[party.id] || 15;
     const plStrength = party.partyListStrength || 15;
-    let votes = ((pollShare + plStrength) / 2) * 100000;
+
+    // STEP 69: Blend in performance share (50/50 influence)
+    const perfShare = perfShareMap[party.id] || 15;
+    let votes = ((pollShare + plStrength + perfShare) / 3) * 100000;
 
     // SUBTRACT Ban Yai penalty from party-list votes
     // (corrupt local politics reduces national ideological vote)
@@ -553,16 +1298,90 @@ function runElection() {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // PHASE 3: TOTAL SEATS
+  // PHASE 3: FINAL 50/50 SEAT ALLOCATION  (STEP 70)
+  //   50% = Ending National Poll percentage
+  //   50% = Campaign Performance Index (from calculatePerformanceIndex)
+  //   Distributed via Largest Remainder method across 500 seats
   // ═══════════════════════════════════════════════════════════
 
+  // 1. Calculate raw constituency + party-list from Phases 1 & 2
+  //    These are the "mechanical" results — kept for reference
+  const mechanicalSeats = {};
   CAMPAIGN_PARTIES.forEach(party => {
-    const total = results.constituency[party.id].seats + results.partyList[party.id].seats;
-    results.total[party.id] = total;
-    campaignState.constituencySeats[party.id] = results.constituency[party.id].seats;
-    campaignState.partyListSeats[party.id] = results.partyList[party.id].seats;
-    campaignState.totalSeats[party.id] = total;
+    mechanicalSeats[party.id] = results.constituency[party.id].seats + results.partyList[party.id].seats;
   });
+
+  // 2. Calculate 50/50 final vote share for each party
+  const fiftyFiftyData = [];
+  CAMPAIGN_PARTIES.forEach(party => {
+    const pollShare = campaignState.nationalPollShare[party.id] || 15;
+    const perfShare = perfShareMap[party.id] || 15;
+
+    // The core 50/50 rule
+    const finalVoteShare = (pollShare * 0.5) + (perfShare * 0.5);
+
+    fiftyFiftyData.push({
+      partyId: party.id,
+      pollShare,
+      perfShare,
+      finalVoteShare,
+      rawSeats: (finalVoteShare / 100) * TOTAL_SEATS,
+      floorSeats: 0,
+      decimalRemainder: 0
+    });
+  });
+
+  // 3. Normalize finalVoteShare to exactly 100% (handle float drift)
+  const totalVoteShare = fiftyFiftyData.reduce((sum, d) => sum + d.finalVoteShare, 0);
+  fiftyFiftyData.forEach(d => {
+    d.finalVoteShare = (d.finalVoteShare / totalVoteShare) * 100;
+    d.rawSeats = (d.finalVoteShare / 100) * TOTAL_SEATS;
+    d.floorSeats = Math.floor(d.rawSeats);
+    d.decimalRemainder = d.rawSeats - d.floorSeats;
+  });
+
+  // 4. Allocate floor seats
+  let totalAllocated = fiftyFiftyData.reduce((sum, d) => sum + d.floorSeats, 0);
+
+  // 5. Distribute remainder seats by largest decimal remainder
+  const remainderQueue = [...fiftyFiftyData].sort((a, b) => b.decimalRemainder - a.decimalRemainder);
+  let seatsToDistribute = TOTAL_SEATS - totalAllocated;
+
+  for (let i = 0; i < seatsToDistribute && i < remainderQueue.length; i++) {
+    remainderQueue[i].floorSeats++;
+  }
+
+  // 6. Write final seats into results
+  fiftyFiftyData.forEach(d => {
+    const finalSeats = d.floorSeats;
+
+    // Distribute between constituency and party-list proportionally
+    const mechTotal = mechanicalSeats[d.partyId] || 1;
+    const constRatio = mechTotal > 0
+      ? results.constituency[d.partyId].seats / mechTotal
+      : 0.8; // default 80% constituency if no mechanical data
+
+    const constSeats = Math.round(finalSeats * constRatio);
+    const plSeats = finalSeats - constSeats;
+
+    results.constituency[d.partyId].seats = constSeats;
+    results.partyList[d.partyId].seats = plSeats;
+    results.total[d.partyId] = finalSeats;
+
+    campaignState.constituencySeats[d.partyId] = constSeats;
+    campaignState.partyListSeats[d.partyId] = plSeats;
+    campaignState.totalSeats[d.partyId] = finalSeats;
+  });
+
+  // Store the 50/50 diagnostic data for the election results screen
+  results.fiftyFifty = fiftyFiftyData;
+
+  console.log('[STEP 70] 50/50 Final Seat Allocation:');
+  fiftyFiftyData.forEach(d => {
+    const party = CAMPAIGN_PARTIES.find(p => p.id === d.partyId);
+    console.log(`  ${party?.shortName || d.partyId}: Poll=${d.pollShare.toFixed(1)}% + Perf=${d.perfShare.toFixed(1)}% → FinalVote=${d.finalVoteShare.toFixed(1)}% → ${d.floorSeats} seats`);
+  });
+  console.log(`  Total: ${fiftyFiftyData.reduce((s, d) => s + d.floorSeats, 0)} / ${TOTAL_SEATS}`);
 
   results.playerSeats = results.total[campaignState.playerPartyId] || 0;
   campaignState.electionHeld = true;
@@ -837,6 +1656,36 @@ function winGame() {
     console.warn("Could not save handoff data:", e);
   }
 
+  // STEP 27: Flag entry mode so main-game uses real campaign seat data
+  localStorage.setItem('game_entry_mode', 'campaign_finished');
+
+  // STEP 27 + STEP 70: Save election results to localStorage for main-game seat allocation
+  try {
+    // Get 50/50 data if available
+    const fiftyFifty = campaignState.electionResults?.fiftyFifty || [];
+    const fiftyFiftyMap = {};
+    fiftyFifty.forEach(d => { fiftyFiftyMap[d.partyId] = d; });
+
+    const electionData = CAMPAIGN_PARTIES.map(p => ({
+      id: p.id,
+      name: p.name,
+      shortName: p.shortName,
+      color: p.color,
+      seats: handoff.totalSeats[p.id] || 0,
+      constituencySeats: handoff.constituencySeats[p.id] || 0,
+      partyListSeats: handoff.partyListSeats[p.id] || 0,
+      inCoalition: handoff.coalitionPartners.includes(p.id) || p.id === handoff.playerPartyId,
+      // STEP 70: 50/50 breakdown
+      pollShare: fiftyFiftyMap[p.id]?.pollShare || 0,
+      perfShare: fiftyFiftyMap[p.id]?.perfShare || 0,
+      finalVoteShare: fiftyFiftyMap[p.id]?.finalVoteShare || 0
+    }));
+    localStorage.setItem('election_results', JSON.stringify(electionData));
+    console.log('[campaign/engine.js] STEP 70 — Election results (with 50/50) saved to localStorage.');
+  } catch (e) {
+    console.warn('[campaign/engine.js] Could not save election results:', e);
+  }
+
   // Redirect to the governing module
   window.location.href = "../main-game/index.html";
 }
@@ -1012,6 +1861,15 @@ function loadCampaignState() {
 
     // 2. Overwrite with saved state (funds, scrutiny, poll shares, log, etc.)
     Object.assign(campaignState, saveData.state);
+
+    // STEP 86: CRITICAL FIX — Re-apply localStorage stats AFTER Object.assign.
+    // Without this, the stale values from tps_campaign_save overwrite the
+    // fresh values that Parliament's exit save hook just wrote to localStorage.
+    // localStorage is the AUTHORITATIVE source for shared stats.
+    if (typeof _loadStatsFromStorage === 'function') {
+      _loadStatsFromStorage();
+      console.log('[campaign/engine.js] STEP 86 — localStorage stats re-applied after Object.assign (prevents reset).');
+    }
 
     // 3. Restore calendar day
     if (typeof CampaignCalendar !== 'undefined' && saveData.calendarDay) {

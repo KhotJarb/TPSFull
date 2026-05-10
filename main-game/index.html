@@ -53,6 +53,11 @@
       <div class="header-left">
         <div class="header-logo">TPS</div>
         <div class="header-title">Thailand Political Simulation</div>
+        <div id="active-party-display" class="party-indicator-box">
+          <div id="player-party-color-dot" class="status-dot"></div>
+          <span class="label" data-i18n="current_party_label">Affiliation:</span>
+          <span id="player-party-name" class="party-name-value">Loading...</span>
+        </div>
       </div>
       <div class="header-center">
         <div id="turn-display" class="turn-badge">
@@ -146,91 +151,133 @@
             <span class="coalition-value" id="val-coalition">75%</span>
           </div>
         </div>
+
+        <!-- Coalition Contacts (v1.0.2 — Step 8) -->
+        <div class="sidebar-section">
+          <h2 class="sidebar-heading">
+            <span class="heading-icon">🤝</span> <span>Coalition Contacts</span>
+            <span class="seats-badge" id="diplomacy-actions-badge"
+              style="background:rgba(96,165,250,0.12);color:var(--blue-400);cursor:pointer"
+              onclick="openWarRoom()" title="Open Coalition War Room">⚔️ War Room</span>
+          </h2>
+          <div id="diplomacy-contacts" class="diplomacy-contacts">
+            <!-- Dynamically filled by renderDiplomacyContacts() -->
+          </div>
+        </div>
       </aside>
 
-      <!-- CENTER: Main Event Area -->
-      <main id="main-content">
-        <!-- Warning Ticker -->
-        <div id="warning-ticker" class="warning-ticker" style="display:none;">
-          <div class="ticker-icon">🚨</div>
-          <div id="warning-text" class="ticker-text"></div>
-        </div>
+      <!-- CENTER: Main Event Area — STEP 35 RESTRUCTURED -->
+      <main id="main-content" class="scrollable-pane">
 
-        <!-- Crisis Event Panel -->
-        <div id="crisis-panel" class="crisis-panel" style="display:none;">
-          <div class="crisis-header">
-            <div class="crisis-badge">BREAKING — CRISIS EVENT</div>
-            <div id="crisis-turn" class="crisis-turn"></div>
+        <!-- LAYER 1: Persistent Top Status (always visible when month is active) -->
+        <div id="dashboard-top-status">
+          <!-- Warning Ticker -->
+          <div id="warning-ticker" class="warning-ticker" style="display:none;">
+            <div class="ticker-icon">🚨</div>
+            <div id="warning-text" class="ticker-text"></div>
           </div>
-          <h2 id="crisis-title" class="crisis-title"></h2>
-          <p id="crisis-description" class="crisis-description"></p>
-          <div id="crisis-choices" class="crisis-choices"></div>
-        </div>
 
-        <!-- Outcome Panel -->
-        <div id="outcome-panel" class="outcome-panel" style="display:none;">
-          <div class="outcome-header">
-            <span class="outcome-badge">SITUATION REPORT</span>
+          <!-- STEP 33/35: Power Decay badge — persistent, hidden until month starts -->
+          <div id="power-decay-indicator" class="power-decay-indicator hidden-pre-month">
+            <span id="decay-phase-icon" class="decay-phase-icon">🌅</span>
+            <span id="decay-phase-name" class="decay-phase-name">Honeymoon</span>
+            <span id="decay-phase-mult" class="decay-phase-mult">×1.00</span>
           </div>
-          <p id="outcome-text" class="outcome-text"></p>
-          <div id="outcome-effects" class="outcome-effects"></div>
-          <button id="btn-end-turn" class="btn btn-primary btn-lg">
-            <span class="btn-icon">⏭️</span> End Month & Proceed
-          </button>
         </div>
 
-        <!-- Turn Report Panel -->
-        <div id="report-panel" class="report-panel" style="display:none;">
-          <div class="report-header">
-            <span class="report-badge">📋 MONTHLY REPORT</span>
-            <span id="report-turn" class="report-turn"></span>
+        <!-- LAYER 2: Dynamic Event Container (swappable panels — only one visible at a time) -->
+        <div id="dynamic-event-container">
+
+          <!-- Crisis Event Panel -->
+          <div id="crisis-panel" class="crisis-panel" style="display:none;">
+            <div class="crisis-header">
+              <div class="crisis-badge">BREAKING — CRISIS EVENT</div>
+              <div id="crisis-turn" class="crisis-turn"></div>
+            </div>
+            <h2 id="crisis-title" class="crisis-title"></h2>
+            <p id="crisis-description" class="crisis-description"></p>
+            <div id="crisis-choices" class="crisis-choices"></div>
           </div>
-          <div id="report-stats" class="report-stats"></div>
-          <div id="report-laws" class="report-laws"></div>
-          <div id="report-warnings" class="report-warnings"></div>
-          <button id="btn-next-month" class="btn btn-primary btn-lg">
-            <span class="btn-icon">📰</span> Next Month — Face New Crisis
-          </button>
-        </div>
 
-        <!-- Idle / Waiting State -->
-        <div id="idle-panel" class="idle-panel">
-          <div class="idle-content">
-            <div class="idle-icon">🏛️</div>
-            <h2 data-i18n="game_gov_house">Government House</h2>
-            <p data-i18n="game_gov_desc">Your coalition awaits your leadership, Prime Minister.</p>
-            <button id="btn-start-month" class="btn btn-primary btn-lg pulse-animation">
-              <span class="btn-icon">📰</span> <span data-i18n="game_begin_month">Begin This Month</span>
+          <!-- Outcome Panel -->
+          <div id="outcome-panel" class="outcome-panel" style="display:none;">
+            <div class="outcome-header">
+              <span class="outcome-badge">SITUATION REPORT</span>
+            </div>
+            <p id="outcome-text" class="outcome-text"></p>
+            <div id="outcome-effects" class="outcome-effects"></div>
+            <button id="btn-end-turn" class="btn btn-primary btn-lg">
+              <span class="btn-icon">⏭️</span> End Month &amp; Proceed
             </button>
           </div>
+
+          <!-- Turn Report Panel -->
+          <div id="report-panel" class="report-panel" style="display:none;">
+            <div class="report-header">
+              <span class="report-badge">📋 MONTHLY REPORT</span>
+              <span id="report-turn" class="report-turn"></span>
+            </div>
+            <div id="report-stats" class="report-stats"></div>
+            <div id="report-laws" class="report-laws"></div>
+            <div id="report-warnings" class="report-warnings"></div>
+            <button id="btn-next-month" class="btn btn-primary btn-lg">
+              <span class="btn-icon">📰</span> Next Month — Face New Crisis
+            </button>
+          </div>
+
+          <!-- Idle Panel (shown between events) -->
+          <div id="idle-panel" class="idle-panel">
+            <div class="idle-content">
+              <div class="idle-icon">🏛️</div>
+              <h2 data-i18n="game_gov_house">Government House</h2>
+              <p id="idle-description" data-i18n="game_gov_desc">Your coalition awaits your leadership, Prime Minister.</p>
+
+              <button id="btn-start-month" class="btn btn-primary btn-lg pulse-animation">
+                <span class="btn-icon">📰</span> <span data-i18n="game_begin_month">Begin This Month</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Vote Result Panel -->
+          <div id="vote-panel" class="vote-panel" style="display:none;">
+            <div class="vote-header">
+              <span class="vote-badge" id="vote-result-badge">PARLIAMENTARY VOTE</span>
+            </div>
+            <h3 id="vote-law-name" class="vote-law-name"></h3>
+            <div id="vote-tally" class="vote-tally">
+              <div class="tally-bar">
+                <div class="tally-yes" id="tally-yes"></div>
+                <div class="tally-no" id="tally-no"></div>
+              </div>
+              <div class="tally-labels">
+                <span class="tally-yes-label" id="tally-yes-label">0 Yes</span>
+                <span class="tally-threshold">251 needed</span>
+                <span class="tally-no-label" id="tally-no-label">0 No</span>
+              </div>
+            </div>
+            <div id="vote-party-breakdown" class="vote-party-breakdown"></div>
+            <p id="vote-message" class="vote-message"></p>
+            <button id="btn-close-vote" class="btn btn-secondary">Close</button>
+          </div>
+
+        </div><!-- /#dynamic-event-container -->
+
+        <!-- LAYER 3: Persistent PM Actions (always visible, locked until month starts) -->
+        <!-- STEP 33/35: Locked until month begins — now OUTSIDE idle-panel -->
+        <div class="pm-actions-panel locked-pre-month" id="pm-actions-panel">
+          <div class="pm-actions-title">🎖️ Prime Ministerial Actions</div>
+          <div class="pm-actions-grid" id="pm-actions-grid">
+            <!-- Dynamically filled -->
+          </div>
         </div>
 
-        <!-- Vote Result Panel -->
-        <div id="vote-panel" class="vote-panel" style="display:none;">
-          <div class="vote-header">
-            <span class="vote-badge" id="vote-result-badge">PARLIAMENTARY VOTE</span>
-          </div>
-          <h3 id="vote-law-name" class="vote-law-name"></h3>
-          <div id="vote-tally" class="vote-tally">
-            <div class="tally-bar">
-              <div class="tally-yes" id="tally-yes"></div>
-              <div class="tally-no" id="tally-no"></div>
-            </div>
-            <div class="tally-labels">
-              <span class="tally-yes-label" id="tally-yes-label">0 Yes</span>
-              <span class="tally-threshold">251 needed</span>
-              <span class="tally-no-label" id="tally-no-label">0 No</span>
-            </div>
-          </div>
-          <div id="vote-party-breakdown" class="vote-party-breakdown"></div>
-          <p id="vote-message" class="vote-message"></p>
-          <button id="btn-close-vote" class="btn btn-secondary">Close</button>
-        </div>
+
       </main>
 
       <!-- RIGHT SIDEBAR: Laws & Policies -->
       <aside id="sidebar-right" class="sidebar">
-        <div class="sidebar-section">
+        <!-- STEP 33: Locked until month begins -->
+        <div class="sidebar-section locked-pre-month" id="legislation-section">
           <h2 class="sidebar-heading">
             <span class="heading-icon">📜</span> <span data-i18n="game_legislation">Legislation</span>
           </h2>
@@ -288,6 +335,126 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- CABINET ROOM MODAL (v1.0.2 — Step 7)                      -->
+  <!-- Player allocates ministries to coalition partners here.    -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="cabinet-modal-overlay" class="cabinet-overlay" style="display:none;">
+    <div class="cabinet-room">
+      <div class="cabinet-room__header">
+        <div class="cabinet-room__title">
+          <span class="cabinet-room__icon">🏛️</span>
+          <div>
+            <div class="cabinet-room__title-en">Cabinet Formation</div>
+            <div class="cabinet-room__title-th">จัดตั้งคณะรัฐมนตรี</div>
+          </div>
+        </div>
+        <div id="pm-party-banner-container" class="cabinet-room__subtitle">
+          <!-- STEP 29: Dynamically populated by _renderCorePartyBanner() -->
+        </div>
+      </div>
+
+      <div class="cabinet-room__body">
+        <!-- LEFT: Ministry Grid -->
+        <div class="cabinet-room__ministries">
+          <div class="cabinet-room__tier-group">
+            <div class="cabinet-room__tier-label tier-a">⭐ TIER A — Crown Jewels</div>
+            <div class="cabinet-room__slots" id="cabinet-slots-a">
+              <!-- Dynamically filled -->
+            </div>
+          </div>
+          <div class="cabinet-room__tier-group">
+            <div class="cabinet-room__tier-label tier-b">📋 TIER B — Important Portfolios</div>
+            <div class="cabinet-room__slots" id="cabinet-slots-b">
+              <!-- Dynamically filled -->
+            </div>
+          </div>
+          <div class="cabinet-room__tier-group">
+            <div class="cabinet-room__tier-label tier-c">📎 TIER C — Minor Portfolios</div>
+            <div class="cabinet-room__slots" id="cabinet-slots-c">
+              <!-- Dynamically filled -->
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Coalition Roster + Satisfaction -->
+        <div class="cabinet-room__roster">
+          <div class="cabinet-room__roster-title">Coalition Partners</div>
+          <div class="cabinet-room__roster-subtitle">
+            Click a party, then click a ministry slot to assign.
+          </div>
+          <div class="cabinet-room__party-list" id="cabinet-party-list">
+            <!-- Dynamically filled -->
+          </div>
+
+          <div class="cabinet-room__satisfaction-preview" id="cabinet-satisfaction-preview">
+            <!-- Live satisfaction meter shown here -->
+          </div>
+        </div>
+      </div>
+
+      <div class="cabinet-room__footer">
+        <div class="cabinet-room__footer-info">
+          <span id="cabinet-unassigned-count">12</span> ministries unassigned
+        </div>
+        <div class="cabinet-room__footer-actions">
+          <button id="btn-cabinet-auto" class="btn btn-ghost btn-sm" title="Auto-assign based on party demands">
+            🤖 Auto-Assign
+          </button>
+          <button id="btn-cabinet-reset" class="btn btn-ghost btn-sm" title="Clear all assignments">
+            🔄 Reset
+          </button>
+          <button id="btn-cabinet-form" class="btn btn-primary btn-lg" disabled>
+            <span class="btn-icon">✅</span> Form Government — จัดตั้งรัฐบาล
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- STEP 44: AMENDMENT PHASE (GRIDLOCK) OVERLAY                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="amendment-phase-overlay" class="amendment-overlay" style="display:none;">
+    <div class="amendment-modal">
+      <div id="amendment-content">
+        <!-- Dynamically filled by legislation.js showAmendmentPhase() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- STEP 41: DIPLOMACY WAR ROOM MODAL                          -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="diplomacy-war-room" class="diplomacy-warroom-overlay" style="display:none;">
+    <div class="diplomacy-warroom">
+      <div class="diplomacy-warroom__header">
+        <div class="diplomacy-warroom__title-group">
+          <span class="diplomacy-warroom__icon">🤝</span>
+          <div>
+            <div class="diplomacy-warroom__title-en">Coalition War Room</div>
+            <div class="diplomacy-warroom__title-th">ห้องเจรจาพันธมิตร</div>
+          </div>
+        </div>
+        <div class="diplomacy-warroom__subtitle">
+          Manage your coalition partners. Every deal has a price.
+        </div>
+        <button id="btn-close-warroom" class="diplomacy-warroom__close">&times;</button>
+      </div>
+
+      <!-- Coalition Stats Summary -->
+      <div class="diplomacy-warroom__stats" id="warroom-coalition-stats">
+        <!-- Dynamically filled -->
+      </div>
+
+      <!-- Party Cards Grid -->
+      <div class="diplomacy-warroom__body" id="warroom-party-cards">
+        <!-- Dynamically filled by renderWarRoomCards() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
   <!-- MODAL OVERLAY                                               -->
   <!-- ══════════════════════════════════════════════════════════ -->
   <div id="modal-overlay" class="modal-overlay" style="display:none;">
@@ -304,8 +471,11 @@
   <script src="../shared/localization.js"></script>
   <script src="../shared/settings.js"></script>
 
-  <!-- Scripts (order matters: data first, then engine, then main) -->
+  <!-- Scripts (order matters: data → cabinet → diplomacy → legislation → engine → main) -->
   <script src="data.js"></script>
+  <script src="cabinet.js"></script>
+  <script src="diplomacy.js"></script>
+  <script src="legislation.js"></script>
   <script src="engine.js"></script>
   <script src="main.js"></script>
 

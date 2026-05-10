@@ -172,6 +172,24 @@ function getRandomCrisisEvent() {
  */
 function triggerCrisisEvent() {
   const event = getRandomCrisisEvent();
+
+  // v1.0.2: Scale crisis effects by time-based power decay
+  const decayMult = getPowerDecayMultiplier();
+  if (decayMult > 1.0) {
+    event.choices.forEach(choice => {
+      if (!choice.effects) return;
+      // Amplify ALL negative effects based on time in office
+      for (const key of Object.keys(choice.effects)) {
+        const val = choice.effects[key];
+        const isHarmful = (key === 'unrest' && val > 0) ||
+                          (key !== 'unrest' && val < 0);
+        if (isHarmful) {
+          choice.effects[key] = Math.round(val * decayMult);
+        }
+      }
+    });
+  }
+
   gameState.currentEvent = event;
   return event;
 }
@@ -214,12 +232,16 @@ function resolveCrisisChoice(choiceIndex) {
   // Apply party relationship effects
   applyPartyEffects(choice.partyEffects);
 
-  // Record in event history
+  // Record in event history (STEP 48: store bilingual fields)
   gameState.eventHistory.push({
     turn: gameState.turn,
     eventId: event.id,
     eventTitle: event.title,
+    eventTitleTH: event.titleTH || event.title,
+    eventTitleEN: event.titleEN || event.title,
     choiceLabel: choice.label,
+    choiceLabelTH: choice.labelTH || choice.label,
+    choiceLabelEN: choice.labelEN || choice.label,
     effects: { ...scaledEffects },
     partyEffects: choice.partyEffects ? { ...choice.partyEffects } : {}
   });
@@ -280,18 +302,62 @@ function proposeLaw(lawId) {
   let noVotes = 0;
   const partyVotes = [];
 
-  // All parties vote (coalition and opposition)
+  // ── STEP 43: Loyalty-aware voting ──
+  // Coalition partners' votes are filtered through coalitionLoyalty.
+  // Opposition parties still vote purely on ideology + relation.
+  const corePartyId = (typeof localStorage !== 'undefined' && localStorage.getItem('selectedPartyId')) || '';
+
   parties.forEach(party => {
     const ideologyScore = party.voteModifiers[lawId] || 0;
     const relationBonus = party.relation * 0.3;
     const totalScore = ideologyScore + relationBonus;
-
-    // Small random factor for unpredictability (-5 to +5)
     const randomFactor = (Math.random() - 0.5) * 10;
     const finalScore = totalScore + randomFactor;
 
-    const votedYes = finalScore > 0;
+    let votedYes;
+    let voteReason = '';
     const seats = party.seats;
+
+    if (party.inCoalition && party.id !== corePartyId) {
+      // ── Coalition Partner: Loyalty-based voting ──
+
+      // Check whip compliance flag first (overrides everything)
+      if (party.willVoteYesOnNextBill) {
+        votedYes = true;
+        voteReason = '🗳️ Whipped (forced YES)';
+        // Consume the flag
+        party.willVoteYesOnNextBill = false;
+      }
+      // Loyalty >= 60%: Reliable ally — votes YES (unless ideology is VERY opposed)
+      else if ((party.coalitionLoyalty || 50) >= 60) {
+        // Even loyal parties rebel if their ideology strongly opposes
+        votedYes = ideologyScore >= -25 ? true : (finalScore > -10);
+        voteReason = votedYes ? '✅ Loyal ally' : '⚠️ Loyal but ideologically opposed';
+      }
+      // Loyalty 30-60%: Unreliable — RNG coin flip weighted by ideology
+      else if ((party.coalitionLoyalty || 50) >= 30) {
+        const loyaltyBonus = ((party.coalitionLoyalty || 50) - 30) / 30 * 15; // 0-15 bonus
+        const flipScore = finalScore + loyaltyBonus;
+        votedYes = flipScore > 0;
+        voteReason = votedYes ? '🎲 Wavering — voted YES' : '🎲 Wavering — voted NO';
+      }
+      // Loyalty < 30%: Hostile — votes NO or ABSTAINS
+      else {
+        // Tiny chance they still vote yes if ideology strongly supports
+        votedYes = ideologyScore > 25 && Math.random() > 0.5;
+        voteReason = votedYes ? '😤 Disloyal but ideologically aligned' : '🚫 Disloyal — voted NO';
+      }
+    }
+    else if (party.id === corePartyId && party.inCoalition) {
+      // Player's core party always votes YES
+      votedYes = true;
+      voteReason = '👑 Core party';
+    }
+    else {
+      // ── Opposition: Pure ideology + relation ──
+      votedYes = finalScore > 0;
+      voteReason = votedYes ? 'Ideology aligned' : 'Opposition';
+    }
 
     if (votedYes) {
       yesVotes += seats;
@@ -309,11 +375,21 @@ function proposeLaw(lawId) {
       relationBonus: Math.round(relationBonus),
       totalScore: Math.round(finalScore),
       votedYes: votedYes,
-      inCoalition: party.inCoalition
+      voteReason: voteReason,
+      inCoalition: party.inCoalition,
+      coalitionLoyalty: party.coalitionLoyalty || null
     });
   });
 
   const passed = yesVotes >= MAJORITY_THRESHOLD;
+
+  // ── STEP 44: Gridlock Detection ──
+  // If the bill is CLOSE to passing (within 21 votes), don't declare failure yet.
+  // Instead, flag it as a "gridlock" so the Amendment Phase can intervene.
+  const GRIDLOCK_MARGIN = 21; // Bill must get at least 230 YES votes to trigger gridlock
+  const gridlockThreshold = MAJORITY_THRESHOLD - GRIDLOCK_MARGIN;
+  const isGridlock = !passed && yesVotes >= gridlockThreshold;
+  const missingVotes = MAJORITY_THRESHOLD - yesVotes;
 
   // If passed, apply immediate effects and mark as enacted
   if (passed) {
@@ -334,20 +410,30 @@ function proposeLaw(lawId) {
       }
     });
   }
+  // If gridlock — do NOT apply failure. The Amendment Phase will handle it.
+  // If total defeat (yesVotes < gridlockThreshold) — normal failure.
 
   return {
     passed,
     alreadyPassed: false,
     lawName: law.name,
     lawId: law.id,
+    lawIcon: law.icon || '📄',
+    lawEffects: law.effects,        // STEP 44: Pass raw effects for amendment halving
     yesVotes,
     noVotes,
     totalSeats: PARLIAMENT_TOTAL_SEATS,
     majorityNeeded: MAJORITY_THRESHOLD,
     partyVotes,
+    // STEP 44: Gridlock fields
+    isGridlock,
+    missingVotes: isGridlock ? missingVotes : 0,
+    gridlockThreshold,
     message: passed
       ? `✅ "${law.name}" has been ENACTED by Parliament! (${yesVotes} Yes — ${noVotes} No)`
-      : `❌ "${law.name}" was REJECTED by Parliament. (${yesVotes} Yes — ${noVotes} No)`
+      : isGridlock
+        ? `⚠️ "${law.name}" is DEADLOCKED. ${missingVotes} votes short. The floor is in chaos.`
+        : `❌ "${law.name}" was REJECTED by Parliament. (${yesVotes} Yes — ${noVotes} No)`
   };
 }
 
@@ -364,9 +450,11 @@ function repealLaw(lawId) {
   }
 
   // Repeal vote — parties that dislike the law will vote YES to repeal
+  // STEP 43: Same loyalty-aware logic as proposeLaw
   let yesVotes = 0;
   let noVotes = 0;
   const partyVotes = [];
+  const corePartyId = (typeof localStorage !== 'undefined' && localStorage.getItem('selectedPartyId')) || '';
 
   parties.forEach(party => {
     // Invert: parties that hated the law want it repealed
@@ -375,7 +463,34 @@ function repealLaw(lawId) {
     const totalScore = ideologyScore + relationBonus;
     const randomFactor = (Math.random() - 0.5) * 10;
     const finalScore = totalScore + randomFactor;
-    const votedYes = finalScore > 0;
+
+    let votedYes;
+    let voteReason = '';
+
+    if (party.inCoalition && party.id !== corePartyId) {
+      // Coalition partner: loyalty filter
+      if (party.willVoteYesOnNextBill) {
+        votedYes = true;
+        voteReason = '🗳️ Whipped (forced YES)';
+        party.willVoteYesOnNextBill = false;
+      } else if ((party.coalitionLoyalty || 50) >= 60) {
+        votedYes = ideologyScore >= -25 ? true : (finalScore > -10);
+        voteReason = votedYes ? '✅ Loyal ally' : '⚠️ Loyal but opposed';
+      } else if ((party.coalitionLoyalty || 50) >= 30) {
+        const loyaltyBonus = ((party.coalitionLoyalty || 50) - 30) / 30 * 15;
+        votedYes = (finalScore + loyaltyBonus) > 0;
+        voteReason = votedYes ? '🎲 Wavering — YES' : '🎲 Wavering — NO';
+      } else {
+        votedYes = ideologyScore > 25 && Math.random() > 0.5;
+        voteReason = votedYes ? '😤 Disloyal — aligned' : '🚫 Disloyal — NO';
+      }
+    } else if (party.id === corePartyId && party.inCoalition) {
+      votedYes = true;
+      voteReason = '👑 Core party';
+    } else {
+      votedYes = finalScore > 0;
+      voteReason = votedYes ? 'Ideology aligned' : 'Opposition';
+    }
 
     if (votedYes) {
       yesVotes += party.seats;
@@ -389,7 +504,9 @@ function repealLaw(lawId) {
       shortName: party.shortName,
       seats: party.seats,
       votedYes,
-      inCoalition: party.inCoalition
+      voteReason,
+      inCoalition: party.inCoalition,
+      coalitionLoyalty: party.coalitionLoyalty || null
     });
   });
 
@@ -498,17 +615,19 @@ function endTurn() {
     lawEffects: [],
     defections: [],
     joiners: [],
+    loyaltyCrises: [],  // STEP 43
     warnings: [],
     gameOver: false,
     gameOverReason: ""
   };
 
-  // ── 1. Monthly base income & decay (scaled by difficulty) ──
+  // ── 1. Monthly base income & decay (scaled by difficulty + power decay) ──
   const gds = getGovDiffScale();
+  const decayMult = getPowerDecayMultiplier(); // v1.0.2
   const baseChanges = {
     budget: Math.round(GAME_CONSTANTS.MONTHLY_BUDGET_INCOME * gds.budgetIncomeMult),
-    unrest: Math.round(GAME_CONSTANTS.MONTHLY_UNREST_DECAY * gds.monthlyDecayMult),
-    popularity: Math.round(GAME_CONSTANTS.MONTHLY_POPULARITY_DECAY * gds.monthlyDecayMult)
+    unrest: Math.round(GAME_CONSTANTS.MONTHLY_UNREST_DECAY * gds.monthlyDecayMult * decayMult),
+    popularity: Math.round(GAME_CONSTANTS.MONTHLY_POPULARITY_DECAY * gds.monthlyDecayMult * decayMult)
   };
 
   // Economic growth affects budget income
@@ -556,6 +675,50 @@ function endTurn() {
       gameState.coalitionStability + 1, 0, 100
     );
   }
+
+  // ── 3B. STEP 43: Per-party loyalty decay & nuclear threat ──
+  const corePartyId = (typeof localStorage !== 'undefined' && localStorage.getItem('selectedPartyId')) || '';
+  report.loyaltyCrises = [];
+
+  parties.forEach(party => {
+    if (!party.inCoalition || party.id === corePartyId) return;
+
+    // Monthly loyalty drift based on global coalition stability
+    // Low stability erodes everyone's loyalty; high stability slowly restores it
+    if (gameState.coalitionStability < 40) {
+      const loyaltyDrain = Math.round((40 - gameState.coalitionStability) * 0.08);
+      party.coalitionLoyalty = Math.max(0, (party.coalitionLoyalty || 50) - loyaltyDrain);
+    } else if (gameState.coalitionStability > 70) {
+      // Very slow natural loyalty recovery
+      party.coalitionLoyalty = Math.min(100, (party.coalitionLoyalty || 50) + 1);
+    }
+
+    // Low PM popularity also erodes loyalty
+    if (gameState.popularity < 25) {
+      party.coalitionLoyalty = Math.max(0, (party.coalitionLoyalty || 50) - 2);
+    }
+
+    // ── NUCLEAR THREAT: Loyalty < 15% ──
+    if ((party.coalitionLoyalty || 50) < 15) {
+      report.loyaltyCrises.push({
+        partyId: party.id,
+        partyName: party.name,
+        shortName: party.shortName,
+        seats: party.seats,
+        loyalty: party.coalitionLoyalty || 0,
+        color: party.color
+      });
+      report.warnings.push(
+        `🚨 CRITICAL: ${party.name} (${party.seats} seats) loyalty at ${party.coalitionLoyalty || 0}%! They threaten to withdraw from the coalition!`
+      );
+    }
+    // Warning for low loyalty
+    else if ((party.coalitionLoyalty || 50) < 30) {
+      report.warnings.push(
+        `⚠️ ${party.shortName} loyalty is dangerously low (${party.coalitionLoyalty || 0}%). Consider diplomatic action.`
+      );
+    }
+  });
 
   // ── 4. Check coalition defections & joiners ──
   report.defections = checkCoalitionDefections();
@@ -713,6 +876,188 @@ function calculateVictoryScore() {
   scores.title = titles[scores.grade];
 
   return scores;
+}
+
+
+// ─── POWER DECAY SYSTEM (v1.0.2 — Step 9) ──────────────────
+
+/**
+ * getPowerDecayMultiplier() — Returns a time-based difficulty multiplier.
+ * 
+ * The longer you're in office, the harder things get.
+ * Months 1-12:  1.0× – 1.15× (Honeymoon period)
+ * Months 13-24: 1.15× – 1.3× (Mid-term fatigue)
+ * Months 25-36: 1.3× – 1.45× (Late-term pressure)
+ * Months 37-48: 1.45× – 1.6× (Lame duck danger)
+ *
+ * @returns {number} Multiplier (1.0 to 1.6)
+ */
+function getPowerDecayMultiplier() {
+  if (!gameState) return 1.0;
+  const turn = gameState.turn || 1;
+  // Linear scale: turn 1 = 1.0, turn 48 = 1.6
+  return 1.0 + (turn - 1) * (0.6 / 47);
+}
+
+/**
+ * getPowerDecayPhase() — Returns the current phase name for UI display.
+ */
+function getPowerDecayPhase() {
+  if (!gameState) return { name: 'Honeymoon', icon: '🌅', color: 'var(--green-400)' };
+  const turn = gameState.turn || 1;
+  
+  if (turn <= 12) return { name: 'Honeymoon', icon: '🌅', color: 'var(--green-400)', desc: 'The public is patient. Enjoy it while it lasts.' };
+  if (turn <= 24) return { name: 'Mid-Term', icon: '⏳', color: 'var(--gold-400)', desc: 'Fatigue sets in. Every mistake is magnified.' };
+  if (turn <= 36) return { name: 'Late-Term', icon: '🔥', color: 'var(--amber-400)', desc: 'Crises intensify. Your enemies smell blood.' };
+  return { name: 'Lame Duck', icon: '💀', color: 'var(--red-400)', desc: 'Maximum pressure. Survival is victory.' };
+}
+
+
+// ─── PM EXCLUSIVE ACTIONS (v1.0.2 — Step 9) ─────────────────
+
+let pmActionCooldowns = {
+  tvAddress: 0,
+  overseasDiplomacy: 0,
+  emergencyDecree: 0
+};
+
+/**
+ * PM Action Config
+ */
+const PM_ACTIONS = {
+  tvAddress: {
+    name: 'National TV Address',
+    nameThai: 'แถลงการณ์ทางโทรทัศน์',
+    icon: '📺',
+    cost: 80,
+    cooldown: 3,
+    description: 'Address the nation on all channels. Rally public support, but risk backlash if overused.',
+    effects: { popularity: +12, unrest: +3 },
+    narratives: [
+      'You appear on every screen in Thailand. "Fellow citizens, your government stands firm." Ratings spike. But critics call it propaganda.',
+      'A carefully scripted 30-minute address. You announce new welfare measures and promise reform. Social media response is... mixed.',
+      'The cameras roll at 8 PM sharp. You speak directly to the camera, voice steady. For 30 minutes, the nation listens. Some are moved. Others change the channel.',
+      'Your broadcast preempts the evening soap operas. Half the country is inspired; the other half is annoyed you interrupted their show.'
+    ]
+  },
+  overseasDiplomacy: {
+    name: 'Overseas Diplomatic Mission',
+    nameThai: 'ภารกิจทางการทูต',
+    icon: '✈️',
+    cost: 120,
+    cooldown: 4,
+    description: 'Visit key allies (Japan, China, US). Boost economic growth and ease military tensions through international legitimacy.',
+    effects: { growth: +0.3, militaryPatience: +15, coalitionStability: -5 },
+    narratives: [
+      'Your plane touches down in Tokyo. Trade agreements are signed. Photos of you with the Japanese PM dominate the front pages back home. But your coalition complains you\'re "always abroad."',
+      'A whirlwind ASEAN summit. You secure FDI pledges and a joint statement supporting democracy. Generals note the international attention — coups become harder to justify.',
+      'Three capitals in five days. You return exhausted but triumphant, waving investment MoUs for the cameras. Critics ask who\'s minding the store.',
+      'A state visit to Beijing yields infrastructure deals worth billions. Back home, opposition accuses you of selling sovereignty. The military grudgingly respects the diplomatic cover.'
+    ]
+  },
+  emergencyDecree: {
+    name: 'Emergency Decree',
+    nameThai: 'พ.ร.ก.ฉุกเฉิน',
+    icon: '🚨',
+    cost: 0,
+    cooldown: 6,
+    description: 'Invoke emergency powers to crush unrest. Effective but devastating to democracy credentials.',
+    effects: { unrest: -25, popularity: -15, militaryPatience: +10, coalitionStability: -10 },
+    narratives: [
+      'At 3 AM, you sign the decree. By dawn, protest camps are cleared, social media throttled, and assembly banned. Order is restored — at a terrible cost to your democratic legacy.',
+      'The Emergency Decree is broadcast on all channels. "Extraordinary times require extraordinary measures." International condemnation is swift. But the streets are quiet.',
+      'Tanks on street corners. Checkpoints at major intersections. The unrest evaporates overnight. But so does any pretense of your government being different from its predecessors.'
+    ]
+  }
+};
+
+/**
+ * executePMAction(actionId) — Performs a PM exclusive action.
+ *
+ * @param {string} actionId — 'tvAddress', 'overseasDiplomacy', or 'emergencyDecree'
+ * @returns {Object} Result { success, message, effects, narrative, warning }
+ */
+function executePMAction(actionId) {
+  const action = PM_ACTIONS[actionId];
+  if (!action) return { success: false, message: 'Unknown action.' };
+
+  // Check cooldown
+  if (pmActionCooldowns[actionId] > 0) {
+    return { success: false, message: `${action.name} is on cooldown. Wait ${pmActionCooldowns[actionId]} more month${pmActionCooldowns[actionId] > 1 ? 's' : ''}.` };
+  }
+
+  // Check budget
+  if (action.cost > 0 && gameState.budget < action.cost) {
+    return { success: false, message: `Insufficient budget. Need ฿${action.cost}B.` };
+  }
+
+  // Apply budget cost
+  if (action.cost > 0) {
+    gameState.budget -= action.cost;
+  }
+
+  // Apply effects
+  applyEffects(action.effects);
+
+  // Set cooldown
+  pmActionCooldowns[actionId] = action.cooldown;
+
+  // Pick narrative
+  const narrative = action.narratives[Math.floor(Math.random() * action.narratives.length)];
+
+  // Record in event history
+  gameState.eventHistory.push({
+    turn: gameState.turn,
+    eventId: `pm_${actionId}`,
+    eventTitle: `${action.icon} ${action.name}`,
+    choiceLabel: 'PM Action',
+    effects: { ...action.effects },
+    partyEffects: {}
+  });
+
+  console.log(`[engine.js] PM Action: ${action.name}, effects:`, action.effects);
+
+  return {
+    success: true,
+    message: `${action.icon} ${action.name} executed successfully.`,
+    effects: { budget: -(action.cost || 0), ...action.effects },
+    narrative,
+    actionId,
+    warning: null
+  };
+}
+
+/**
+ * tickPMActionCooldowns() — Decrements PM action cooldowns by 1 each turn.
+ */
+function tickPMActionCooldowns() {
+  for (const key of Object.keys(pmActionCooldowns)) {
+    if (pmActionCooldowns[key] > 0) {
+      pmActionCooldowns[key]--;
+    }
+  }
+}
+
+/**
+ * getPMActionStatus(actionId) — Returns current status of a PM action.
+ */
+function getPMActionStatus(actionId) {
+  const action = PM_ACTIONS[actionId];
+  if (!action) return null;
+  return {
+    ...action,
+    actionId,
+    cooldown: pmActionCooldowns[actionId] || 0,
+    canUse: pmActionCooldowns[actionId] === 0 && (action.cost === 0 || gameState.budget >= action.cost),
+    budgetOk: action.cost === 0 || gameState.budget >= action.cost
+  };
+}
+
+/**
+ * resetPMActions() — Resets all PM action cooldowns for a new game.
+ */
+function resetPMActions() {
+  pmActionCooldowns = { tvAddress: 0, overseasDiplomacy: 0, emergencyDecree: 0 };
 }
 
 

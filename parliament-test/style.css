@@ -128,7 +128,8 @@
   --z-panel:    10;
   --z-overlay:  100;
   --z-modal:    1000;
-  --z-toast:    2000;
+  --z-toast:    20000;
+  --z-notification: 25000;
 }
 
 
@@ -1454,7 +1455,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: var(--z-toast);
+  z-index: 9999;
   pointer-events: none;
 }
 
@@ -1749,3 +1750,539 @@ body {
   border-top: 1px solid var(--border-primary);
   margin: 12px 0;
 }
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   SECTION 15: PAUSE / PLAY DEBATE BUTTON (v1.0.2)
+   ────────────────────────────────────────────────────────────────────────── */
+
+#btn-pause-debate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--player-border);
+  background: var(--player-bg);
+  color: var(--player-primary);
+  font-family: var(--font-primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+#btn-pause-debate:hover {
+  background: rgba(255, 215, 0, 0.18);
+  border-color: var(--player-primary);
+  box-shadow: var(--shadow-glow-gold);
+  transform: translateY(-1px);
+}
+
+#btn-pause-debate:active {
+  transform: translateY(0) scale(0.97);
+}
+
+#btn-pause-debate .pause-icon {
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+#btn-pause-debate.is-paused {
+  background: rgba(40, 167, 69, 0.12);
+  border-color: rgba(40, 167, 69, 0.4);
+  color: var(--success);
+  animation: paused-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes paused-pulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(40, 167, 69, 0); }
+  50%      { box-shadow: 0 0 14px rgba(40, 167, 69, 0.3); }
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   SECTION 16: PARTY STANCE BANNER (v1.0.2)
+   Shows player's role (Gov/Opposition) and party recommendation.
+   ────────────────────────────────────────────────────────────────── */
+
+.party-stance-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  margin: 0 0 6px 0;
+  background: linear-gradient(135deg, rgba(20, 28, 54, 0.95) 0%, rgba(15, 21, 40, 0.95) 100%);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  flex-wrap: wrap;
+}
+
+.party-stance-banner.hidden { display: none; }
+
+/* Role Badge */
+.stance-banner__role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.stance-banner__role.government {
+  background: rgba(29, 53, 87, 0.4);
+  border: 1px solid rgba(69, 123, 157, 0.4);
+  color: #7EB8DA;
+}
+
+.stance-banner__role.opposition {
+  background: rgba(230, 57, 70, 0.12);
+  border: 1px solid rgba(230, 57, 70, 0.3);
+  color: #FF8A92;
+}
+
+.stance-role__icon { font-size: 0.9rem; }
+.stance-role__label { font-size: 0.65rem; }
+
+/* Divider */
+.stance-banner__divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+/* Recommendation */
+.stance-banner__recommendation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.stance-rec__label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.stance-rec__value {
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.stance-rec__value.support {
+  background: rgba(40, 167, 69, 0.15);
+  color: #4ADE80;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.stance-rec__value.oppose {
+  background: rgba(230, 57, 70, 0.15);
+  color: #FF6B7A;
+  border: 1px solid rgba(230, 57, 70, 0.3);
+}
+
+.stance-rec__value.abstain {
+  background: rgba(108, 117, 125, 0.15);
+  color: #9ba3b8;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.stance-rec__value.free-vote {
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--text-gold);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+/* Warning */
+.stance-banner__warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background: rgba(255, 183, 71, 0.08);
+  border: 1px solid rgba(255, 183, 71, 0.2);
+  animation: stance-warn-pulse 2s ease-in-out infinite;
+}
+
+.stance-banner__warning.hidden { display: none; }
+
+.stance-warning__icon { font-size: 0.8rem; }
+
+.stance-warning__text {
+  font-size: 0.65rem;
+  color: #FFB347;
+  font-weight: 600;
+}
+
+@keyframes stance-warn-pulse {
+  0%, 100% { border-color: rgba(255, 183, 71, 0.2); }
+  50%      { border-color: rgba(255, 183, 71, 0.5); }
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   SECTION 17: ENFORCE PARTY WHIP BUTTON (v1.0.2)
+   A high-stakes button that costs Political Capital but locks in votes.
+   ────────────────────────────────────────────────────────────────── */
+
+.whip-control {
+  margin-bottom: 10px;
+}
+
+.whip-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(128, 0, 128, 0.12) 0%, rgba(75, 0, 130, 0.12) 100%);
+  border: 1px solid rgba(148, 103, 189, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: #C9A3E8;
+  transition: all 0.2s ease;
+}
+
+.whip-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(128, 0, 128, 0.22) 0%, rgba(75, 0, 130, 0.22) 100%);
+  border-color: rgba(148, 103, 189, 0.6);
+  box-shadow: 0 0 16px rgba(148, 103, 189, 0.2);
+  transform: translateY(-1px);
+}
+
+.whip-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.whip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.whip-btn.enforced {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.15) 0%, rgba(0, 100, 0, 0.15) 100%);
+  border-color: rgba(40, 167, 69, 0.4);
+  color: #4ADE80;
+  cursor: default;
+}
+
+.whip-btn__icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.whip-btn__content {
+  flex: 1;
+  text-align: left;
+}
+
+.whip-btn__label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+}
+
+.whip-btn__sub {
+  font-size: 0.58rem;
+  color: rgba(201, 163, 232, 0.6);
+  margin-top: 2px;
+}
+
+.whip-btn__cost {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(230, 57, 70, 0.15);
+  color: #FF6B7A;
+  flex-shrink: 0;
+}
+
+/* Status bar */
+.whip-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+.whip-status__item strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.whip-status__divider {
+  color: rgba(255, 255, 255, 0.1);
+}
+
+
+/* ──────────────────────────────────────────────────────────────────
+   SECTION 18: LEGISLATIVE AFTERMATH MODAL (v1.0.2 — Step 6)
+   Post-vote impact dashboard with animated three-pillar visualization.
+   ────────────────────────────────────────────────────────────────── */
+
+.aftermath-modal {
+  max-width: 480px;
+}
+
+/* Verdict Banner */
+.aftermath__verdict {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, rgba(0, 80, 0, 0.08) 100%);
+}
+
+.aftermath__verdict.defeated {
+  border-color: rgba(230, 57, 70, 0.3);
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.08) 0%, rgba(100, 0, 0, 0.08) 100%);
+}
+
+.aftermath__verdict-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.aftermath__verdict-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.aftermath__verdict-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #4ADE80;
+  text-transform: uppercase;
+}
+
+.aftermath__verdict.defeated .aftermath__verdict-label {
+  color: #FF6B7A;
+}
+
+.aftermath__verdict-bill {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aftermath__verdict-thai {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.aftermath__vote-badge {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.3);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* Three Pillars Dashboard */
+.aftermath__pillars {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.aftermath__pillar {
+  padding: 12px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.aftermath__pillar.positive {
+  border-color: rgba(40, 167, 69, 0.3);
+}
+
+.aftermath__pillar.negative {
+  border-color: rgba(230, 57, 70, 0.3);
+}
+
+.aftermath__pillar-icon {
+  font-size: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.aftermath__pillar-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+}
+
+.aftermath__pillar-thai {
+  font-size: 0.52rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.aftermath__pillar-value {
+  font-size: 1.2rem;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 6px;
+}
+
+.aftermath__pillar-value.positive {
+  color: #4ADE80;
+}
+
+.aftermath__pillar-value.negative {
+  color: #FF6B7A;
+}
+
+.aftermath__pillar-value.neutral {
+  color: var(--text-muted);
+}
+
+/* Mini bar indicator */
+.aftermath__pillar-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.aftermath__pillar-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aftermath__pillar-bar-fill.positive {
+  background: linear-gradient(90deg, #28A745, #4ADE80);
+}
+
+.aftermath__pillar-bar-fill.negative {
+  background: linear-gradient(90deg, #E63946, #FF6B7A);
+}
+
+/* Public Reaction */
+.aftermath__reaction {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(255, 215, 0, 0.04);
+  border: 1px solid rgba(255, 215, 0, 0.12);
+  border-left: 3px solid rgba(255, 215, 0, 0.4);
+}
+
+.aftermath__reaction-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #FFD700;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.aftermath__reaction-text {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Entrance animation */
+@keyframes aftermath-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.aftermath-modal {
+  animation: aftermath-slide-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   STEP 22: ACTIVE PARTY IDENTITY INDICATOR
+   ────────────────────────────────────────────────────────────────────────── */
+
+.party-indicator-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 14px;
+  padding: 3px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  animation: pi-fade-in 0.5s ease forwards;
+}
+.party-indicator-box .status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+  transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+.party-indicator-box .label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.6rem;
+  opacity: 0.65;
+}
+.party-indicator-box .party-name-value {
+  font-weight: 700;
+  color: var(--text-bright);
+  font-size: 0.75rem;
+}
+@keyframes pi-fade-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+

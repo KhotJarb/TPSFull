@@ -135,6 +135,9 @@ const INITIAL_CAMPAIGN_STATE = {
   // Player resources
   playerFunds: 1000,       // in millions of Baht
   playerScrutiny: 0,       // 0-100: media/legal scrutiny (high = risk of disqualification)
+  politicalCapital: 50,    // STEP 73: shared with Parliament — political clout (0-100)
+  localPopularity: 50,     // STEP 73: shared with Parliament — ground-level support (0-100)
+  influence: 50,           // STEP 82: shared with Parliament — backroom currency (0-100)
   actionPointsPerWeek: 3,  // actions available each week
   actionPointsRemaining: 3,
 
@@ -165,9 +168,81 @@ function initCampaignState(playerPartyId) {
   campaignState = JSON.parse(JSON.stringify(INITIAL_CAMPAIGN_STATE));
   if (playerPartyId) campaignState.playerPartyId = playerPartyId;
 
-  // Initialize poll shares from base popularity
+  // ── STEP 207: Dynamic Election Year (from localStorage or default 2027) ──
+  const storedYear = localStorage.getItem('tps_current_election_year');
+  if (storedYear) {
+    campaignState.electionYear = parseInt(storedYear) || 2027;
+    console.log(`[campaign/data.js] STEP 207 — Dynamic election year loaded: ${campaignState.electionYear}`);
+  }
+
+  // ── STEP 207: Apply Legacy Buffs from Opposition Module ──
+  const legacyPolls = parseInt(localStorage.getItem('tps_legacy_polls'));
+  const legacyFunds = parseInt(localStorage.getItem('tps_legacy_funds'));
+  if (legacyPolls && !isNaN(legacyPolls)) {
+    console.log(`[campaign/data.js] STEP 207 — Legacy poll buff applied: +${legacyPolls}%`);
+  }
+  if (legacyFunds && !isNaN(legacyFunds)) {
+    campaignState.playerFunds += legacyFunds;
+    console.log(`[campaign/data.js] STEP 207 — Legacy funds buff applied: +฿${legacyFunds}M`);
+  }
+  // Clean up consumed legacy keys (one-time use)
+  localStorage.removeItem('tps_legacy_polls');
+  localStorage.removeItem('tps_legacy_funds');
+
+  // ── STEP 67: Read balance mode from localStorage ──
+  const balanceMode = localStorage.getItem('tps_balance_mode') || 'default';
+  campaignState.balanceMode = balanceMode;
+  console.log(`[campaign/data.js] Balance mode: ${balanceMode}`);
+
+  if (balanceMode === 'equality') {
+    // ── Sovereign Equality: ~20% each with ±2% random variation ──
+    const rawPolls = {};
+    let rawTotal = 0;
+    CAMPAIGN_PARTIES.forEach(p => {
+      const variation = (Math.random() * 4) - 2; // -2.0 to +2.0
+      rawPolls[p.id] = 20 + variation;
+      rawTotal += rawPolls[p.id];
+    });
+    // Normalize to exactly 100%
+    CAMPAIGN_PARTIES.forEach(p => {
+      campaignState.nationalPollShare[p.id] = Math.round(((rawPolls[p.id] / rawTotal) * 100) * 10) / 10;
+    });
+    // Fix any floating-point drift — adjust largest party
+    const pollSum = Object.values(campaignState.nationalPollShare).reduce((a, b) => a + b, 0);
+    const drift = Math.round((100 - pollSum) * 10) / 10;
+    if (drift !== 0) {
+      const largestId = Object.keys(campaignState.nationalPollShare)
+        .sort((a, b) => campaignState.nationalPollShare[b] - campaignState.nationalPollShare[a])[0];
+      campaignState.nationalPollShare[largestId] += drift;
+    }
+
+    // Flatten starting funds to level playing field
+    campaignState.playerFunds = 1000;
+    console.log('[campaign/data.js] Equality polls:', JSON.stringify(campaignState.nationalPollShare));
+  } else {
+    // ── Historical Realism: use hardcoded basePopularity ──
+    CAMPAIGN_PARTIES.forEach(p => {
+      campaignState.nationalPollShare[p.id] = p.basePopularity;
+    });
+  }
+
+  // ── STEP 207: Apply Legacy Poll Buff (after poll shares are set) ──
+  if (legacyPolls && !isNaN(legacyPolls) && legacyPolls > 0 && playerPartyId) {
+    campaignState.nationalPollShare[playerPartyId] =
+      (campaignState.nationalPollShare[playerPartyId] || 20) + legacyPolls;
+
+    // Re-normalize all poll shares to 100%
+    const totalPoll = Object.values(campaignState.nationalPollShare).reduce((a, b) => a + b, 0);
+    if (totalPoll > 0) {
+      for (const pid in campaignState.nationalPollShare) {
+        campaignState.nationalPollShare[pid] = Math.round((campaignState.nationalPollShare[pid] / totalPoll) * 1000) / 10;
+      }
+    }
+    console.log(`[campaign/data.js] STEP 207 — Player polls after legacy buff:`, JSON.stringify(campaignState.nationalPollShare));
+  }
+
+  // Initialize seat counters
   CAMPAIGN_PARTIES.forEach(p => {
-    campaignState.nationalPollShare[p.id] = p.basePopularity;
     campaignState.constituencySeats[p.id] = 0;
     campaignState.partyListSeats[p.id] = 0;
     campaignState.totalSeats[p.id] = 0;
@@ -175,9 +250,62 @@ function initCampaignState(playerPartyId) {
 
   // Generate MPs for all parties
   generateAllPartyMPs();
+
+  // STEP 73: Load any shared stats from localStorage (Parliament → Campaign bridge)
+  _loadStatsFromStorage();
+
   return campaignState;
 }
 
+
+// ──────────────────────────────────────────────────────────────────
+// STEP 73: CROSS-MODULE STATE SYNCHRONIZATION
+// Funds, Political Capital, Local Popularity, and Scrutiny are
+// shared between Campaign and Parliament via localStorage.
+// ──────────────────────────────────────────────────────────────────
+
+/**
+ * _syncStatsToStorage() — Writes current player stats to localStorage.
+ * Called after EVERY action, event, or day advance that changes stats.
+ * Parliament module reads these same keys on init.
+ */
+function _syncStatsToStorage() {
+  if (!campaignState) return;
+  try {
+    localStorage.setItem('tps_funds', String(campaignState.playerFunds));
+    localStorage.setItem('tps_capital', String(campaignState.politicalCapital));
+    localStorage.setItem('tps_local_pop', String(campaignState.localPopularity));
+    localStorage.setItem('tps_scrutiny', String(campaignState.playerScrutiny));
+    localStorage.setItem('tps_influence', String(campaignState.influence || 0)); // STEP 79
+  } catch (e) {
+    console.warn('[campaign/data.js] STEP 73 — Failed to sync stats to localStorage:', e);
+  }
+}
+
+/**
+ * _loadStatsFromStorage() — Pulls shared stats from localStorage.
+ * Used when transitioning Parliament → Campaign to pick up changes
+ * that Parliament made (e.g., capital +10 from a successful debate).
+ * Only overrides if the keys exist (first-time players use defaults).
+ */
+function _loadStatsFromStorage() {
+  if (!campaignState) return;
+
+  const storedFunds = localStorage.getItem('tps_funds');
+  const storedCapital = localStorage.getItem('tps_capital');
+  const storedLocalPop = localStorage.getItem('tps_local_pop');
+  const storedScrutiny = localStorage.getItem('tps_scrutiny');
+  const storedInfluence = localStorage.getItem('tps_influence'); // STEP 79
+
+  if (storedFunds !== null) campaignState.playerFunds = parseFloat(storedFunds);
+  if (storedCapital !== null) campaignState.politicalCapital = parseFloat(storedCapital);
+  if (storedLocalPop !== null) campaignState.localPopularity = parseFloat(storedLocalPop);
+  if (storedScrutiny !== null) campaignState.playerScrutiny = parseFloat(storedScrutiny);
+  if (storedInfluence !== null) campaignState.influence = parseFloat(storedInfluence); // STEP 79
+
+  console.log(`[campaign/data.js] STEP 73 — Loaded shared stats from localStorage:`);
+  console.log(`  Funds: ${campaignState.playerFunds}M฿ | Capital: ${campaignState.politicalCapital} | LocalPop: ${campaignState.localPopularity} | Influence: ${campaignState.influence}`);
+}
 // ──────────────────────────────────────────────────────────────────
 // SECTION 3: THAI NAME GENERATION
 // Realistic romanized Thai names (official English transliteration)

@@ -60,7 +60,9 @@ function initExtendedResources() {
 
   // Add Influence if not already present
   if (parliamentState.playerInfluence === undefined) {
-    parliamentState.playerInfluence = 40; // Start with 40/100
+    // STEP 82: Load from localStorage first, fallback to 50
+    const stored = localStorage.getItem('tps_influence');
+    parliamentState.playerInfluence = stored !== null ? parseFloat(stored) : 50;
   }
 
   // Legislative tracking
@@ -81,8 +83,83 @@ function initExtendedResources() {
     parliamentState.activeBills = [];
   }
 
+  // STEP 84: Restore active bills from localStorage
+  loadActiveBills();
+
   console.log("[engine.js] Extended resources initialized.");
   console.log(`  → Influence: ${parliamentState.playerInfluence}/100`);
+  console.log(`  → Active Bills: ${parliamentState.activeBills.length}`);
+}
+
+/**
+ * STEP 84: loadActiveBills() — Restores the active bills pipeline
+ * from localStorage. Called during Parliament module initialization
+ * to ensure bills survive module switches.
+ *
+ * Only loads if parliamentState.activeBills is empty (fresh load).
+ * If bills already exist in memory, this is a no-op to prevent duplication.
+ */
+function loadActiveBills() {
+  if (!parliamentState) return;
+
+  // Only restore if activeBills is empty (first load)
+  if (parliamentState.activeBills && parliamentState.activeBills.length > 0) {
+    console.log(`[engine.js] STEP 84 — Active bills already in memory (${parliamentState.activeBills.length}). Skipping load.`);
+    return;
+  }
+
+  try {
+    const savedData = localStorage.getItem('tps_active_bills');
+    if (!savedData) {
+      console.log('[engine.js] STEP 84 — No saved active bills found.');
+      return;
+    }
+
+    const parsed = JSON.parse(savedData);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      console.log('[engine.js] STEP 84 — Saved bills array is empty.');
+      return;
+    }
+
+    // Rebuild bill objects — validate each has required fields
+    const restored = [];
+    parsed.forEach(saved => {
+      if (!saved.id || !saved.templateId || !saved.stage) {
+        console.warn(`[engine.js] STEP 84 — Skipping invalid bill:`, saved);
+        return;
+      }
+
+      // Rebuild with all serialized fields
+      restored.push({
+        id:                 saved.id,
+        templateId:         saved.templateId,
+        title:              saved.title || 'Unknown Bill',
+        titleThai:          saved.titleThai || '',
+        category:           saved.category || 'reform',
+        description:        saved.description || '',
+        stage:              saved.stage,
+        signatures:         saved.signatures || 0,
+        requiredSignatures: saved.requiredSignatures || 20,
+        difficulty:         saved.difficulty || 50,
+        publicApproval:     saved.publicApproval || 50,
+        committeeExpert:    saved.committeeExpert || null,
+        committeeBonus:     saved.committeeBonus || 0,
+        passChance:         saved.passChance || 50,
+        initiatedDay:       saved.initiatedDay || 0,
+        resolvedDay:        saved.resolvedDay || null,
+        history:            Array.isArray(saved.history) ? saved.history : ['Bill restored from save.']
+      });
+    });
+
+    parliamentState.activeBills = restored;
+    console.log(`[engine.js] STEP 84 — Restored ${restored.length} active bill(s) from localStorage:`);
+    restored.forEach(b => {
+      console.log(`  → "${b.title}" | Stage: ${b.stage} | Sigs: ${b.signatures}/${b.requiredSignatures}`);
+    });
+
+  } catch (e) {
+    console.warn('[engine.js] STEP 84 — Failed to load active bills:', e);
+  }
 }
 
 
@@ -166,6 +243,52 @@ const BILL_TEMPLATES = [
     difficulty: 35,
     publicApproval: 65,
     description: "GDPR-style data protection, right to be forgotten, Big Tech accountability."
+  },
+
+  // ── STEP 80: 4 New Bills ──────────────────────────────────────────
+  {
+    id: "bill_clean_air",
+    title: "Clean Air Act",
+    titleThai: "ร่าง พ.ร.บ. อากาศสะอาด",
+    category: "social",
+    requiredSignatures: 25,
+    influenceCost: 15,
+    difficulty: 45,
+    publicApproval: 90,
+    description: "Ban crop burning, enforce PM2.5 standards, hold factories accountable. Thailand's annual smog crisis demands action."
+  },
+  {
+    id: "bill_marriage_equality",
+    title: "Marriage Equality Act",
+    titleThai: "ร่าง พ.ร.บ. สมรสเท่าเทียม",
+    category: "social",
+    requiredSignatures: 30,
+    influenceCost: 20,
+    difficulty: 55,
+    publicApproval: 70,
+    description: "Full legal recognition of same-sex marriage, adoption rights, and spousal benefits. A landmark civil rights bill."
+  },
+  {
+    id: "bill_amnesty",
+    title: "Political Amnesty Bill",
+    titleThai: "ร่าง พ.ร.บ. นิรโทษกรรม",
+    category: "reform",
+    requiredSignatures: 60,
+    influenceCost: 40,
+    difficulty: 90,
+    publicApproval: 45,
+    description: "Blanket amnesty for all political offenses since 2006. Deeply divisive — unites some, enrages others. Senate will fight this."
+  },
+  {
+    id: "bill_soft_power",
+    title: "Soft Power Fund Act",
+    titleThai: "ร่าง พ.ร.บ. กองทุนซอฟต์พาวเวอร์",
+    category: "economic",
+    requiredSignatures: 20,
+    influenceCost: 12,
+    difficulty: 30,
+    publicApproval: 75,
+    description: "Establish a ฿5B fund for Thai cultural exports — film, music, food, Muay Thai. Boost Thailand's global brand."
   }
 ];
 
@@ -203,6 +326,9 @@ function initiateBill(billTemplateId) {
   parliamentState.playerInfluence = Math.max(0,
     parliamentState.playerInfluence - adjustedCost);
 
+  // STEP 82: Persist influence to localStorage
+  localStorage.setItem('tps_influence', String(parliamentState.playerInfluence));
+
   // Create the bill object
   const bill = {
     id: `bill_${Date.now()}`,
@@ -225,6 +351,9 @@ function initiateBill(billTemplateId) {
 
   parliamentState.activeBills.push(bill);
   parliamentState.legislativeRecord.billsInitiated++;
+
+  // STEP 83: Persist active bills to localStorage
+  saveActiveBills();
 
   console.log(`[engine.js] Bill initiated: "${template.title}" (Influence cost: ${adjustedCost})`);
 
@@ -275,6 +404,9 @@ function gatherSignatures(billId) {
   // Deduct cost
   parliamentState.playerInfluence = Math.max(0, parliamentState.playerInfluence - cost);
 
+  // STEP 82: Persist influence to localStorage
+  localStorage.setItem('tps_influence', String(parliamentState.playerInfluence));
+
   // Calculate success (scaled by difficulty)
   let successChance = 60;
   successChance += (parliamentState.playerPoliticalCapital || 50) * 0.2;
@@ -309,6 +441,9 @@ function gatherSignatures(billId) {
       ? `Lobbied MPs for signatures: +${signaturesGained} (${bill.signatures}/${bill.requiredSignatures})`
       : `Lobbying attempt had limited success: +${signaturesGained} (${bill.signatures}/${bill.requiredSignatures})`
   );
+
+  // STEP 83: Persist active bills to localStorage
+  saveActiveBills();
 
   return {
     success,
@@ -439,6 +574,9 @@ function committeePhase(billId, expertId) {
   bill.history.push(`Committee phase completed with ${expert.label}. Pass chance: ${bill.passChance}%.`);
 
   parliamentState.legislativeRecord.billsInCommittee++;
+
+  // STEP 83: Persist active bills to localStorage
+  saveActiveBills();
 
   return {
     success: true,
@@ -613,6 +751,9 @@ function earnInfluence(amount, source) {
   parliamentState.playerInfluence = Math.min(100,
     (parliamentState.playerInfluence || 0) + amount);
 
+  // STEP 82: Persist influence to localStorage
+  localStorage.setItem('tps_influence', String(parliamentState.playerInfluence));
+
   console.log(`[engine.js] Influence +${amount} from: ${source} (Total: ${parliamentState.playerInfluence})`);
 
   logEvent("influence", `Influence +${amount}`, source, { influence: amount });
@@ -629,6 +770,10 @@ function spendInfluence(amount) {
   if ((parliamentState.playerInfluence || 0) < amount) return false;
 
   parliamentState.playerInfluence -= amount;
+
+  // STEP 82: Persist influence to localStorage
+  localStorage.setItem('tps_influence', String(parliamentState.playerInfluence));
+
   return true;
 }
 
@@ -666,11 +811,173 @@ function getBillTemplates() {
   return [...BILL_TEMPLATES];
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// STEP 83: ACTIVE BILL PERSISTENCE
+// Saves active bills pipeline to localStorage so it survives module switches.
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * saveActiveBills() — Serializes all active bills to localStorage.
+ * Called after every bill-mutating operation (propose, gather sigs,
+ * committee, resolve).
+ */
+function saveActiveBills() {
+  if (!parliamentState || !parliamentState.activeBills) return;
+
+  try {
+    const serialized = parliamentState.activeBills.map(b => ({
+      id:                 b.id,
+      templateId:         b.templateId,
+      title:              b.title,
+      titleThai:          b.titleThai,
+      category:           b.category,
+      description:        b.description,
+      stage:              b.stage,
+      signatures:         b.signatures,
+      requiredSignatures: b.requiredSignatures,
+      difficulty:         b.difficulty,
+      publicApproval:     b.publicApproval,
+      committeeExpert:    b.committeeExpert,
+      committeeBonus:     b.committeeBonus,
+      passChance:         b.passChance,
+      initiatedDay:       b.initiatedDay,
+      resolvedDay:        b.resolvedDay || null,
+      history:            b.history
+    }));
+
+    localStorage.setItem('tps_active_bills', JSON.stringify(serialized));
+    console.log(`[engine.js] STEP 83 — Saved ${serialized.length} active bill(s) to localStorage.`);
+  } catch (e) {
+    console.warn('[engine.js] STEP 83 — Failed to save active bills:', e);
+  }
+}
+
 /**
  * getLegislativeRecord() — Returns the player's legislative stats.
  */
 function getLegislativeRecord() {
   return parliamentState ? parliamentState.legislativeRecord : null;
+}
+
+
+// ──────────────────────────────────────────────────────────────────────────
+// STEP 80: BILL RESOLUTION — resolveBill()
+// Called after a bill completes the vote stage.
+// Passing rewards Capital + Local Popularity scaled by difficulty.
+// Failing has no penalty — just flavor text and a tip.
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * BILL_FAIL_FLAVOR — Random flavor text for failed bills.
+ * Selected randomly to keep narrative fresh.
+ */
+const BILL_FAIL_FLAVOR = [
+  "The opposition whip held firm. Better luck next session.",
+  "Senate conservatives blocked it. You'll need more allies.",
+  "Too many abstentions. The coalition fractured at the last moment.",
+  "The House Speaker ruled the bill out of order on a technicality.",
+  "Key swing MPs defected to the opposition on the final count.",
+  "Public interest waned and MPs voted with the establishment.",
+  "เสียงไม่พอ — ฝ่ายค้านสามัคคีกว่าที่คิด"
+];
+
+/**
+ * resolveBill() — Resolves a bill's final outcome after voting.
+ *
+ * @param {string} billId — The active bill's ID
+ * @param {boolean} isPassed — Whether the bill passed the final vote
+ * @returns {Object} Resolution result with rewards or flavor text
+ */
+function resolveBill(billId, isPassed) {
+  if (!parliamentState) return { error: "State not initialized." };
+
+  const bill = parliamentState.activeBills.find(b => b.id === billId);
+  if (!bill) return { error: "Bill not found." };
+
+  // Get difficulty scaling
+  const diff = (typeof TPSGlobalState !== 'undefined') ? TPSGlobalState.difficulty : 'normal';
+  let rewardMult = 1.0;
+  if (diff === 'easy') rewardMult = 1.3;   // Generous rewards
+  if (diff === 'hard') rewardMult = 0.7;   // Modest rewards
+
+  if (isPassed) {
+    // ── SUCCESS: Reward based on bill difficulty ──
+    // STEP 88: 1.5x buff to make passing bills more rewarding
+    const diffMultiplier = (bill.difficulty || 50) / 50;
+    const capReward = Math.floor(3 * diffMultiplier * rewardMult * 1.5);
+    const popReward = Math.floor(2 * diffMultiplier * rewardMult * 1.5);
+
+    // Apply rewards
+    applyEffects({
+      politicalCapital: capReward,
+      localPopularity: popReward
+    });
+
+    // Update bill status
+    bill.stage = BILL_STAGES.PASSED;
+    bill.resolvedDay = parliamentState.totalDaysElapsed || 0;
+    bill.history.push(`✅ PASSED! Rewarded +${capReward} Capital, +${popReward} Local Popularity.`);
+
+    // Track stats
+    if (parliamentState.legislativeRecord) {
+      parliamentState.legislativeRecord.billsPassed++;
+    }
+
+    // Log event
+    logEvent("legislation", `Bill Passed: ${bill.title}`,
+      `"${bill.title}" passed the final vote! +${capReward} Capital, +${popReward} Local Popularity.`,
+      { capital: capReward, popularity: popReward });
+
+    console.log(`[engine.js] STEP 80 — Bill PASSED: "${bill.title}" | +${capReward} Capital, +${popReward} LocalPop`);
+
+    // STEP 83: Persist active bills to localStorage
+    saveActiveBills();
+
+    return {
+      success: true,
+      passed: true,
+      bill: bill,
+      capitalReward: capReward,
+      popularityReward: popReward,
+      message: `✅ "${bill.title}" passed! The people celebrate. +${capReward} Capital, +${popReward} Local Popularity.`,
+      messageTH: `✅ "${bill.titleThai}" ผ่านสภาแล้ว! ประชาชนยินดี +${capReward} ทุนการเมือง, +${popReward} คะแนนนิยมท้องถิ่น`
+    };
+
+  } else {
+    // ── FAILED: No penalty, just flavor text ──
+    bill.stage = BILL_STAGES.DEFEATED;
+    bill.resolvedDay = parliamentState.totalDaysElapsed || 0;
+
+    const flavor = BILL_FAIL_FLAVOR[Math.floor(Math.random() * BILL_FAIL_FLAVOR.length)];
+    bill.history.push(`❌ DEFEATED. ${flavor}`);
+
+    // Track stats
+    if (parliamentState.legislativeRecord) {
+      parliamentState.legislativeRecord.billsDefeated++;
+    }
+
+    // Log event
+    logEvent("legislation", `Bill Defeated: ${bill.title}`,
+      `"${bill.title}" was rejected. ${flavor}`,
+      { defeated: true });
+
+    console.log(`[engine.js] STEP 80 — Bill DEFEATED: "${bill.title}" | ${flavor}`);
+
+    // STEP 83: Persist active bills to localStorage
+    saveActiveBills();
+
+    return {
+      success: true,
+      passed: false,
+      bill: bill,
+      capitalReward: 0,
+      popularityReward: 0,
+      flavor: flavor,
+      message: `❌ "${bill.title}" was rejected. ${flavor}`,
+      messageTH: `❌ "${bill.titleThai}" ถูกปัดตก ลองสร้างอิทธิพลเพิ่มแล้วเจรจาใหม่!`,
+      tip: "Keep building your Influence and try negotiating next time!"
+    };
+  }
 }
 
 

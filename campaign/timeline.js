@@ -244,6 +244,33 @@ function advanceCampaignDay() {
     runAICampaigns();
     applyPollDrift();
 
+    // ── STEP 79: Capital-Driven Influence Regeneration ──
+    if (campaignState) {
+      const currentCapital = campaignState.politicalCapital || 0;
+      let influenceGain = 0;
+
+      if (currentCapital >= 75) {
+        influenceGain = 20;
+      } else if (currentCapital > 60) {
+        influenceGain = 15;
+      } else if (currentCapital > 50) {
+        influenceGain = 10;
+      }
+
+      if (influenceGain > 0) {
+        campaignState.influence = Math.min(100, (campaignState.influence || 0) + influenceGain);
+        localStorage.setItem('tps_influence', String(campaignState.influence));
+
+        campaignState.campaignLog.push({
+          week: newWeek,
+          type: "influence_regen",
+          message: `🤝 High Capital (${currentCapital}) attracted allies. Influence +${influenceGain} (now: ${campaignState.influence})`
+        });
+
+        console.log(`[campaign/timeline.js] STEP 79 — Influence +${influenceGain} (Capital: ${currentCapital}, Total Influence: ${campaignState.influence})`);
+      }
+    }
+
     if (campaignState) {
       campaignState.campaignLog.push({
         week: newWeek,
@@ -275,6 +302,14 @@ function advanceCampaignDay() {
     }
   }
 
+  // ── STEP 74: Check for critical low stat penalties ──
+  if (typeof checkStatPenalties === 'function') {
+    const statPenalties = checkStatPenalties();
+    if (statPenalties.length > 0) {
+      result.statPenalties = statPenalties;
+    }
+  }
+
   // ── Campaign end check ──
   if (CampaignCalendar.isLastDay()) {
     result.type = "campaign_end";
@@ -286,6 +321,9 @@ function advanceCampaignDay() {
   _fireCampaignTimeCallback('onDayAdvance', result);
   _fireCampaignTimeCallback('onStateUpdate', result);
 
+  // STEP 73: Persist shared stats to localStorage after every day advance
+  if (typeof _syncStatsToStorage === 'function') _syncStatsToStorage();
+
   return result;
 }
 
@@ -296,10 +334,23 @@ function advanceCampaignDay() {
 // ──────────────────────────────────────────────────────────────────────────
 
 /**
- * PARLIAMENT_IGNORE_PENALTY — Political Capital lost for ignoring Parliament.
+ * STEP 77: getParliamentIgnorePenalty() — Dynamic penalty based on difficulty.
  * In Thai politics, absence from Parliament sessions is heavily criticized.
+ * Higher difficulty = harsher consequence for skipping.
+ *
+ *   Easy:   -4 Political Capital (lenient — media forgives quickly)
+ *   Normal: -6 Political Capital (standard — questions asked)
+ *   Hard:   -8 Political Capital (brutal — front page scandal)
+ *
+ * @returns {number} The capital penalty amount (positive number)
  */
-const PARLIAMENT_IGNORE_PENALTY = 8;
+function getParliamentIgnorePenalty() {
+  const diff = (typeof TPSGlobalState !== 'undefined') ? TPSGlobalState.difficulty
+    : (localStorage.getItem('tps_difficulty') || 'normal');
+  if (diff === 'easy') return 4;
+  if (diff === 'hard') return 8;
+  return 6; // normal
+}
 
 /**
  * handleParliamentChoice() — Called when the player responds to
@@ -322,27 +373,35 @@ function handleParliamentChoice(choice) {
     };
 
   } else if (choice === "ignore") {
-    // Apply penalty
-    const penalty = PARLIAMENT_IGNORE_PENALTY;
+    // STEP 77: Dynamic penalty based on difficulty
+    const penalty = getParliamentIgnorePenalty();
+    const scrutinyHit = 3;
 
     if (campaignState) {
-      // Deduct from scrutiny and log it
-      campaignState.playerScrutiny = Math.min(100, campaignState.playerScrutiny + 3);
+      // Deduct Political Capital
+      campaignState.politicalCapital = Math.max(0,
+        (campaignState.politicalCapital || 50) - penalty);
+
+      // Increase scrutiny
+      campaignState.playerScrutiny = Math.min(100, campaignState.playerScrutiny + scrutinyHit);
+
+      // STEP 73: Sync to localStorage immediately
+      _syncStatsToStorage();
 
       campaignState.campaignLog.push({
         week: CampaignCalendar.getWeek(),
         type: "parliament_skip",
-        message: `Skipped Parliament session on ${CampaignCalendar.getDayName()}. Media scrutiny +3. Political capital penalty applied.`
+        message: `🏛️ Skipped Parliament on ${CampaignCalendar.getDayName()}. -${penalty} Political Capital, +${scrutinyHit}% Scrutiny.`
       });
     }
 
-    console.log(`[campaign/timeline.js] Player ignores Parliament. Penalty: -${penalty} Political Capital, +3 Scrutiny`);
+    console.log(`[campaign/timeline.js] STEP 77 — Player ignores Parliament. Penalty: -${penalty} Capital, +${scrutinyHit} Scrutiny`);
 
     return {
       action: "penalty",
       capitalPenalty: penalty,
-      scrutinyPenalty: 3,
-      message: `You skipped the Parliament session. The media criticizes your absence. (-${penalty} Political Capital, +3 Scrutiny)`
+      scrutinyPenalty: scrutinyHit,
+      message: `You skipped the Parliament session. The media criticizes your absence. (-${penalty} Political Capital, +${scrutinyHit}% Scrutiny)`
     };
   }
 

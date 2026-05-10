@@ -54,6 +54,39 @@
         </div>
       </div>
 
+      <!-- ── STEP 65: Game Balance Mode Selector ── -->
+      <div id="balance-mode-selector" class="balance-mode-selector">
+        <div class="balance-mode-header">
+          <span class="balance-mode-icon">⚖️</span>
+          <span class="balance-mode-title" data-i18n="game_mode_title">Game Balance Mode</span>
+          <span class="balance-mode-sub" data-i18n="game_mode_sub">โหมดสมดุลเกม — Choose starting conditions</span>
+        </div>
+        <div class="balance-mode-options">
+          <label class="mode-option" id="mode-default-label">
+            <input type="radio" name="balanceMode" value="default" checked>
+            <span class="mode-option-card">
+              <span class="mode-option-icon">📜</span>
+              <span class="mode-option-info">
+                <strong data-i18n="mode_default">Historical Realism</strong>
+                <em data-i18n="mode_default_th">อิงความเป็นจริง</em>
+                <p data-i18n="mode_default_desc">Parties start with historically accurate base scores. Asymmetric difficulty — some parties are harder to win with.</p>
+              </span>
+            </span>
+          </label>
+          <label class="mode-option" id="mode-equality-label">
+            <input type="radio" name="balanceMode" value="equality">
+            <span class="mode-option-card">
+              <span class="mode-option-icon">🤝</span>
+              <span class="mode-option-info">
+                <strong data-i18n="mode_equality">Sovereign Equality</strong>
+                <em data-i18n="mode_equality_th">โหมดเท่าเทียม</em>
+                <p data-i18n="mode_equality_desc">All parties start at ~20% polls with minor random variation. Pure strategic gameplay on a level field.</p>
+              </span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <button id="btn-start-campaign" class="btn btn-gold btn-lg" disabled data-i18n="campaign_begin">
         Begin Campaign →
       </button>
@@ -69,6 +102,11 @@
       <div class="ch-left">
         <span class="ch-logo">TPS</span>
         <span class="ch-title" data-i18n="campaign_hq">Campaign HQ</span>
+        <div id="active-party-display" class="party-indicator-box">
+          <div id="player-party-color-dot" class="status-dot"></div>
+          <span class="label" data-i18n="current_party_label">Affiliation:</span>
+          <span id="player-party-name" class="party-name-value">Loading...</span>
+        </div>
       </div>
       <div class="ch-center">
         <div class="week-badge">
@@ -85,10 +123,16 @@
           <span id="val-funds" class="res-val">1000</span>
           <span class="res-unit">M฿</span>
         </div>
-        <div class="resource" data-i18n="campaign_scrutiny" data-i18n-attr="title">
+        <div class="resource resource-scrutiny" id="scrutiny-container" title="EC Scrutiny — Risk of disqualification">
           <span class="res-icon">🔍</span>
-          <span id="val-scrutiny" class="res-val">0</span>
-          <span class="res-unit">%</span>
+          <div class="scrutiny-bar-wrap">
+            <div class="scrutiny-bar-track">
+              <div class="scrutiny-bar-fill" id="scrutiny-bar-fill" style="width:0%"></div>
+            </div>
+            <span id="val-scrutiny" class="res-val scrutiny-val">0</span>
+            <span class="res-unit">%</span>
+          </div>
+          <span class="scrutiny-label" id="scrutiny-label">SAFE</span>
         </div>
         <div class="resource" data-i18n="campaign_ap" data-i18n-attr="title">
           <span class="res-icon">⚡</span>
@@ -97,12 +141,12 @@
         </div>
       </div>
     </header>
+    <!-- ═══ STEP 62: Strict 3-Column Dashboard Layout ═══ -->
+    <div id="campaign-body" class="campaign-dashboard">
 
-    <!-- Dashboard Body -->
-    <div id="campaign-body">
-      <!-- LEFT: Map + Polls -->
-      <div class="dash-left">
-        <div class="panel map-panel">
+      <!-- ─── LEFT COLUMN: Map (flex-grow) + Polls (fixed) ─── -->
+      <div class="dashboard-col left-col">
+        <div class="panel map-panel" id="map-panel">
           <div class="panel-head">
             <h2><span class="hi">🗺️</span> <span data-i18n="campaign_map_title">Thailand Electoral Map</span></h2>
             <div class="map-legend" id="map-legend"></div>
@@ -113,43 +157,70 @@
           <div id="map-tooltip" class="map-tooltip"></div>
         </div>
 
-        <div class="panel poll-panel">
+        <div class="panel poll-panel" id="national-polls-container">
           <div class="panel-head"><h2><span class="hi">📊</span> <span data-i18n="campaign_polls_title">National Polls</span></h2></div>
           <div id="poll-bars" class="poll-bars"></div>
         </div>
       </div>
 
-      <!-- UNIFIED CALENDAR STRIP (NEW — Part 2) -->
-      <div class="calendar-strip" id="calendar-strip">
-        <div class="cal-strip-inner" id="cal-strip-days">
-          <!-- 7 day cells populated by main.js -->
+      <!-- ─── CENTER COLUMN: Calendar (fixed) + Actions Grid (flex-grow) ─── -->
+      <div class="dashboard-col center-col">
+        <div class="calendar-strip" id="calendar-strip">
+          <div class="cal-strip-inner" id="cal-strip-days">
+            <!-- 7 day cells populated by main.js -->
+          </div>
         </div>
-      </div>
 
-      <!-- CENTER: Actions + Log -->
-      <div class="dash-center">
-        <div class="panel actions-panel">
-          <div class="panel-head"><h2><span class="hi">⚡</span> <span data-i18n="campaign_actions_title">Campaign Actions</span></h2></div>
+        <div class="panel actions-panel" id="actions-panel">
+          <div class="panel-head"><h2><span class="hi">⚡</span> <span data-i18n="campaign_actions_title">Campaign Actions</span></h2><span class="badge" id="ap-badge">3 AP</span></div>
           <div id="action-buttons" class="action-grid">
+            <!-- Row 1: Core Actions -->
             <button class="action-btn" id="act-rally" data-action="rally">
               <div class="act-icon">📢</div>
               <div class="act-label" data-i18n="action_rally">Hold Rally</div>
-              <div class="act-cost" data-i18n="action_rally_cost">-50M฿ · -1 AP</div>
-            </button>
-            <button class="action-btn" id="act-io" data-action="io">
-              <div class="act-icon">📱</div>
-              <div class="act-label" data-i18n="action_io">IO Campaign</div>
-              <div class="act-cost" data-i18n="action_io_cost">-80M฿ · -1 AP</div>
+              <div class="act-cost">-50M฿ · -1 AP</div>
             </button>
             <button class="action-btn" id="act-banyai" data-action="banyai">
               <div class="act-icon">🏘️</div>
               <div class="act-label" data-i18n="action_banyai">Deploy Ban Yai</div>
-              <div class="act-cost" data-i18n="action_banyai_cost">-120M฿ · -1 AP</div>
+              <div class="act-cost">-120M฿ · -1 AP</div>
             </button>
+            <button class="action-btn" id="act-io" data-action="io_smear">
+              <div class="act-icon">🐍</div>
+              <div class="act-label" data-i18n="action_io_smear">IO Smear Campaign</div>
+              <div class="act-cost">-80M฿ · -1 AP</div>
+            </button>
+            <!-- Row 2: Strategic Actions -->
+            <button class="action-btn" id="act-debate" data-action="tv_debate">
+              <div class="act-icon">📺</div>
+              <div class="act-label" data-i18n="action_tv_debate">Televised Debate</div>
+              <div class="act-cost">-5 Cap · -1 AP</div>
+            </button>
+            <button class="action-btn" id="act-relief" data-action="grassroots_relief">
+              <div class="act-icon">🎁</div>
+              <div class="act-label" data-i18n="action_grassroots">Grassroots Relief</div>
+              <div class="act-cost">-80M฿ · -1 AP</div>
+            </button>
+            <button class="action-btn" id="act-ec" data-action="ec_petition">
+              <div class="act-icon">⚖️</div>
+              <div class="act-label" data-i18n="action_ec_petition">File EC Petition</div>
+              <div class="act-cost">-8 Cap · -1 AP</div>
+            </button>
+            <!-- Row 3: Economy & Media -->
             <button class="action-btn" id="act-fundraise" data-action="fundraise">
               <div class="act-icon">💵</div>
               <div class="act-label" data-i18n="action_fundraise">Fundraise</div>
-              <div class="act-cost" data-i18n="action_fundraise_cost">-1 AP</div>
+              <div class="act-cost">-1 AP</div>
+            </button>
+            <button class="action-btn" id="act-media" data-action="media_tour">
+              <div class="act-icon">🎥</div>
+              <div class="act-label" data-i18n="action_media_tour">Media Tour</div>
+              <div class="act-cost">-40M฿ · -1 AP</div>
+            </button>
+            <button class="action-btn" id="act-poll" data-action="commission_poll">
+              <div class="act-icon">📊</div>
+              <div class="act-label" data-i18n="action_poll">Commission Poll</div>
+              <div class="act-cost">-30M฿ · -1 AP</div>
             </button>
           </div>
           <!-- Province/Region/District Selector (shown when relevant) -->
@@ -160,30 +231,30 @@
             <button id="btn-cancel-action" class="btn btn-ghost btn-md" data-i18n="action_cancel">Cancel</button>
           </div>
         </div>
+      </div>
 
-        <div class="panel">
+      <!-- ─── RIGHT COLUMN: Log (fixed) + Controls (fixed) + Roster (flex-grow, scrollable) ─── -->
+      <div class="dashboard-col right-col">
+        <div class="panel log-panel-right" id="campaign-log-container">
           <div class="panel-head"><h2><span class="hi">📖</span> <span data-i18n="campaign_log_title">Campaign Log</span></h2></div>
           <div id="campaign-log" class="campaign-log">
             <div class="log-empty" data-i18n="campaign_log_empty">Campaign begins. Choose your actions wisely.</div>
           </div>
         </div>
 
-        <div class="week-controls">
+        <div class="week-controls" id="turn-controls">
           <button id="btn-next-day" class="btn btn-gold btn-lg" data-i18n="campaign_next_day">
             ☀️ Next Day →
           </button>
-          <button id="btn-end-week" class="btn btn-ghost btn-lg" style="margin-left:8px;" data-i18n="campaign_skip_week">
+          <button id="btn-end-week" class="btn btn-ghost btn-lg" data-i18n="campaign_skip_week">
             ⏩ Skip to Week End
           </button>
           <button id="btn-hold-election" class="btn btn-danger btn-lg" style="display:none;" data-i18n="campaign_hold_election">
             🗳️ Hold General Election
           </button>
         </div>
-      </div>
 
-      <!-- RIGHT: Roster -->
-      <div class="dash-right">
-        <div class="panel roster-panel">
+        <div class="panel roster-panel" id="mp-roster-container">
           <div class="panel-head">
             <h2><span class="hi">👔</span> <span data-i18n="campaign_roster_title">MP Roster</span></h2>
             <span id="roster-count" class="badge">0 / 500</span>
@@ -194,6 +265,7 @@
           <div id="roster-list" class="roster-list"></div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -311,7 +383,7 @@
         </button>
       </div>
       <p style="color:var(--text3);font-size:.7rem;margin-top:12px;" id="parl-modal-penalty">
-        Penalty for ignoring: -8 Political Capital, +3% Scrutiny
+        ⚠️ Penalty for ignoring: -6 Political Capital, +3% Scrutiny (scales by difficulty)
       </p>
     </div>
   </div>
@@ -322,11 +394,13 @@
   <!-- Shared: Localization & Settings Engine -->
   <script src="../shared/localization.js"></script>
   <script src="../shared/settings.js"></script>
+  <script src="../shared/news.js"></script>
 
   <!-- Scripts (timeline.js added for Part 2 — Unified Time Engine) -->
   <script src="data.js"></script>
   <script src="timeline.js"></script>
   <script src="engine.js"></script>
+  <script src="events.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

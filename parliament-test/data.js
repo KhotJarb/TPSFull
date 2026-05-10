@@ -485,6 +485,12 @@ const INITIAL_PARLIAMENT_STATE = {
   playerLocalPopularity: 50,       // Start at 50/100 — middle ground
   playerFunds: 500,                // Starting funds (millions ฿)
 
+  // ── v1.0.2: Parliamentary Agency Stats ──
+  partyLoyalty: 70,                // 0-100: How loyal your party MPs are to your whip
+  coalitionStability: 65,          // 0-100: How stable the governing coalition is
+  whipUsedThisSession: false,      // Did the player enforce party whip this debate?
+  whipUsesTotal: 0,                // Total whip enforcements (excessive use decays loyalty)
+
   // ── Phase Control ──
   currentPhase: "macro",           // "macro" or "parliament"
 
@@ -567,6 +573,24 @@ function initParliamentState(config = {}) {
   if (config.playerAlignment)    parliamentState.playerAlignment = config.playerAlignment;
   if (config.playerName)         parliamentState.playerName = config.playerName;
   if (config.playerConstituency) parliamentState.playerConstituency = config.playerConstituency;
+
+  // STEP 73/79: Load shared stats from localStorage (Campaign → Parliament bridge)
+  try {
+    const storedFunds = localStorage.getItem('tps_funds');
+    const storedCapital = localStorage.getItem('tps_capital');
+    const storedLocalPop = localStorage.getItem('tps_local_pop');
+    const storedInfluence = localStorage.getItem('tps_influence'); // STEP 79
+
+    if (storedFunds !== null) parliamentState.playerFunds = parseFloat(storedFunds);
+    if (storedCapital !== null) parliamentState.playerPoliticalCapital = parseFloat(storedCapital);
+    if (storedLocalPop !== null) parliamentState.playerLocalPopularity = parseFloat(storedLocalPop);
+    if (storedInfluence !== null) parliamentState.playerInfluence = parseFloat(storedInfluence); // STEP 79
+
+    console.log(`[parliament/data.js] STEP 73/79 — Loaded shared stats:`);
+    console.log(`  Funds: ${parliamentState.playerFunds}M฿ | Capital: ${parliamentState.playerPoliticalCapital} | LocalPop: ${parliamentState.playerLocalPopularity} | Influence: ${parliamentState.playerInfluence || 40}`);
+  } catch (e) {
+    console.warn('[parliament/data.js] STEP 73 — Could not load shared stats:', e);
+  }
 
   // Log initialization
   console.log(`[parliament/data.js] Parliament RPG initialized.`);
@@ -688,6 +712,30 @@ function applyEffects(effects) {
   }
   if (effects.funds !== undefined) {
     parliamentState.playerFunds = Math.max(0, parliamentState.playerFunds + effects.funds);
+  }
+
+  // v1.0.2: Party agency stats
+  if (effects.partyLoyalty !== undefined) {
+    parliamentState.partyLoyalty = clampStat(
+      parliamentState.partyLoyalty + effects.partyLoyalty
+    );
+  }
+  if (effects.coalitionStability !== undefined) {
+    parliamentState.coalitionStability = clampStat(
+      parliamentState.coalitionStability + effects.coalitionStability
+    );
+  }
+
+  // STEP 73/79: Sync shared stats back to localStorage (Parliament → Campaign bridge)
+  try {
+    localStorage.setItem('tps_funds', String(parliamentState.playerFunds));
+    localStorage.setItem('tps_capital', String(parliamentState.playerPoliticalCapital));
+    localStorage.setItem('tps_local_pop', String(parliamentState.playerLocalPopularity));
+    if (parliamentState.playerInfluence !== undefined) {
+      localStorage.setItem('tps_influence', String(parliamentState.playerInfluence)); // STEP 79
+    }
+  } catch (e) {
+    console.warn('[parliament/data.js] STEP 73 — Failed to sync stats:', e);
   }
 
   console.log(`[data.js] Effects applied:`, effects);

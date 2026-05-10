@@ -18,8 +18,11 @@ const PARTIES = [
     ideology: "progressive",
     description: "Youth-driven, urban-based reformists pushing for constitutional rewrite, military reform, and digital rights. Wildly popular online but polarizing among elites.",
     color: "#FF6B2B",
+    leader: "Thanawat Chaiprakan",
+    leaderTitle: "Secretary-General",
     seats: 152,
     relation: 70,
+    coalitionLoyalty: 72,
     inCoalition: true,
     priorities: ["constitution_reform", "decentralization", "digital_rights", "education"],
     voteModifiers: {
@@ -40,8 +43,11 @@ const PARTIES = [
     ideology: "populist",
     description: "The spiritual successor to banned populist movements. Champions rural subsidies, universal healthcare expansion, and infrastructure mega-projects. Has deep roots in the Northeast and North.",
     color: "#E63946",
+    leader: "Siriporn Rattanakul",
+    leaderTitle: "Party Chairwoman",
     seats: 141,
     relation: 55,
+    coalitionLoyalty: 58,
     inCoalition: true,
     priorities: ["subsidies", "infrastructure", "healthcare", "rural_development"],
     voteModifiers: {
@@ -62,8 +68,11 @@ const PARTIES = [
     ideology: "royalist",
     description: "The establishment party backed by military brass, senior bureaucrats, and royalist networks. Defends traditional institutions and national security at all costs.",
     color: "#1D3557",
+    leader: "Gen. Somchai Wongprasert",
+    leaderTitle: "Party Leader",
     seats: 97,
     relation: -10,
+    coalitionLoyalty: 25,
     inCoalition: false,
     priorities: ["military_budget", "media_control", "national_security"],
     voteModifiers: {
@@ -84,8 +93,11 @@ const PARTIES = [
     ideology: "centrist",
     description: "A centrist 'big tent' party of career politicians, business elites, and pragmatic dealmakers. They will join any coalition if the price is right.",
     color: "#457B9D",
+    leader: "Kittichai Sukhavachana",
+    leaderTitle: "Party President",
     seats: 65,
     relation: 30,
+    coalitionLoyalty: 50,
     inCoalition: true,
     priorities: ["infrastructure", "economic_stability"],
     voteModifiers: {
@@ -106,8 +118,11 @@ const PARTIES = [
     ideology: "regional",
     description: "Represents the deep south's cultural identity, advocating for regional autonomy, bilingual education, and special economic zones. A critical kingmaker in close elections.",
     color: "#2A9D8F",
+    leader: "Ismail Wahab",
+    leaderTitle: "Coalition Coordinator",
     seats: 45,
     relation: 20,
+    coalitionLoyalty: 35,
     inCoalition: false,
     priorities: ["decentralization", "education", "regional_autonomy"],
     voteModifiers: {
@@ -237,25 +252,51 @@ const CRISIS_EVENTS = [
   {
     id: "student_flashmob",
     title: "🎓 Student Flash Mob at Democracy Monument",
+    titleTH: "🎓 นักศึกษาแฟลชม็อบที่อนุสาวรีย์ประชาธิปไตย",
+    titleEN: "🎓 Student Flash Mob at Democracy Monument",
     description: "Thousands of university students have gathered at Ratchadamnoen Avenue, raising the three-finger salute and demanding a full constitutional rewrite. The protest is trending worldwide on social media. Riot police await orders.",
+    descTH: "นักศึกษาหลายพันคนรวมตัวที่ถนนราชดำเนิน ชูสามนิ้วเรียกร้องให้เขียนรัฐธรรมนูญใหม่ การชุมนุมกำลังเป็นกระแสทั่วโลก ตำรวจปราบจลาจลรอคำสั่ง",
+    descEN: "Thousands of university students have gathered at Ratchadamnoen Avenue, raising the three-finger salute and demanding a full constitutional rewrite. The protest is trending worldwide on social media. Riot police await orders.",
     choices: [
       {
         label: "Open dialogue — invite student leaders to Government House",
+        labelTH: "เปิดเจรจา — เชิญแกนนำนักศึกษาเข้าทำเนียบฯ",
+        labelEN: "Open dialogue — invite student leaders to Government House",
         effects: { popularity: +8, unrest: -5, militaryPatience: -8 },
         partyEffects: { progressive_move: +10, national_heritage: -15 },
         outcome: "You sit across from student leaders on live TV. Reformists praise your courage, but generals are quietly furious."
       },
       {
         label: "Ignore and wait — it will blow over on its own",
+        labelTH: "เพิกเฉยและรอ — เดี๋ยวก็จะสงบไปเอง",
+        labelEN: "Ignore and wait — it will blow over on its own",
         effects: { popularity: -3, unrest: +8 },
         partyEffects: { progressive_move: -10, national_heritage: +5 },
         outcome: "The protest grows for three more days. International media picks it up. Your silence is deafening."
       },
       {
         label: "Deploy crowd control — disperse with water cannons",
+        labelTH: "สลายการชุมนุม — ใช้รถฉีดน้ำแรงดันสูง",
+        labelEN: "Deploy crowd control — disperse with water cannons",
         effects: { popularity: -12, unrest: +15, militaryPatience: +5 },
         partyEffects: { progressive_move: -20, national_heritage: +10 },
         outcome: "Viral videos of students being blasted with water cannons flood social media. Your approval craters overnight."
+      },
+      {
+        label: "Blame the Opposition (PR Spin)",
+        labelTH: "โยนความผิดให้ฝ่ายค้าน (สงครามข่าว)",
+        labelEN: "Blame the Opposition (PR Spin)",
+        effects: { popularity: +2, unrest: +5, coalitionStability: +3 },
+        partyEffects: { progressive_move: -5, national_heritage: +8, thai_unity: +3 },
+        outcome: "Your PR team floods social media with claims that opposition figures are 'puppeteering' the students. Half the country buys it. The protest is forgotten in the noise war."
+      },
+      {
+        label: "Buy Off Protest Leaders (Corrupt)",
+        labelTH: "ซื้อตัวแกนนำ (ทุจริต)",
+        labelEN: "Buy Off Protest Leaders (Corrupt)",
+        effects: { popularity: -2, unrest: -10, budget: -60 },
+        partyEffects: { progressive_move: -15, peoples_populist: +5 },
+        outcome: "Three key student leaders suddenly 'choose to pursue their studies abroad' on mysterious scholarships. The movement fractures. Your hands are dirty, but the streets are quiet."
       }
     ]
   },
@@ -312,50 +353,102 @@ const CRISIS_EVENTS = [
   {
     id: "military_interview",
     title: "🎖️ Army Commander's Cryptic TV Interview",
+    titleTH: "🎖️ ผบ.ทบ.ให้สัมภาษณ์ลึกลับทางทีวี",
+    titleEN: "🎖️ Army Commander's Cryptic TV Interview",
     description: "The Army Commander-in-Chief appeared on prime-time television, saying he is 'deeply concerned about national stability' and that 'the military is always ready to protect the nation.' Political analysts are reading between the lines. The baht drops 2% overnight.",
+    descTH: "ผู้บัญชาการทหารบกปรากฏตัวทางโทรทัศน์ช่วงไพรม์ไทม์ กล่าวว่า 'ห่วงใยเสถียรภาพของชาติอย่างยิ่ง' และ 'กองทัพพร้อมเสมอที่จะปกป้องชาติ' เงินบาทร่วง 2% ข้ามคืน",
+    descEN: "The Army Commander-in-Chief appeared on prime-time television, saying he is 'deeply concerned about national stability' and that 'the military is always ready to protect the nation.' Political analysts are reading between the lines. The baht drops 2% overnight.",
     choices: [
       {
         label: "Visit the army barracks personally to reassure the generals",
+        labelTH: "เข้าเยี่ยมค่ายทหารด้วยตนเองเพื่อสร้างความมั่นใจ",
+        labelEN: "Visit the army barracks personally to reassure the generals",
         effects: { popularity: -5, unrest: -5, militaryPatience: +15 },
         partyEffects: { national_heritage: +10, progressive_move: -10 },
         outcome: "You're photographed shaking hands with brass. Your base sees weakness; the military sees submission."
       },
       {
         label: "Hold a press conference asserting civilian supremacy",
+        labelTH: "แถลงข่าวยืนยันอำนาจพลเรือนเหนือกองทัพ",
+        labelEN: "Hold a press conference asserting civilian supremacy",
         effects: { popularity: +7, unrest: +8, militaryPatience: -15 },
         partyEffects: { progressive_move: +15, national_heritage: -15 },
         outcome: "Your speech goes viral. Democrats cheer. In military circles, you've just crossed a line."
       },
       {
         label: "Quietly reshuffle the cabinet to include a military-linked figure",
+        labelTH: "ปรับ ครม.เงียบๆ ดึงคนใกล้ชิดกองทัพเข้ามา",
+        labelEN: "Quietly reshuffle the cabinet to include a military-linked figure",
         effects: { popularity: -3, unrest: -3, militaryPatience: +10 },
         partyEffects: { national_heritage: +8, progressive_move: -8, peoples_populist: -5 },
         outcome: "A quiet compromise. No headlines, but your coalition grumbles about selling out."
+      },
+      {
+        label: "Leak Kompromat on the General",
+        labelTH: "ปล่อยข่าวลับเรื่องทุจริตของนายพล",
+        labelEN: "Leak Kompromat on the General",
+        effects: { popularity: +3, unrest: +12, militaryPatience: -20 },
+        partyEffects: { progressive_move: +5, national_heritage: -20 },
+        outcome: "Anonymous documents surface showing the general's family owns suspicious land near the new high-speed rail corridor. The general retreats — but swears vengeance privately."
+      },
+      {
+        label: "Announce Massive Defense Budget Increase",
+        labelTH: "ประกาศเพิ่มงบกลาโหมมหาศาล",
+        labelEN: "Announce Massive Defense Budget Increase",
+        effects: { popularity: -8, budget: -120, militaryPatience: +20, unrest: +3 },
+        partyEffects: { national_heritage: +15, progressive_move: -20, peoples_populist: -15 },
+        outcome: "New tanks, helicopters, and a 30% pay raise for officers. The generals are beaming. Your education and health ministries are gutted."
       }
     ]
   },
   {
     id: "minister_scandal",
     title: "📱 Viral Exposé: Minister's Hidden Assets",
+    titleTH: "📱 แฉสดรัฐมนตรีซ่อนทรัพย์สิน",
+    titleEN: "📱 Viral Exposé: Minister's Hidden Assets",
     description: "An investigative journalist has published leaked documents showing your Finance Minister owns 14 luxury condos, 3 foreign bank accounts, and a superyacht — all undeclared. The hashtag #ฉ้อราษฎร์บังหลวง is trending #1 nationwide.",
+    descTH: "นักข่าวสืบสวนเผยแพร่เอกสารลับ ชี้รัฐมนตรีว่าการกระทรวงการคลังเป็นเจ้าของคอนโดหรู 14 ห้อง บัญชีธนาคารต่างประเทศ 3 บัญชี และเรือยอช์ต — ทั้งหมดไม่แจ้ง #ฉ้อราษฎร์บังหลวง ขึ้นเทรนด์อันดับ 1",
+    descEN: "An investigative journalist has published leaked documents showing your Finance Minister owns 14 luxury condos, 3 foreign bank accounts, and a superyacht — all undeclared. The hashtag #ฉ้อราษฎร์บังหลวง is trending #1 nationwide.",
     choices: [
       {
         label: "Fire the minister immediately and order an investigation",
+        labelTH: "ปลดรัฐมนตรีทันทีและสั่งสอบ",
+        labelEN: "Fire the minister immediately and order an investigation",
         effects: { popularity: +10, unrest: -5 },
         partyEffects: { thai_unity: -15 },
         outcome: "Swift justice. The public applauds, but the minister's faction within the coalition is plotting revenge."
       },
       {
         label: "Express concern but wait for formal investigation results",
+        labelTH: "แสดงความห่วงใยแต่รอผลสอบอย่างเป็นทางการ",
+        labelEN: "Express concern but wait for formal investigation results",
         effects: { popularity: -8, unrest: +7 },
         partyEffects: { thai_unity: +5, progressive_move: -10 },
         outcome: "The scandal dominates news cycles for weeks. Every day you don't act, your credibility bleeds."
       },
       {
-        label: "Deflect — announce a major new economic policy to change the news cycle",
+        label: "Deflect — announce a major economic policy to change the news cycle",
+        labelTH: "เบี่ยงประเด็น — ประกาศนโยบายเศรษฐกิจใหม่",
+        labelEN: "Deflect — announce a major economic policy to change the news cycle",
         effects: { popularity: -3, budget: -80, unrest: +3, growth: +1 },
         partyEffects: {},
         outcome: "The distraction works... for about 48 hours. Then the story comes back stronger."
+      },
+      {
+        label: "Frame It as Opposition Sabotage",
+        labelTH: "กล่าวโทษฝ่ายค้านว่าอยู่เบื้องหลัง",
+        labelEN: "Frame It as Opposition Sabotage",
+        effects: { popularity: +1, unrest: +6, coalitionStability: +5 },
+        partyEffects: { thai_unity: +10, national_heritage: +5, progressive_move: -8 },
+        outcome: "Your spin doctors work overtime: 'These documents were fabricated by foreign-funded NGOs working with the opposition.' Your base rallies. Journalists are appalled."
+      },
+      {
+        label: "Extort the Minister — Take a Cut (Corrupt)",
+        labelTH: "เรียกส่วยจากรัฐมนตรี (ทุจริต)",
+        labelEN: "Extort the Minister — Take a Cut (Corrupt)",
+        effects: { popularity: -1, budget: +100, unrest: +3, coalitionStability: -5 },
+        partyEffects: { thai_unity: +5, progressive_move: -5 },
+        outcome: "In a private meeting, you make the minister an offer: his resignation letter stays in your desk drawer — in exchange for a 'voluntary contribution' to the party fund. ฿100B quietly appears."
       }
     ]
   },
@@ -596,8 +689,61 @@ const CRISIS_EVENTS = [
         outcome: "The Sangha Supreme Council promises 'internal review.' Nothing changes. Cynicism grows."
       }
     ]
+  },
+  {
+    id: "military_budget_demand",
+    title: "🎖️ Military General Demands Higher Budget",
+    titleTH: "🎖️ นายพลเรียกร้องเพิ่มงบกลาโหม",
+    titleEN: "🎖️ Military General Demands Higher Budget",
+    description: "General Prawit has publicly demanded a 40% increase in the defense budget, citing 'deteriorating regional security.' He holds a press conference at the Army Club, flanked by all four service chiefs. The implied threat is unmistakable.",
+    descTH: "นายพลประวิตรเรียกร้องต่อสาธารณะให้เพิ่มงบกลาโหม 40% อ้าง 'ความมั่นคงในภูมิภาคเสื่อมถอย' แถลงข่าวที่สโมสรทหารบก มี ผบ.เหล่าทัพทั้ง 4 ยืนข้าง",
+    descEN: "General Prawit has publicly demanded a 40% increase in the defense budget, citing 'deteriorating regional security.' He holds a press conference at the Army Club, flanked by all four service chiefs. The implied threat is unmistakable.",
+    choices: [
+      {
+        label: "Full Compliance — approve the budget increase",
+        labelTH: "ยอมตามทุกอย่าง — อนุมัติงบที่เรียกร้อง",
+        labelEN: "Full Compliance — approve the budget increase",
+        effects: { popularity: -10, budget: -150, militaryPatience: +25, unrest: +5 },
+        partyEffects: { national_heritage: +15, progressive_move: -25, peoples_populist: -15 },
+        outcome: "The defense budget balloons. Schools lose funding. Hospitals ration medicine. But the generals are satisfied — for now."
+      },
+      {
+        label: "Partial Compromise — offer a smaller increase",
+        labelTH: "ประนีประนอม — เสนอเพิ่มบางส่วน",
+        labelEN: "Partial Compromise — offer a smaller increase",
+        effects: { popularity: -3, budget: -60, militaryPatience: +10, unrest: +2 },
+        partyEffects: { national_heritage: +5, progressive_move: -5, thai_unity: +5 },
+        outcome: "You offer a 15% increase. General Prawit accepts publicly but tells aides he's 'disappointed.' A fragile peace."
+      },
+      {
+        label: "Complete Defiance — reject the demand outright",
+        labelTH: "ปฏิเสธเด็ดขาด — ไม่ยอมให้แม้แต่บาทเดียว",
+        labelEN: "Complete Defiance — reject the demand outright",
+        effects: { popularity: +12, unrest: +10, militaryPatience: -25 },
+        partyEffects: { progressive_move: +20, national_heritage: -25, peoples_populist: +10 },
+        outcome: "You say: 'The people's needs come before tanks.' Social media erupts. In military barracks, officers watch in cold silence."
+      },
+      {
+        label: "Blame the Opposition (PR Spin)",
+        labelTH: "โยนให้ฝ่ายค้าน (สงครามข่าว)",
+        labelEN: "Blame the Opposition (PR Spin)",
+        effects: { popularity: +3, unrest: +5, militaryPatience: -5, coalitionStability: +3 },
+        partyEffects: { progressive_move: -3, national_heritage: +3, thai_unity: +5 },
+        outcome: "'If the opposition hadn't blocked our defense bill last year, the military wouldn't need this.' A masterful deflection. Nobody believes it, but it gives cover."
+      },
+      {
+        label: "Bribe the General (Corrupt)",
+        labelTH: "ติดสินบนนายพล (ทุจริต)",
+        labelEN: "Bribe the General (Corrupt)",
+        effects: { popularity: -2, budget: -80, militaryPatience: +15, coalitionStability: -3 },
+        partyEffects: { national_heritage: +5, progressive_move: -10 },
+        outcome: "A private dinner at a Hua Hin resort. A 'consulting contract' for the general's brother-in-law. ฿80B disappears. The budget increase is quietly shelved."
+      }
+    ]
   }
 ];
+
+
 
 // ─── GAME CONSTANTS ─────────────────────────────────────────
 const GAME_CONSTANTS = {

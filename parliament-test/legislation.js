@@ -460,6 +460,9 @@ function withdrawBill(billId) {
   // Remove from active bills
   parliamentState.activeBills.splice(idx, 1);
 
+  // STEP 84: Persist the change
+  if (typeof saveActiveBills === 'function') saveActiveBills();
+
   logEvent("legislation", `Bill Withdrawn: ${bill.title}`,
     "The bill was withdrawn from the legislative pipeline.",
     { politicalCapital: -3 });

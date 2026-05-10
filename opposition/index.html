@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPS: Opposition HQ — ศูนย์บัญชาการฝ่ายค้าน</title>
+    <meta name="description"
+        content="Thailand Political Simulation — Opposition Headquarters. Lead the opposition for 48 months to build credibility.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cinzel:wght@600;700;800;900&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════════════════════════
+         TOP NAVIGATION BAR — Opposition Theme
+         ═══════════════════════════════════════════════════════ -->
+    <div class="top-nav opposition-theme" id="opposition-header">
+        <div class="nav-left">
+            <h2 class="opp-title">🏛️ OPPOSITION HQ</h2>
+            <span class="opp-subtitle">ศูนย์บัญชาการฝ่ายค้าน</span>
+            <div class="turn-badge" id="turn-counter">
+                <span class="turn-label">TERM</span>
+                <span class="turn-detail">Year <span id="opp-year">1</span> · Month <span
+                        id="opp-month-num">1</span></span>
+                <span class="turn-sep">/</span>
+                <span class="turn-max">48</span>
+            </div>
+            <div id="opp-affiliation-badge" style="display: flex; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 5px 15px; margin-left: 15px;">
+                <div id="opp-party-color" style="width: 10px; height: 10px; border-radius: 50%; background-color: #fbbf24; margin-right: 10px; box-shadow: 0 0 8px #fbbf24;"></div>
+                <span style="color: #6b7280; font-size: 0.7rem; font-weight: 700; margin-right: 6px; letter-spacing: 1.2px; text-transform: uppercase;">AFFILIATION:</span>
+                <span id="opp-party-name" style="color: white; font-weight: 700; font-size: 0.85rem;">Independent</span>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="stat-box funds-box" id="stat-funds">
+                <span class="stat-icon">💰</span>
+                <div class="stat-inner">
+                    <span class="stat-label">FUNDS</span>
+                    <span class="stat-value" id="opp-funds">฿0M</span>
+                </div>
+            </div>
+            <div class="stat-box capital-box" id="stat-capital">
+                <span class="stat-icon">⚡</span>
+                <div class="stat-inner">
+                    <span class="stat-label">CAPITAL</span>
+                    <span class="stat-value" id="opp-capital">0</span>
+                </div>
+            </div>
+            <div class="stat-box intel-box" id="stat-intel">
+                <span class="stat-icon">🔍</span>
+                <div class="stat-inner">
+                    <span class="stat-label">INTEL</span>
+                    <span class="stat-value" id="opp-intel">0</span>
+                </div>
+            </div>
+            <div class="stat-box credibility-box" id="stat-credibility">
+                <span class="stat-icon">🛡️</span>
+                <div class="stat-inner">
+                    <span class="stat-label">CREDIBILITY</span>
+                    <div class="cred-bar-wrap">
+                        <div class="cred-bar-track">
+                            <div class="cred-bar-fill" id="cred-bar-fill" style="width:50%"></div>
+                        </div>
+                        <span class="stat-value cred-value" id="opp-credibility">50</span>
+                        <span class="cred-max">/100</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         MAIN DASHBOARD — 3-Column CSS Grid
+         ═══════════════════════════════════════════════════════ -->
+    <div class="opposition-dashboard" id="opposition-dashboard">
+
+        <!-- ─── LEFT COLUMN: Shadow Targets ─── -->
+        <div class="dashboard-col left-col">
+            <div class="col-header">
+                <h3><span class="col-icon">🎯</span> Shadow Targets</h3>
+                <span class="col-subtitle">เป้าหมายตรวจสอบ</span>
+            </div>
+            <div class="targets-scroll" id="target-ministers-list">
+                <!-- Minister target cards will be injected by engine.js -->
+                <div class="placeholder-card">
+                    <div class="placeholder-icon">🔒</div>
+                    <p>Minister data loading...</p>
+                    <span class="placeholder-sub">Assign shadow cabinet members to investigate government
+                        ministers</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── CENTER COLUMN: Oversight Actions ─── -->
+        <div class="dashboard-col center-col">
+            <div class="col-header">
+                <h3><span class="col-icon">🕵️</span> Oversight Actions</h3>
+                <span class="col-subtitle">ปฏิบัติการตรวจสอบ</span>
+            </div>
+            <div id="opposition-action-grid" class="action-grid">
+                <!-- Action buttons will be injected by engine.js -->
+                <!-- Placeholder structure for visual reference -->
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">📋</div>
+                    <div class="act-label">File Motion</div>
+                    <div class="act-cost">ยื่นญัตติ</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">🔬</div>
+                    <div class="act-label">Deep Investigate</div>
+                    <div class="act-cost">สอบสวนลึก</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">📰</div>
+                    <div class="act-label">Press Leak</div>
+                    <div class="act-cost">ปล่อยข่าว</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">🗣️</div>
+                    <div class="act-label">Public Hearing</div>
+                    <div class="act-cost">ประชาพิจารณ์</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">🤝</div>
+                    <div class="act-label">Cross-Party Alliance</div>
+                    <div class="act-cost">พันธมิตรข้ามพรรค</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">📊</div>
+                    <div class="act-label">Commission Poll</div>
+                    <div class="act-cost">จ้างสำรวจโพล</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">💵</div>
+                    <div class="act-label">Fundraise</div>
+                    <div class="act-cost">ระดมทุน</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">📺</div>
+                    <div class="act-label">Media Blitz</div>
+                    <div class="act-cost">บุกสื่อ</div>
+                </button>
+                <button class="action-btn opp-action" disabled>
+                    <div class="act-icon">⚖️</div>
+                    <div class="act-label">No-Confidence Vote</div>
+                    <div class="act-cost">อภิปรายไม่ไว้วางใจ</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ─── RIGHT COLUMN: Status & Parliament ─── -->
+        <div class="dashboard-col right-col">
+            <div class="col-header">
+                <h3><span class="col-icon">📜</span> Command Center</h3>
+                <span class="col-subtitle">ศูนย์บัญชาการ</span>
+            </div>
+
+            <button id="btn-enter-parliament" class="action-btn massive-btn parliament-btn"
+                onclick="tryEnterParliament()">
+                <div class="massive-btn-glow"></div>
+                <span class="massive-icon">🏛️</span>
+                <span class="massive-label">ENTER PARLIAMENT SESSION</span>
+                <span class="massive-sub">เข้าสู่การประชุมสภา</span>
+            </button>
+
+            <button id="btn-next-month" class="action-btn massive-btn next-turn-btn" onclick="advanceMonth()">
+                <div class="massive-btn-glow"></div>
+                <span class="massive-icon">⏩</span>
+                <span class="massive-label">NEXT MONTH</span>
+                <span class="massive-sub">เดือนถัดไป</span>
+            </button>
+
+            <div class="log-panel">
+                <div class="log-header">
+                    <h4>📜 Oversight Log</h4>
+                    <span class="log-count" id="log-count">0 entries</span>
+                </div>
+                <div class="opposition-log" id="opposition-log">
+                    <div class="log-empty">No activities recorded yet. Begin your oversight campaign.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared: Localization & Settings Engine (auto-injects gear FAB + settings modal) -->
+    <script src="../shared/localization.js"></script>
+    <script src="../shared/settings.js"></script>
+    <script src="engine.js"></script>
+</body>
+
+</html>

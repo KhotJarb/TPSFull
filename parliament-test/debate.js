@@ -81,7 +81,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "against",
     publicInterest: 85,
     estimatedDuration: 12,
-    relatedMinistry: "Ministry of Agriculture and Cooperatives"
+    relatedMinistry: "Ministry of Agriculture and Cooperatives",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: -8,
+        partyLoyalty: +5,
+        coalitionStability: +6,
+        newsReaction: "Farmers protest as market-based pricing replaces guaranteed subsidies.",
+        newsReactionThai: "เกษตรกรประท้วงหลังราคาตลาดแทนที่เงินอุดหนุน"
+      },
+      ifFail: {
+        publicPopularity: +5,
+        partyLoyalty: -4,
+        coalitionStability: -8,
+        newsReaction: "Villagers celebrate as government fails to cut farm subsidies.",
+        newsReactionThai: "ชาวบ้านเฮ! รัฐบาลล้มเหลวตัดเงินอุดหนุนเกษตร"
+      }
+    }
   },
   {
     id: "police_budget_cut",
@@ -94,7 +110,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "for",
     publicInterest: 78,
     estimatedDuration: 15,
-    relatedMinistry: "Royal Thai Police"
+    relatedMinistry: "Royal Thai Police",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +12,
+        partyLoyalty: -6,
+        coalitionStability: -15,
+        newsReaction: "Historic: Police budget slashed. Education funding surges. Police unions furious.",
+        newsReactionThai: "ประวัติศาสตร์: ตัดงบตำรวจ เพิ่มงบการศึกษา สมาคมตำรวจโกรธจัด"
+      },
+      ifFail: {
+        publicPopularity: -5,
+        partyLoyalty: +3,
+        coalitionStability: +4,
+        newsReaction: "Status quo preserved. Education advocates disappointed.",
+        newsReactionThai: "สภาพเดิม: นักการศึกษาผิดหวัง ตำรวจยิ้ม"
+      }
+    }
   },
   {
     id: "digital_economy_act",
@@ -107,7 +139,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "neutral",
     publicInterest: 60,
     estimatedDuration: 10,
-    relatedMinistry: "Ministry of Digital Economy and Society"
+    relatedMinistry: "Ministry of Digital Economy and Society",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +4,
+        partyLoyalty: +3,
+        coalitionStability: +2,
+        newsReaction: "Thailand enters the AI age with new regulatory framework. Tech stocks dip.",
+        newsReactionThai: "ไทยเข้าสู่ยุค AI ด้วยกรอบกฎหมายใหม่"
+      },
+      ifFail: {
+        publicPopularity: -2,
+        partyLoyalty: -2,
+        coalitionStability: -3,
+        newsReaction: "Digital regulation stalls. Privacy advocates alarmed.",
+        newsReactionThai: "กฎหมายดิจิทัลสะดุด นักรณรงค์ความเป็นส่วนตัวกังวล"
+      }
+    }
   },
   {
     id: "constitutional_amendment",
@@ -120,7 +168,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "for",
     publicInterest: 92,
     estimatedDuration: 18,
-    relatedMinistry: "Office of the Prime Minister"
+    relatedMinistry: "Office of the Prime Minister",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +18,
+        partyLoyalty: -10,
+        coalitionStability: -20,
+        newsReaction: "Seismic shift! Constitution unlocked for reform. Military establishment issues warning.",
+        newsReactionThai: "แผ่นดินไหวทางการเมือง! ปลดล็อกรัฐธรรมนูญ ทหารส่งสัญญาณเตือน"
+      },
+      ifFail: {
+        publicPopularity: -12,
+        partyLoyalty: +5,
+        coalitionStability: +8,
+        newsReaction: "Reform blocked. Youth protesters take to the streets in frustration.",
+        newsReactionThai: "ปฏิรูปถูกสกัด! เยาวชนลงถนนประท้วง"
+      }
+    }
   },
   {
     id: "eec_expansion",
@@ -133,7 +197,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "neutral",
     publicInterest: 55,
     estimatedDuration: 11,
-    relatedMinistry: "Ministry of Industry"
+    relatedMinistry: "Ministry of Industry",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: -3,
+        partyLoyalty: +6,
+        coalitionStability: +5,
+        newsReaction: "EEC Phase 2 greenlit. Investors cheer, but Eastern communities fear displacement.",
+        newsReactionThai: "EEC ระยะ 2 ผ่าน! นักลงทุนเฮ แต่ชาวบ้านกลัวถูกไล่ที่"
+      },
+      ifFail: {
+        publicPopularity: +4,
+        partyLoyalty: -3,
+        coalitionStability: -6,
+        newsReaction: "EEC expansion blocked. Environmentalists celebrate, investors flee.",
+        newsReactionThai: "EEC ขยายไม่ผ่าน! นักอนุรักษ์ยิ้ม นักลงทุนถอนตัว"
+      }
+    }
   },
   {
     id: "military_conscription_reform",
@@ -146,7 +226,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "for",
     publicInterest: 88,
     estimatedDuration: 16,
-    relatedMinistry: "Ministry of Defence"
+    relatedMinistry: "Ministry of Defence",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +20,
+        partyLoyalty: -8,
+        coalitionStability: -18,
+        newsReaction: "HISTORIC: Conscription abolished! Young Thais celebrate. Military brass silent.",
+        newsReactionThai: "ประวัติศาสตร์: ยกเลิกเกณฑ์ทหาร! เยาวชนเฮ นายทหารเงียบ"
+      },
+      ifFail: {
+        publicPopularity: -10,
+        partyLoyalty: +4,
+        coalitionStability: +6,
+        newsReaction: "Draft survives. Young voters furious. #ยกเลิกเกณฑ์ทหาร trends nationwide.",
+        newsReactionThai: "เกณฑ์ทหารยังอยู่! เยาวชนโกรธ #ยกเลิกเกณฑ์ทหาร ติดเทรนด์"
+      }
+    }
   },
   {
     id: "universal_healthcare_upgrade",
@@ -159,7 +255,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "for",
     publicInterest: 75,
     estimatedDuration: 9,
-    relatedMinistry: "Ministry of Public Health"
+    relatedMinistry: "Ministry of Public Health",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +15,
+        partyLoyalty: +4,
+        coalitionStability: -3,
+        newsReaction: "Villagers celebrate the new Welfare Bill. Healthcare coverage expanded nationwide.",
+        newsReactionThai: "ชาวบ้านเฮ! ขยายหลักประกันสุขภาพทั่วประเทศ"
+      },
+      ifFail: {
+        publicPopularity: -8,
+        partyLoyalty: -2,
+        coalitionStability: +2,
+        newsReaction: "Healthcare expansion blocked. Rural communities feel abandoned.",
+        newsReactionThai: "ขยายสุขภาพถ้วนหน้าไม่ผ่าน! ชาวชนบทรู้สึกถูกทอดทิ้ง"
+      }
+    }
   },
   {
     id: "decentralization_bill",
@@ -172,7 +284,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "for",
     publicInterest: 50,
     estimatedDuration: 10,
-    relatedMinistry: "Ministry of Interior"
+    relatedMinistry: "Ministry of Interior",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +6,
+        partyLoyalty: -4,
+        coalitionStability: -7,
+        newsReaction: "Power shifts to provinces. Bangkok bureaucrats scramble as budgets are redirected.",
+        newsReactionThai: "อำนาจกระจายสู่ท้องถิ่น! ข้าราชการกรุงเทพฯ ตื่นตัว"
+      },
+      ifFail: {
+        publicPopularity: -4,
+        partyLoyalty: +2,
+        coalitionStability: +3,
+        newsReaction: "Centralization holds. Provinces remain dependent on Bangkok.",
+        newsReactionThai: "รวมศูนย์อำนาจยังอยู่ ท้องถิ่นยังต้องพึ่งกรุงเทพฯ"
+      }
+    }
   },
   {
     id: "cannabis_regulation",
@@ -185,7 +313,23 @@ const DEBATE_TOPICS = [
     oppositionPosition: "against",
     publicInterest: 82,
     estimatedDuration: 13,
-    relatedMinistry: "Ministry of Public Health"
+    relatedMinistry: "Ministry of Public Health",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +5,
+        partyLoyalty: +4,
+        coalitionStability: +3,
+        newsReaction: "Cannabis controls tightened. Medical users relieved, recreational users frustrated.",
+        newsReactionThai: "คุมเข้มกัญชา! ผู้ป่วยสบายใจ ผู้ใช้เพื่อพักผ่อนโวย"
+      },
+      ifFail: {
+        publicPopularity: -6,
+        partyLoyalty: -3,
+        coalitionStability: -5,
+        newsReaction: "Cannabis chaos continues. Hospitals report surge in youth usage.",
+        newsReactionThai: "กัญชาวุ่นวายต่อ! โรงพยาบาลรายงานเยาวชนใช้เพิ่มขึ้น"
+      }
+    }
   },
   {
     id: "wealth_tax_bill",
@@ -198,7 +342,406 @@ const DEBATE_TOPICS = [
     oppositionPosition: "for",
     publicInterest: 70,
     estimatedDuration: 14,
-    relatedMinistry: "Ministry of Finance"
+    relatedMinistry: "Ministry of Finance",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +15,
+        partyLoyalty: -12,
+        coalitionStability: -14,
+        newsReaction: "Investors flee as Tax Bill passes. Progressives celebrate 'historic justice'.",
+        newsReactionThai: "นักลงทุนหนี! ภาษีทรัพย์สินผ่าน ฝ่ายก้าวหน้าเฮ 'ความเป็นธรรมทางประวัติศาสตร์'"
+      },
+      ifFail: {
+        publicPopularity: -8,
+        partyLoyalty: +6,
+        coalitionStability: +5,
+        newsReaction: "Wealth tax blocked. Tycoons breathe easy. Progressives vow to try again.",
+        newsReactionThai: "ภาษีทรัพย์สินถูกสกัด! เศรษฐีสบายใจ ฝ่ายก้าวหน้าสัญญาจะกลับมา"
+      }
+    }
+  },
+
+  // ═══ v1.0.2 — EXPANDED TOPICS (Step 10) ═══════════════════════════════
+
+  {
+    id: "amnesty_bill",
+    title: "Political Amnesty Bill",
+    titleThai: "ร่าง พ.ร.บ. นิรโทษกรรมทางการเมือง",
+    category: "reform",
+    description: "Grants blanket amnesty for all political offenses since 2014. Deeply divisive — supporters call it national reconciliation, opponents call it a blank check for criminals.",
+    controversy: 98,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 95,
+    estimatedDuration: 20,
+    relatedMinistry: "Ministry of Justice",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +10,
+        partyLoyalty: -15,
+        coalitionStability: -25,
+        newsReaction: "BOMBSHELL: Amnesty Bill passes. Exiles can return home. Establishment in shock.",
+        newsReactionThai: "ระเบิดการเมือง! นิรโทษกรรมผ่าน ผู้ลี้ภัยกลับบ้านได้ ฝ่ายอนุรักษ์ตกตะลึง"
+      },
+      ifFail: {
+        publicPopularity: -8,
+        partyLoyalty: +6,
+        coalitionStability: +5,
+        newsReaction: "Amnesty blocked. Political prisoners remain behind bars. Youth groups stage vigil.",
+        newsReactionThai: "นิรโทษกรรมถูกสกัด นักโทษการเมืองยังอยู่ในคุก เยาวชนจุดเทียนรำลึก"
+      }
+    }
+  },
+  {
+    id: "casino_legalization",
+    title: "Entertainment Complex (Casino) Legalization Act",
+    titleThai: "ร่าง พ.ร.บ. สถานบันเทิงครบวงจร (กาสิโน)",
+    category: "economic",
+    description: "Legalizes integrated resort-casinos in 3 designated zones. Projected ฿200B annual revenue. Religious groups and anti-gambling activists fiercely oppose.",
+    controversy: 82,
+    governmentPosition: "for",
+    oppositionPosition: "neutral",
+    publicInterest: 88,
+    estimatedDuration: 14,
+    relatedMinistry: "Ministry of Finance",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: -5,
+        partyLoyalty: +8,
+        coalitionStability: +4,
+        newsReaction: "Casino era begins! Tourism stocks surge. Buddhist groups condemn 'moral decay'.",
+        newsReactionThai: "ยุคกาสิโนเริ่มต้น! หุ้นท่องเที่ยวพุ่ง กลุ่มพุทธประณาม 'ศีลธรรมเสื่อม'"
+      },
+      ifFail: {
+        publicPopularity: +3,
+        partyLoyalty: -4,
+        coalitionStability: -3,
+        newsReaction: "Casino dream dies. Underground gambling rings rejoice as legal alternative blocked.",
+        newsReactionThai: "ฝันกาสิโนสลาย บ่อนใต้ดินยิ้ม ทางเลือกถูกกฎหมายถูกปิดกั้น"
+      }
+    }
+  },
+  {
+    id: "marriage_equality",
+    title: "Marriage Equality Act",
+    titleThai: "ร่าง พ.ร.บ. สมรสเท่าเทียม",
+    category: "social",
+    description: "Grants same-sex couples equal legal rights to marriage, adoption, and inheritance. Thailand would be the first in ASEAN. Conservative groups mobilize.",
+    controversy: 75,
+    governmentPosition: "neutral",
+    oppositionPosition: "for",
+    publicInterest: 90,
+    estimatedDuration: 12,
+    relatedMinistry: "Ministry of Social Development",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +14,
+        partyLoyalty: -6,
+        coalitionStability: -8,
+        newsReaction: "HISTORIC: Thailand becomes first ASEAN nation with marriage equality! Global praise floods in.",
+        newsReactionThai: "ประวัติศาสตร์! ไทยเป็นชาติแรกในอาเซียนที่มีสมรสเท่าเทียม โลกชื่นชม"
+      },
+      ifFail: {
+        publicPopularity: -10,
+        partyLoyalty: +3,
+        coalitionStability: +4,
+        newsReaction: "Marriage equality blocked. LGBTQ+ community devastated. International criticism mounts.",
+        newsReactionThai: "สมรสเท่าเทียมถูกคว่ำ! ชุมชน LGBTQ+ เศร้า นานาชาติวิจารณ์"
+      }
+    }
+  },
+  {
+    id: "land_reform_act",
+    title: "Agricultural Land Reform & Redistribution Act",
+    titleThai: "ร่าง พ.ร.บ. ปฏิรูปที่ดินเพื่อการเกษตร",
+    category: "reform",
+    description: "Caps individual land ownership at 50 rai. Excess land redistributed to landless farmers. Wealthy landowners threaten legal challenges.",
+    controversy: 88,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 72,
+    estimatedDuration: 16,
+    relatedMinistry: "Ministry of Agriculture and Cooperatives",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +16,
+        partyLoyalty: -12,
+        coalitionStability: -18,
+        newsReaction: "Land revolution! Tycoons lose holdings. Farmers celebrate in the fields.",
+        newsReactionThai: "ปฏิวัติที่ดิน! เศรษฐีเสียที่ เกษตรกรเฮในท้องนา"
+      },
+      ifFail: {
+        publicPopularity: -6,
+        partyLoyalty: +5,
+        coalitionStability: +4,
+        newsReaction: "Land reform blocked. Rural activists vow continued fight. Status quo preserved.",
+        newsReactionThai: "ปฏิรูปที่ดินถูกสกัด! นักเคลื่อนไหวชนบทสัญญาจะสู้ต่อ"
+      }
+    }
+  },
+  {
+    id: "anti_corruption_court",
+    title: "Independent Anti-Corruption Court Establishment Act",
+    titleThai: "ร่าง พ.ร.บ. จัดตั้งศาลพิเศษปราบทุจริต",
+    category: "reform",
+    description: "Creates a fast-track court exclusively for corruption cases. Politicians from ALL parties are terrified. The public overwhelmingly supports it.",
+    controversy: 68,
+    governmentPosition: "neutral",
+    oppositionPosition: "for",
+    publicInterest: 80,
+    estimatedDuration: 11,
+    relatedMinistry: "Office of the Judiciary",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +18,
+        partyLoyalty: -8,
+        coalitionStability: -10,
+        newsReaction: "Anti-corruption court established! Politicians scramble to clean their books.",
+        newsReactionThai: "ตั้งศาลปราบทุจริตสำเร็จ! นักการเมืองรีบทำความสะอาดบัญชี"
+      },
+      ifFail: {
+        publicPopularity: -12,
+        partyLoyalty: +4,
+        coalitionStability: +6,
+        newsReaction: "Anti-corruption court killed. Public outrage at 'foxes guarding the henhouse'.",
+        newsReactionThai: "ศาลปราบทุจริตถูกคว่ำ! ประชาชนโกรธ 'หมาป่าเฝ้าเล้าไก่'"
+      }
+    }
+  },
+  {
+    id: "censorship_bill",
+    title: "National Cybersecurity & Content Control Bill",
+    titleThai: "ร่าง พ.ร.บ. ความมั่นคงปลอดภัยไซเบอร์และการควบคุมเนื้อหา",
+    category: "security",
+    description: "Grants government power to block websites, monitor social media, and arrest users for 'disinformation'. Tech companies and civil liberty groups strongly oppose.",
+    controversy: 85,
+    governmentPosition: "for",
+    oppositionPosition: "against",
+    publicInterest: 76,
+    estimatedDuration: 13,
+    relatedMinistry: "Ministry of Digital Economy and Society",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: -14,
+        partyLoyalty: +7,
+        coalitionStability: +5,
+        newsReaction: "Internet crackdown! VPN usage skyrockets. International press condemns 'digital authoritarianism'.",
+        newsReactionThai: "ปิดกั้นอินเทอร์เน็ต! การใช้ VPN พุ่ง สื่อนานาชาติประณาม 'เผด็จการดิจิทัล'"
+      },
+      ifFail: {
+        publicPopularity: +8,
+        partyLoyalty: -5,
+        coalitionStability: -6,
+        newsReaction: "Censorship bill defeated! Internet freedom advocates celebrate. Government embarrassed.",
+        newsReactionThai: "กฎหมายเซ็นเซอร์ถูกคว่ำ! นักรณรงค์เสรีภาพเฮ รัฐบาลเสียหน้า"
+      }
+    }
+  },
+  {
+    id: "minimum_wage_hike",
+    title: "Minimum Wage Increase to ฿600/Day",
+    titleThai: "ร่าง พ.ร.บ. ปรับค่าแรงขั้นต่ำ 600 บาท/วัน",
+    category: "economic",
+    description: "Nearly doubles the current minimum wage. Workers celebrate. The Federation of Thai Industries warns of mass layoffs and factory relocations to Vietnam.",
+    controversy: 80,
+    governmentPosition: "neutral",
+    oppositionPosition: "for",
+    publicInterest: 92,
+    estimatedDuration: 12,
+    relatedMinistry: "Ministry of Labour",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +20,
+        partyLoyalty: -6,
+        coalitionStability: -10,
+        newsReaction: "Workers rejoice! ฿600 minimum wage passes. Factory owners threaten exodus to neighbors.",
+        newsReactionThai: "แรงงานเฮ! ค่าแรง 600 บาทผ่าน เจ้าของโรงงานขู่ย้ายฐาน"
+      },
+      ifFail: {
+        publicPopularity: -10,
+        partyLoyalty: +5,
+        coalitionStability: +4,
+        newsReaction: "Wage increase blocked. Labor unions threaten general strike. Social media erupts.",
+        newsReactionThai: "ขึ้นค่าแรงไม่ผ่าน! สหภาพแรงงานขู่นัดหยุดงาน โซเชียลลุกเป็นไฟ"
+      }
+    }
+  },
+  {
+    id: "senator_election",
+    title: "Senate Reform: Direct Election of Senators",
+    titleThai: "ร่างแก้ไขรัฐธรรมนูญ: เลือกตั้ง ส.ว. โดยตรง",
+    category: "reform",
+    description: "Replaces the appointed Senate with a directly elected one. The military-backed Senate fiercely resists. Reformists see this as the key to democracy.",
+    controversy: 94,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 85,
+    estimatedDuration: 18,
+    relatedMinistry: "Office of the Senate",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +22,
+        partyLoyalty: -10,
+        coalitionStability: -22,
+        newsReaction: "DEMOCRATIC REVOLUTION: Senate elections mandated! Military establishment in crisis mode.",
+        newsReactionThai: "ปฏิวัติประชาธิปไตย! บังคับเลือกตั้ง ส.ว. กองทัพเข้าโหมดวิกฤต"
+      },
+      ifFail: {
+        publicPopularity: -14,
+        partyLoyalty: +5,
+        coalitionStability: +8,
+        newsReaction: "Senate reform dies. Appointed senators cheer. Youth protesters blocked at Parliament gates.",
+        newsReactionThai: "ปฏิรูปวุฒิสภาตาย! ส.ว. แต่งตั้งเฮ เยาวชนถูกกันหน้ารัฐสภา"
+      }
+    }
+  },
+  {
+    id: "pollution_emergency",
+    title: "PM2.5 Emergency Response & Clean Air Act",
+    titleThai: "ร่าง พ.ร.บ. ฉุกเฉินฝุ่น PM2.5 และอากาศสะอาด",
+    category: "social",
+    description: "Bans crop burning, mandates factory emissions controls, and subsidizes electric vehicles. Northern Thailand chokes annually. Farmers say burning is their only option.",
+    controversy: 60,
+    governmentPosition: "for",
+    oppositionPosition: "neutral",
+    publicInterest: 78,
+    estimatedDuration: 10,
+    relatedMinistry: "Ministry of Natural Resources and Environment",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +10,
+        partyLoyalty: +2,
+        coalitionStability: -4,
+        newsReaction: "Clean Air Act passes! Northern Thailand breathes easier. Farmers protest burning ban.",
+        newsReactionThai: "กฎหมายอากาศสะอาดผ่าน! ภาคเหนือหายใจสะดวก เกษตรกรประท้วงห้ามเผา"
+      },
+      ifFail: {
+        publicPopularity: -6,
+        partyLoyalty: -2,
+        coalitionStability: +2,
+        newsReaction: "Clean Air Act blocked. PM2.5 expected to hit record levels again. Hospitals brace.",
+        newsReactionThai: "กฎหมายอากาศสะอาดไม่ผ่าน! PM2.5 จ่อสูงสุดเป็นประวัติการณ์ โรงพยาบาลเตรียมรับมือ"
+      }
+    }
+  },
+  {
+    id: "military_budget_cut",
+    title: "Military Budget Reduction & Transparency Act",
+    titleThai: "ร่าง พ.ร.บ. ลดงบทหารและความโปร่งใส",
+    category: "budget",
+    description: "Cuts military spending by 25% and mandates full disclosure of defense procurement. Redirects savings to education and healthcare. Generals are furious.",
+    controversy: 96,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 82,
+    estimatedDuration: 17,
+    relatedMinistry: "Ministry of Defence",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +16,
+        partyLoyalty: -14,
+        coalitionStability: -20,
+        newsReaction: "EXPLOSIVE: Military budget slashed 25%! Generals 'reviewing all options'. Coup watch activated.",
+        newsReactionThai: "ระเบิด! ตัดงบทหาร 25% นายพล 'ทบทวนทุกทางเลือก' เฝ้าระวังรัฐประหาร"
+      },
+      ifFail: {
+        publicPopularity: -8,
+        partyLoyalty: +6,
+        coalitionStability: +8,
+        newsReaction: "Military budget untouched. Reformists cry foul. Defense contractors celebrate.",
+        newsReactionThai: "งบทหารไม่ถูกแตะ! นักปฏิรูปโวย ผู้รับเหมากลาโหมเฮ"
+      }
+    }
+  },
+
+  // ═══ v1.0.2 — STEP 51 EXPANDED TOPICS ═════════════════════════════════
+
+  {
+    id: "telecom_monopoly_breakup",
+    title: "Telecom Monopoly Breakup Act",
+    titleThai: "ร่าง พ.ร.บ. แตกกิจการผูกขาดโทรคมนาคม",
+    category: "economic",
+    description: "Forces the 3 dominant telecom conglomerates to divest their infrastructure arms. Consumers cheer cheaper data; oligarchs threaten mass layoffs.",
+    controversy: 80,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 75,
+    estimatedDuration: 13,
+    relatedMinistry: "National Broadcasting and Telecommunications Commission",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +14,
+        partyLoyalty: -10,
+        coalitionStability: -12,
+        newsReaction: "Telecom giants shattered! Data prices expected to drop 40%. Tycoons vow legal fight.",
+        newsReactionThai: "แตกยักษ์โทรคมนาคม! ค่าเน็ตคาดลด 40% เจ้าสัวขู่ฟ้อง"
+      },
+      ifFail: {
+        publicPopularity: -6,
+        partyLoyalty: +5,
+        coalitionStability: +4,
+        newsReaction: "Monopoly holds. Thai consumers continue paying highest data prices in ASEAN.",
+        newsReactionThai: "ผูกขาดยังอยู่! คนไทยจ่ายค่าเน็ตแพงสุดในอาเซียนต่อไป"
+      }
+    }
+  },
+  {
+    id: "welfare_state_bill",
+    title: "Comprehensive Welfare State Bill",
+    titleThai: "ร่าง พ.ร.บ. รัฐสวัสดิการครบวงจร",
+    category: "social",
+    description: "Universal basic income of ฿3,000/month for all citizens over 18. Funded by a 3% corporate surtax. Business chambers warn of economic collapse.",
+    controversy: 93,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 95,
+    estimatedDuration: 18,
+    relatedMinistry: "Ministry of Finance",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +22,
+        partyLoyalty: -15,
+        coalitionStability: -22,
+        newsReaction: "REVOLUTION: Thailand adopts universal basic income! Stock market crashes 8%. Villagers celebrate.",
+        newsReactionThai: "ปฏิวัติ! ไทยรับ UBI! ตลาดหุ้นร่วง 8% ชาวบ้านเฮ"
+      },
+      ifFail: {
+        publicPopularity: -15,
+        partyLoyalty: +8,
+        coalitionStability: +6,
+        newsReaction: "Welfare dream crushed. Inequality protests erupt in 42 provinces.",
+        newsReactionThai: "ฝันสวัสดิการสลาย! ม็อบความเหลื่อมล้ำปะทุ 42 จังหวัด"
+      }
+    }
+  },
+  {
+    id: "emergency_decree_repeal",
+    title: "Emergency Decree Repeal Motion",
+    titleThai: "ญัตติยกเลิก พ.ร.ก. ฉุกเฉิน",
+    category: "security",
+    description: "Motion to repeal the government's use of emergency powers for 'maintaining order.' Human rights groups demand it. Security hawks say it's necessary.",
+    controversy: 85,
+    governmentPosition: "against",
+    oppositionPosition: "for",
+    publicInterest: 80,
+    estimatedDuration: 14,
+    relatedMinistry: "National Security Council",
+    impactProfile: {
+      ifPass: {
+        publicPopularity: +16,
+        partyLoyalty: -8,
+        coalitionStability: -15,
+        newsReaction: "Emergency powers revoked! Civil liberties restored. Security agencies warn of 'power vacuum'.",
+        newsReactionThai: "ยกเลิก พ.ร.ก. ฉุกเฉิน! คืนเสรีภาพ หน่วยงานความมั่นคงเตือน 'สุญญากาศอำนาจ'"
+      },
+      ifFail: {
+        publicPopularity: -10,
+        partyLoyalty: +5,
+        coalitionStability: +6,
+        newsReaction: "Emergency decree stands. Protesters arrested under sweeping powers. International condemnation.",
+        newsReactionThai: "พ.ร.ก.ฉุกเฉิน ยังอยู่! ผู้ประท้วงถูกจับ นานาชาติประณาม"
+      }
+    }
   }
 ];
 
@@ -863,10 +1406,11 @@ function runDebate(topicOrId, options = {}) {
 
   // ── Reset debate state ──
   // Link debate speed to TPSGlobalState if available
-  let intervalMs = options.intervalMs || 3000;
+  // v1.0.2: Base interval increased to 4500ms for better readability
+  let intervalMs = options.intervalMs || 4500;
   if (typeof TPSGlobalState !== 'undefined' && TPSGlobalState.debateSpeed) {
-    // debateSpeed: 1 = 3000ms, 2 = 1500ms, 3 = 1000ms
-    intervalMs = Math.round(3000 / TPSGlobalState.debateSpeed);
+    // debateSpeed: 1 = 4500ms, 2 = 2250ms, 3 = 1500ms
+    intervalMs = Math.round(4500 / TPSGlobalState.debateSpeed);
   }
 
   _debateState = {
@@ -890,6 +1434,13 @@ function runDebate(topicOrId, options = {}) {
     voteResult: null
   };
 
+  // v1.0.2: Reset dialogue repeat tracker for new debate
+  _usedDialogueIndices = {};
+
+  // v1.0.2: Reset mid-session event counters
+  _midSessionEventCount = 0;
+  _midSessionCooldown = 0;
+
   // Initialize speaker momentum
   AI_SPEAKERS.forEach(sp => {
     _debateState.speakerMomentum[sp.id] = 50; // Start at 50/100
@@ -901,6 +1452,7 @@ function runDebate(topicOrId, options = {}) {
   // ── Mark state ──
   if (parliamentState) {
     parliamentState.isDebateInProgress = true;
+    parliamentState.whipUsedThisSession = false; // v1.0.2: Reset whip for new session
   }
 
   // ── Fire start callback ──
@@ -994,26 +1546,36 @@ function _pickDialogueLine(speaker, stance) {
   const style = speaker.style;
   const lang = _getDebateLang(); // "en" | "th"
 
-  // Try to get lines for exact alignment → style → stance → lang
-  let lines = DIALOGUE_TEMPLATES[alignment]?.[style]?.[stance]?.[lang];
+  // v1.0.2: Merge original templates with EXTRA_DIALOGUE_BANK
+  let lines = [];
+  const origLines = DIALOGUE_TEMPLATES[alignment]?.[style]?.[stance]?.[lang];
+  if (origLines && origLines.length > 0) lines = [...origLines];
+
+  // Also pull from extra bank if available
+  const extraKey = `${alignment}_${style}_${stance}`;
+  const extraLines = EXTRA_DIALOGUE_BANK[extraKey]?.[lang];
+  if (extraLines && extraLines.length > 0) lines = lines.concat(extraLines);
 
   // Fallback: try the other stance
-  if (!lines || lines.length === 0) {
+  if (lines.length === 0) {
     const fallbackStance = stance === "for" ? "against" : "for";
-    lines = DIALOGUE_TEMPLATES[alignment]?.[style]?.[fallbackStance]?.[lang];
+    const fb = DIALOGUE_TEMPLATES[alignment]?.[style]?.[fallbackStance]?.[lang];
+    if (fb) lines = [...fb];
+    const fbExtra = EXTRA_DIALOGUE_BANK[`${alignment}_${style}_${fallbackStance}`]?.[lang];
+    if (fbExtra) lines = lines.concat(fbExtra);
   }
 
   // Fallback: try a different style in the same alignment
-  if (!lines || lines.length === 0) {
+  if (lines.length === 0) {
     const styles = Object.keys(DIALOGUE_TEMPLATES[alignment] || {});
     for (const s of styles) {
-      lines = DIALOGUE_TEMPLATES[alignment][s][stance]?.[lang] || DIALOGUE_TEMPLATES[alignment][s]["against"]?.[lang];
-      if (lines && lines.length > 0) break;
+      lines = DIALOGUE_TEMPLATES[alignment][s][stance]?.[lang] || DIALOGUE_TEMPLATES[alignment][s]["against"]?.[lang] || [];
+      if (lines.length > 0) break;
     }
   }
 
-  // Ultimate fallback — language-specific
-  if (!lines || lines.length === 0) {
+  // Ultimate fallback
+  if (lines.length === 0) {
     return {
       text: lang === 'th'
         ? 'ท่านประธาน, ผมขอแสดงจุดยืนในเรื่องนี้ต่อสภา'
@@ -1022,8 +1584,20 @@ function _pickDialogueLine(speaker, stance) {
     };
   }
 
-  // Pick a random line
-  const line = lines[Math.floor(Math.random() * lines.length)];
+  // v1.0.2: Session-level repeat prevention
+  const poolKey = `${alignment}_${style}_${stance}_${lang}`;
+  if (!_usedDialogueIndices[poolKey]) _usedDialogueIndices[poolKey] = [];
+  let available = lines.filter((_, i) => !_usedDialogueIndices[poolKey].includes(i));
+  if (available.length === 0) {
+    _usedDialogueIndices[poolKey] = [];
+    available = [...lines];
+  }
+
+  // Pick a random from available
+  const availIdx = Math.floor(Math.random() * available.length);
+  const line = available[availIdx];
+  const origIdx = lines.indexOf(line);
+  _usedDialogueIndices[poolKey].push(origIdx);
 
   // Apply speaker's protestVulnerability — maybe add extra protestable flavor
   if (!line.protestable && Math.random() * 100 < speaker.protestVulnerability) {
@@ -1041,6 +1615,213 @@ function _pickDialogueLine(speaker, stance) {
   return { ...line };
 }
 
+// v1.0.2: Session-level dialogue repeat tracker (reset per debate)
+let _usedDialogueIndices = {};
+
+/**
+ * EXTRA_DIALOGUE_BANK — v1.0.2 Extended dialogue variety.
+ * Keyed as: "alignment_style_stance" → { en: [...], th: [...] }
+ * Supplements DIALOGUE_TEMPLATES to prevent repetition.
+ */
+const EXTRA_DIALOGUE_BANK = {
+  // ── Government Aggressive ──
+  government_aggressive_for: {
+    en: [
+      { text: "The opposition can shout all day — the NUMBERS don't lie! This {topic} will deliver results!", protestable: false },
+      { text: "Every single day they delay this bill, REAL PEOPLE suffer! Enough obstruction!", protestable: true, protestReason: "misleading" },
+      { text: "If the opposition cared half as much about policy as they do about Twitter, this country would be better off!", protestable: true, protestReason: "off_topic" }
+    ],
+    th: [
+      { text: "ฝ่ายค้านจะตะโกนทั้งวันก็ได้ — แต่ตัวเลขไม่โกหก! {topic} นี้จะสร้างผลลัพธ์!", protestable: false },
+      { text: "ทุกวันที่พวกท่านดีเลย์ร่างนี้ คนจริงๆ เดือดร้อน! พอได้แล้วกับการขัดขวาง!", protestable: true, protestReason: "misleading" },
+      { text: "ถ้าฝ่ายค้านสนใจนโยบายสักครึ่งหนึ่งเท่าที่สนใจทวิตเตอร์ ประเทศจะดีกว่านี้!", protestable: true, protestReason: "off_topic" }
+    ]
+  },
+  government_aggressive_against: {
+    en: [
+      { text: "This reckless proposal would set Thailand back 20 years! We will NOT let that happen!", protestable: false },
+      { text: "The author of this bill should be ASHAMED. It betrays every principle of fiscal responsibility!", protestable: true, protestReason: "slander" }
+    ],
+    th: [
+      { text: "ข้อเสนอไม่รอบคอบนี้จะดึงไทยถอยหลัง 20 ปี! เราจะไม่ปล่อยให้เกิดขึ้น!", protestable: false },
+      { text: "ผู้เสนอร่างนี้ควรอาย ร่างนี้ทรยศทุกหลักการความรับผิดชอบทางการเงิน!", protestable: true, protestReason: "slander" }
+    ]
+  },
+  // ── Government Technical ──
+  government_technical_for: {
+    en: [
+      { text: "Our modeling shows a 17.3% ROI within 36 months. The economic case for this {topic} is airtight.", protestable: false },
+      { text: "I refer the House to Appendix C of the committee report — the cost-benefit analysis leaves no room for doubt.", protestable: false },
+      { text: "OECD comparisons with 12 peer economies confirm: Thailand is an outlier. This {topic} normalizes our position.", protestable: false }
+    ],
+    th: [
+      { text: "โมเดลของเราแสดง ROI 17.3% ภายใน 36 เดือน เหตุผลทางเศรษฐกิจของ {topic} นี้ชัดเจน", protestable: false },
+      { text: "ขอให้สภาดูภาคผนวก ค ของรายงานคณะกรรมาธิการ — การวิเคราะห์ต้นทุน-ผลตอบแทนไม่เหลือที่ว่างสำหรับข้อสงสัย", protestable: false },
+      { text: "การเปรียบเทียบ OECD กับ 12 เศรษฐกิจเพื่อน ยืนยัน: ไทยเป็นข้อยกเว้น {topic} นี้ทำให้เราอยู่ในระดับปกติ", protestable: false }
+    ]
+  },
+  // ── Opposition Aggressive ──
+  opposition_aggressive_against: {
+    en: [
+      { text: "The Minister is a PUPPET! Someone else is writing these bills, and we all know WHO!", protestable: true, protestReason: "slander" },
+      { text: "This is what happens when you let GENERALS write policy! Total incompetence disguised as reform!", protestable: true, protestReason: "off_topic" },
+      { text: "How many MORE scandals before this government falls? History is watching!", protestable: false },
+      { text: "The people are HUNGRY, and you're debating THIS?! Read the room!", protestable: true, protestReason: "off_topic" }
+    ],
+    th: [
+      { text: "ท่านรัฐมนตรีเป็นแค่หุ่นเชิด! มีคนอื่นเขียนร่างเหล่านี้ และเราทุกคนรู้ว่าเป็นใคร!", protestable: true, protestReason: "slander" },
+      { text: "นี่คือสิ่งที่เกิดขึ้นเมื่อปล่อยให้นายพลเขียนนโยบาย! ไร้ความสามารถปลอมตัวเป็นการปฏิรูป!", protestable: true, protestReason: "off_topic" },
+      { text: "อีกกี่เรื่องอื้อฉาวรัฐบาลนี้ถึงจะล้ม? ประวัติศาสตร์กำลังจับตาดู!", protestable: false },
+      { text: "ประชาชนหิวโหย แล้วท่านมานั่งอภิปรายเรื่องนี้?! อ่านบรรยากาศบ้าง!", protestable: true, protestReason: "off_topic" }
+    ]
+  },
+  // ── Opposition Technical ──
+  opposition_technical_against: {
+    en: [
+      { text: "Cross-referencing the ministry's own data with Bank of Thailand figures reveals a ฿47 billion discrepancy. Care to explain?", protestable: false },
+      { text: "The regression analysis in our counter-report demonstrates a negative correlation between this policy and GDP growth at p < 0.01.", protestable: false },
+      { text: "Three independent economic institutes have rated this {topic} as 'high risk'. The government is ignoring expert consensus.", protestable: false }
+    ],
+    th: [
+      { text: "การอ้างอิงข้อมูลของกระทรวงเองกับตัวเลขธนาคารแห่งประเทศไทยพบความคลาดเคลื่อน ฿47,000 ล้าน อธิบายได้ไหม?", protestable: false },
+      { text: "การวิเคราะห์การถดถอยในรายงานตอบโต้ของเราแสดงความสัมพันธ์เชิงลบกับ GDP ที่ p < 0.01", protestable: false },
+      { text: "สถาบันเศรษฐกิจอิสระ 3 แห่งจัดอันดับ {topic} นี้ว่า 'เสี่ยงสูง' รัฐบาลเพิกเฉยฉันทามติผู้เชี่ยวชาญ", protestable: false }
+    ]
+  },
+  // ── Opposition Populist ──
+  opposition_populist_against: {
+    en: [
+      { text: "I brought a bag of rice from Udon Thani. THIS is what a farmer earns in a month. You want to take even THAT away?!", protestable: false },
+      { text: "My constituents can't afford MEDICINE. And this government wants to spend billions on vanity projects?!", protestable: false }
+    ],
+    th: [
+      { text: "ผมเอาถุงข้าวจากอุดรธานีมา นี่คือรายได้เกษตรกรหนึ่งเดือน ท่านจะเอาแม้แต่สิ่งนี้ไปอีกหรือ?!", protestable: false },
+      { text: "ประชาชนในเขตผมซื้อยาไม่ได้ แล้วรัฐบาลจะใช้เงินหลายพันล้านกับโครงการโอ้อวด?!", protestable: false }
+    ]
+  },
+  // ── Government Populist ──
+  government_populist_for: {
+    en: [
+      { text: "I was in Chiang Rai last week. A mother held my hand and said, 'Please pass this bill.' How can I say no?", protestable: false },
+      { text: "We promised the people. We WILL deliver. This {topic} is our commitment to every Thai family.", protestable: false }
+    ],
+    th: [
+      { text: "ผมอยู่เชียงรายสัปดาห์ที่แล้ว แม่คนหนึ่งจับมือผมบอกว่า 'ช่วยผ่านร่างนี้' ผมจะปฏิเสธได้อย่างไร?", protestable: false },
+      { text: "เราสัญญากับประชาชน เราจะทำตามสัญญา {topic} นี้คือคำมั่นของเราต่อทุกครอบครัวไทย", protestable: false }
+    ]
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// SECTION 6B: DIALOGUE ARCHETYPES (STEP 51)
+// Topic-agnostic lines for variety. The debate engine randomly injects these
+// between regular speeches to break up repetition.
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * DIALOGUE_ARCHETYPES — Categorized pools of generic parliamentary dialogue.
+ * Each array has bilingual entries. The engine picks randomly from these
+ * to inject "flavor lines" between AI speeches.
+ */
+const DIALOGUE_ARCHETYPES = {
+  /**
+   * Aggressive — heated, confrontational interjections.
+   */
+  aggressive: {
+    en: [
+      { text: "This is a blatant lie to the public! I demand the Minister retract this statement!", protestable: true, protestReason: "misleading" },
+      { text: "You are protecting the elite at the expense of the poor! Shame on this government!", protestable: true, protestReason: "off_topic" },
+      { text: "How DARE you compare this to the 2540 crisis! That is a grotesque distortion of history!", protestable: false },
+      { text: "The Minister should resign! This level of incompetence is criminal negligence!", protestable: true, protestReason: "slander" },
+      { text: "We have EVIDENCE of backroom deals! Shall I read the leaked minutes to this House?!", protestable: false },
+      { text: "The people of Isan didn't send me here to watch you line your pockets!", protestable: false },
+      { text: "ENOUGH with the gaslighting! The numbers are right here — page 47 of YOUR own report!", protestable: false },
+      { text: "You call this governance?! My grandmother runs her somtam stall with more transparency!", protestable: true, protestReason: "off_topic" }
+    ],
+    th: [
+      { text: "นี่คือการโกหกประชาชนอย่างโจ่งแจ้ง! ผมขอให้ท่านรัฐมนตรีถอนคำพูด!", protestable: true, protestReason: "misleading" },
+      { text: "ท่านปกป้องชนชั้นสูงโดยเอาคนจนเป็นเหยื่อ! น่าอายรัฐบาลนี้!", protestable: true, protestReason: "off_topic" },
+      { text: "ท่านกล้าเปรียบเทียบเรื่องนี้กับวิกฤต 2540 ได้อย่างไร?! บิดเบือนประวัติศาสตร์!", protestable: false },
+      { text: "ท่านรัฐมนตรีควรลาออก! ความไร้ความสามารถระดับนี้เข้าข่ายความผิดทางอาญา!", protestable: true, protestReason: "slander" },
+      { text: "เรามีหลักฐานการเจรจาลับ! จะให้ผมอ่านบันทึกการประชุมที่รั่วไหลให้สภาฟังไหม?!", protestable: false },
+      { text: "ประชาชนอีสานไม่ได้ส่งผมมาที่นี่เพื่อดูท่านเอาเงินเข้ากระเป๋า!", protestable: false },
+      { text: "พอได้แล้วกับการบิดเบือน! ตัวเลขอยู่ตรงนี้ — หน้า 47 ของรายงานท่านเอง!", protestable: false },
+      { text: "ท่านเรียกสิ่งนี้ว่าการบริหาร?! ยายผมขายส้มตำยังโปร่งใสกว่า!", protestable: true, protestReason: "off_topic" }
+    ]
+  },
+
+  /**
+   * Technical — data-driven, procedural, legal references.
+   */
+  technical: {
+    en: [
+      { text: "Section 42 clearly contradicts the Administrative Procedures Act. This bill is unconstitutional on its face.", protestable: false },
+      { text: "The fiscal multiplier is negative here. Every baht spent returns only 0.6 baht. The math doesn't lie.", protestable: false },
+      { text: "I refer the House to the World Bank's 2025 Governance Index. Thailand ranks 87th — this bill makes it worse.", protestable: false },
+      { text: "The Environmental Impact Assessment was filed 3 days before the deadline. No independent review was possible.", protestable: false },
+      { text: "Cross-referencing Tables 4 and 7 reveals a ฿12 billion unaccounted allocation. Where did it go?", protestable: false },
+      { text: "The OECD recommends a 15% threshold. This bill proposes 8%. We are below international minimum standards.", protestable: false },
+      { text: "According to the Bank of Thailand's Q3 forecast, this spending trajectory leads to a 4.2% deficit by 2028.", protestable: false },
+      { text: "I have submitted a written amendment to Clause 14(b). The committee chair has a copy.", protestable: false }
+    ],
+    th: [
+      { text: "มาตรา 42 ขัดกับ พ.ร.บ. วิธีปฏิบัติราชการทางปกครองอย่างชัดเจน ร่างนี้ขัดรัฐธรรมนูญ", protestable: false },
+      { text: "ตัวคูณทางการคลังเป็นลบ ทุกบาทที่ใช้ได้คืนแค่ 0.6 บาท ตัวเลขไม่โกหก", protestable: false },
+      { text: "ขอให้สภาดูดัชนีธรรมาภิบาลธนาคารโลก 2568 ไทยอยู่อันดับ 87 — ร่างนี้ทำให้แย่ลง", protestable: false },
+      { text: "รายงาน EIA ยื่นก่อนกำหนด 3 วัน ไม่มีการทบทวนอิสระที่เป็นไปได้", protestable: false },
+      { text: "การอ้างอิงตาราง 4 กับ 7 พบงบที่ไม่สามารถอธิบายได้ ฿12,000 ล้าน หายไปไหน?", protestable: false },
+      { text: "OECD แนะนำเกณฑ์ 15% ร่างนี้เสนอ 8% เราต่ำกว่ามาตรฐานขั้นต่ำสากล", protestable: false },
+      { text: "ตามประมาณการ ธปท. ไตรมาส 3 แนวทางการใช้จ่ายนี้นำไปสู่ขาดดุล 4.2% ภายในปี 2571", protestable: false },
+      { text: "ผมยื่นแก้ไขเพิ่มเติมเป็นลายลักษณ์อักษรข้อ 14(ข) ประธานกรรมาธิการมีสำเนาแล้ว", protestable: false }
+    ]
+  },
+
+  /**
+   * Filler — procedural calls, time requests, neutral interjections.
+   */
+  filler: {
+    en: [
+      { text: "Mr. Speaker, I request the floor.", protestable: false },
+      { text: "Point of order!", protestable: false },
+      { text: "I yield the remainder of my time to the distinguished member from Chiang Mai.", protestable: false },
+      { text: "Mr. Speaker, may I have an extension of 5 minutes?", protestable: false },
+      { text: "I move to table this discussion until the committee report is finalized.", protestable: false },
+      { text: "With respect to the previous speaker, I wish to offer a counter-point.", protestable: false },
+      { text: "I ask that the Minister's response be entered into the official record.", protestable: false },
+      { text: "The honorable member's time has expired. Please conclude your remarks.", protestable: false },
+      { text: "I second the motion.", protestable: false },
+      { text: "May I ask the Minister to repeat the figure? I believe the House did not hear clearly.", protestable: false }
+    ],
+    th: [
+      { text: "ท่านประธาน ผมขอใช้สิทธิ์อภิปราย", protestable: false },
+      { text: "ขอประท้วงตามข้อบังคับ!", protestable: false },
+      { text: "ผมขอมอบเวลาที่เหลือให้ท่านสมาชิกผู้ทรงเกียรติจากเชียงใหม่", protestable: false },
+      { text: "ท่านประธาน ขอขยายเวลา 5 นาทีครับ", protestable: false },
+      { text: "ผมเสนอให้เลื่อนการอภิปรายนี้จนกว่ารายงานกรรมาธิการจะเสร็จสมบูรณ์", protestable: false },
+      { text: "ด้วยความเคารพต่อผู้อภิปรายก่อนหน้า ผมขอเสนอมุมมองตรงข้าม", protestable: false },
+      { text: "ขอให้บันทึกคำตอบของท่านรัฐมนตรีไว้ในรายงานการประชุม", protestable: false },
+      { text: "เวลาของท่านสมาชิกหมดแล้ว กรุณาสรุปคำอภิปราย", protestable: false },
+      { text: "ผมรับรองญัตตินี้", protestable: false },
+      { text: "ขอให้ท่านรัฐมนตรีทวนตัวเลขอีกครั้ง สภาอาจไม่ได้ยินชัดเจน", protestable: false }
+    ]
+  }
+};
+
+/**
+ * getRandomArchetypeLine() — Returns a random dialogue line from a specific archetype.
+ * Used by the debate engine to inject variety between AI speeches.
+ *
+ * @param {string} archetype — "aggressive" | "technical" | "filler"
+ * @param {string} [lang] — "en" | "th" (defaults to current debate lang)
+ * @returns {Object|null} A dialogue object { text, protestable, protestReason? }
+ */
+function getRandomArchetypeLine(archetype, lang) {
+  lang = lang || _getDebateLang();
+  const pool = DIALOGUE_ARCHETYPES[archetype];
+  if (!pool) return null;
+  const lines = pool[lang] || pool.en;
+  return lines[Math.floor(Math.random() * lines.length)];
+}
 
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -1075,6 +1856,16 @@ function _startDialogueStream() {
  */
 function _advanceDialogue() {
   if (!_debateState.isRunning) return;
+
+  // v1.0.2: Check for mid-session random event (5% per tick)
+  if (_checkMidSessionEvent()) {
+    return; // Event triggered — debate is paused, skip normal dialogue
+  }
+
+  // v1.0.2 STEP 50: Check for Interpellation Showdown (10% per tick)
+  if (_checkInterpellationShowdown()) {
+    return; // Interpellation triggered — debate paused for showdown
+  }
 
   const queue = _debateState.dialogueQueue;
   const idx = _debateState.dialogueIndex;
@@ -1155,6 +1946,48 @@ function _deliverAISpeech(entry) {
   // ── Fire callbacks ──
   _fireDebateCallback("onDialogueAdded", transcriptEntry);
   _fireDebateCallback("onSpeakerChange", speaker, transcriptEntry);
+
+  // ── STEP 51: Inject archetype flavor line (20% chance) ──
+  if (Math.random() < 0.20 && typeof DIALOGUE_ARCHETYPES !== 'undefined') {
+    const archetypeRoll = Math.random();
+    let archetype;
+    if (archetypeRoll < 0.40) archetype = 'filler';
+    else if (archetypeRoll < 0.70) archetype = 'aggressive';
+    else archetype = 'technical';
+
+    const flavorLine = getRandomArchetypeLine(archetype);
+    if (flavorLine) {
+      // Pick a random different speaker for the interjection
+      const otherSpeakers = (typeof AI_SPEAKERS !== 'undefined')
+        ? AI_SPEAKERS.filter(s => s.id !== speaker.id)
+        : [];
+      const interjector = otherSpeakers.length > 0
+        ? otherSpeakers[Math.floor(Math.random() * otherSpeakers.length)]
+        : { id: 'backbench', name: 'Backbencher', thaiTitle: 'สมาชิก', party: '', partyShort: '—', alignment: 'neutral', color: '#999', avatar: '💬' };
+
+      const lang = _getDebateLang();
+      const flavorEntry = {
+        id: `flavor_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        type: "ai_interjection",
+        speakerId: interjector.id,
+        speakerName: interjector.name,
+        speakerThaiTitle: interjector.thaiTitle || interjector.name,
+        speakerParty: interjector.party,
+        speakerPartyShort: interjector.partyShort,
+        speakerAlignment: interjector.alignment,
+        speakerColor: interjector.color,
+        speakerAvatar: interjector.avatar,
+        text: flavorLine.text,
+        protestable: flavorLine.protestable || false,
+        protestReason: flavorLine.protestReason || null,
+        archetype: archetype,
+        timestamp: Date.now()
+      };
+
+      _debateState.transcript.push(flavorEntry);
+      _fireDebateCallback("onDialogueAdded", flavorEntry);
+    }
+  }
 }
 
 /**
@@ -1720,6 +2553,25 @@ function playerSpeak(stanceId) {
 // ──────────────────────────────────────────────────────────────────────────
 
 /**
+ * STEP 81: _getGaffeQuote() — Returns a random minister gaffe quote.
+ * Used when THE GAFFE triggers during interpellation.
+ * Inspired by real Thai parliamentary outbursts.
+ * @private
+ */
+function _getGaffeQuote() {
+  const quotes = [
+    "ไม่ต้องมาสอนผม! ผมรู้ดีกว่าท่าน! — I don't need YOU to lecture ME!",
+    "ท่านประธาน ผมขอปฏิเสธที่จะตอบคำถามที่ไร้สาระนี้! — I REFUSE to answer this absurd question!",
+    "You think you can corner ME? I was in politics before you were BORN!",
+    "The numbers are... um... well, the ministry will provide those later... next question!",
+    "That's FAKE NEWS and the honorable member KNOWS it! [bangs desk]",
+    "ผมไม่ได้โกหก! ตัวเลขมันเปลี่ยนไปเอง! — I didn't lie! The numbers changed by themselves!",
+    "If the member doesn't like my answer, he can take it up with the NCPO... I mean, the committee!"
+  ];
+  return quotes[Math.floor(Math.random() * quotes.length)];
+}
+
+/**
  * INTERPELLATION_TOPICS — Questions the player can ask the Government.
  * These are typically opposition-style "gotcha" questions.
  */
@@ -1776,8 +2628,8 @@ const INTERPELLATION_RESPONSE_STANCES = {
     labelThai: "กดดัน",
     description: "Aggressively demand specifics. Risk angering the coalition.",
     effects: {
-      success: { politicalCapital: +8, localPopularity: +3 },
-      failure: { politicalCapital: -5, localPopularity: -2 }
+      success: { politicalCapital: +12, localPopularity: +15 },
+      failure: { politicalCapital: -8, localPopularity: -5 }
     },
     baseSuccessRate: 40
   },
@@ -1786,8 +2638,8 @@ const INTERPELLATION_RESPONSE_STANCES = {
     labelThai: "ขอความกระจ่าง",
     description: "Politely but firmly request additional details.",
     effects: {
-      success: { politicalCapital: +4, localPopularity: +2 },
-      failure: { politicalCapital: -1, localPopularity: 0 }
+      success: { politicalCapital: +7, localPopularity: +8 },
+      failure: { politicalCapital: -2, localPopularity: -1 }
     },
     baseSuccessRate: 65
   },
@@ -1796,7 +2648,7 @@ const INTERPELLATION_RESPONSE_STANCES = {
     labelThai: "ยอมรับคำตอบ",
     description: "Accept the Government's response. Safe but gains nothing.",
     effects: {
-      success: { politicalCapital: +1 },
+      success: { politicalCapital: +2 },
       failure: { politicalCapital: 0 }
     },
     baseSuccessRate: 95
@@ -1887,10 +2739,60 @@ function resolveInterpellation(interpellationId, responseStance) {
   const effects = success ? stance.effects.success : stance.effects.failure;
   applyEffects(effects);
 
+  // ══════════════════════════════════════════════════════════════════
+  // STEP 81: THE MINISTER'S GAFFE RNG
+  // Regardless of the player's stance outcome, there's a small chance
+  // the target minister slips up — loses their temper, makes a gaffe,
+  // or gives a disastrously evasive answer that goes viral.
+  //
+  // Difficulty scaling:
+  //   Easy:   25% chance, +5  Capital & LocalPop (frequent, modest)
+  //   Normal: 15% chance, +7  Capital & LocalPop (standard)
+  //   Hard:    5% chance, +10 Capital & LocalPop (rare but huge)
+  // ══════════════════════════════════════════════════════════════════
+  let gaffeTriggered = false;
+  let gaffeReward = 0;
+
+  const diff = (typeof TPSGlobalState !== 'undefined') ? TPSGlobalState.difficulty
+    : (localStorage.getItem('tps_difficulty') || 'normal');
+  let gaffeChance = 0.15;
+  gaffeReward = 7;
+
+  if (diff === 'easy')  { gaffeChance = 0.25; gaffeReward = 5; }
+  if (diff === 'hard')  { gaffeChance = 0.05; gaffeReward = 10; }
+
+  const gaffeRoll = Math.random();
+  if (gaffeRoll <= gaffeChance) {
+    gaffeTriggered = true;
+
+    // Apply bonus rewards
+    applyEffects({
+      politicalCapital: gaffeReward,
+      localPopularity: gaffeReward
+    });
+
+    console.log(`[debate.js] STEP 81 — 🎬 GAFFE! ${queueItem.target} lost composure! Roll=${gaffeRoll.toFixed(3)} ≤ ${gaffeChance} → +${gaffeReward} Capital & LocalPop`);
+
+    // Log the viral moment
+    logEvent("interpellation", `🎬 VIRAL: ${queueItem.target} Gaffe!`,
+      `${queueItem.target} lost their temper during questioning and gave a disastrous answer! The clip is going viral. +${gaffeReward} Capital, +${gaffeReward} Local Popularity.`,
+      { capital: gaffeReward, popularity: gaffeReward, gaffe: true });
+
+    // Publish gaffe news
+    if (typeof publishNews === 'function') {
+      publishNews('minister_gaffe', {
+        player: parliamentState.playerName || 'Player',
+        target: queueItem.target
+      }, { sentiment: 'positive' });
+    }
+  }
+  // ══════════════════════════════════════════════════════════════════
+
   // Mark as answered
   queueItem.status = "answered";
   queueItem.answeredAt = Date.now();
   queueItem.result = success ? "pressed" : "deflected";
+  if (gaffeTriggered) queueItem.result = "gaffe"; // Override with gaffe result
 
   // ── Push to transcript ──
   const questionEntry = {
@@ -1907,6 +2809,16 @@ function resolveInterpellation(interpellationId, responseStance) {
     timestamp: Date.now()
   };
 
+  // Build government response text — gaffe overrides normal response
+  let govResponseText;
+  if (gaffeTriggered) {
+    govResponseText = `🎬 The ${queueItem.target} LOSES THEIR TEMPER! "${_getGaffeQuote()}" — The clip goes viral within minutes. Social media explodes.`;
+  } else if (success) {
+    govResponseText = `The ${queueItem.target} stumbles over the answer. The opposition benches erupt in applause.`;
+  } else {
+    govResponseText = `The ${queueItem.target} delivers a smooth, well-rehearsed response. The government benches bang their desks in approval.`;
+  }
+
   const governmentResponse = {
     id: `interp_a_${Date.now()}`,
     type: "interpellation_answer",
@@ -1914,11 +2826,9 @@ function resolveInterpellation(interpellationId, responseStance) {
     speakerName: queueItem.target,
     speakerThaiTitle: "ท่านรัฐมนตรี",
     speakerAlignment: "government",
-    speakerColor: "#1D3557",
-    speakerAvatar: "🎙️",
-    text: success
-      ? `The ${queueItem.target} stumbles over the answer. The opposition benches erupt in applause.`
-      : `The ${queueItem.target} delivers a smooth, well-rehearsed response. The government benches bang their desks in approval.`,
+    speakerColor: gaffeTriggered ? "#FF2D55" : "#1D3557",
+    speakerAvatar: gaffeTriggered ? "🤬" : "🎙️",
+    text: govResponseText,
     protestable: false,
     timestamp: Date.now()
   };
@@ -1937,8 +2847,25 @@ function resolveInterpellation(interpellationId, responseStance) {
       : `The ${queueItem.target} deflected your question skillfully. The moment is lost.`,
     effects);
 
+  // v1.0.2: Publish news on interpellation outcome
+  if (typeof publishNews === 'function') {
+    const playerName = parliamentState.playerName || 'Player';
+    if (success) {
+      publishNews('interpellation_success', {
+        player: playerName,
+        target: queueItem.target
+      }, { sentiment: 'positive' });
+    } else {
+      publishNews('interpellation_fail', {
+        player: playerName,
+        target: queueItem.target
+      }, { sentiment: 'negative' });
+    }
+  }
+
   _fireDebateCallback("onInterpellationResult", {
-    success, stance: responseStance, question: queueItem, effects
+    success, stance: responseStance, question: queueItem, effects,
+    gaffeTriggered, gaffeReward  // STEP 81
   });
 
   return {
@@ -1947,9 +2874,13 @@ function resolveInterpellation(interpellationId, responseStance) {
     target: queueItem.target,
     capitalChange: effects.politicalCapital || 0,
     popularityChange: effects.localPopularity || 0,
-    narrative: success
-      ? `The ${queueItem.target} is visibly shaken. Reporters scribble furiously.`
-      : `The Government survives another question session. Business as usual.`
+    gaffeTriggered,       // STEP 81
+    gaffeReward,          // STEP 81
+    narrative: gaffeTriggered
+      ? `🎬 VIRAL MOMENT! The ${queueItem.target} lost their temper and gave a DISASTROUS answer! +${gaffeReward} Capital, +${gaffeReward} Local Pop. The clip is #1 trending!`
+      : success
+        ? `The ${queueItem.target} is visibly shaken. Reporters scribble furiously. Your clip goes viral.`
+        : `The Government survives another question session. Business as usual.`
   };
 }
 
@@ -1987,11 +2918,22 @@ function _endDebate() {
 
 /**
  * castVote() — The player casts their vote on the bill.
- * AI MPs vote based on party alignment, whip, and debate momentum.
+ *
+ * v1.0.2 HARD-MODE ENGINE:
+ *   Result = (GovSeats × GovUnity) - (OppSeats × OppUnity) + PlayerInfluence
+ *   - GovUnity/OppUnity fluctuate with difficulty, controversy, and news
+ *   - Whip enforcement guarantees party votes but costs loyalty over time
+ *   - Bills can genuinely FAIL — triggering government crisis news
  *
  * @param {string} playerVote - "aye" | "nay" | "abstain"
- * @returns {Object} Vote result: { ayes, nays, abstain, passed, playerVote }
+ * @returns {Object} Vote result
  */
+
+// ── House Configuration Constants ──
+const HOUSE_TOTAL_SEATS = 500;
+const GOV_BASE_SEATS = 260;      // Slim majority (realistic Thai parliament)
+const OPP_BASE_SEATS = 240;
+
 function castVote(playerVote) {
   if (!_debateState.currentTopic) {
     return { error: "No active bill to vote on." };
@@ -2000,63 +2942,261 @@ function castVote(playerVote) {
   const topic = _debateState.currentTopic;
   console.log(`[debate.js] ═══ VOTE CAST: Player votes ${playerVote.toUpperCase()} ═══`);
 
-  // ── Simulate AI voting ──
-  // Base: Government has ~260 seats, Opposition has ~240 (realistic Thai parliament)
-  let govBaseAyes = 258;
-  let oppBaseAyes = 0;
+  // ── Get difficulty scaling ──
+  const diffMult = (typeof TPSGlobalState !== 'undefined' && TPSGlobalState.getDifficultyMultiplier)
+    ? TPSGlobalState.getDifficultyMultiplier()  // 0=easy, 1=normal, 2=hard
+    : 1;
 
-  // Adjust based on topic positions
-  if (topic.governmentPosition === "for") {
-    govBaseAyes = 255 + Math.floor(Math.random() * 10);
-  } else if (topic.governmentPosition === "against") {
-    govBaseAyes = 240 - Math.floor(Math.random() * 20);
-    oppBaseAyes = 220 + Math.floor(Math.random() * 15);
-  } else {
-    govBaseAyes = 230 + Math.floor(Math.random() * 30);
+  // ── STEP 1: Calculate Government Unity (0.0 - 1.0) ──
+  // Base: 0.85 on easy, 0.75 on normal, 0.60 on hard
+  let govUnity = 0.85 - (diffMult * 0.10);
+
+  // Coalition stability modifier (from parliamentState)
+  const coalStab = (parliamentState && parliamentState.coalitionStability) || 65;
+  govUnity += (coalStab - 50) * 0.003;  // ±0.045 swing
+
+  // Topic controversy reduces unity (controversial bills = more rebels)
+  govUnity -= (topic.controversy / 100) * 0.12;
+
+  // Government position modifier
+  if (topic.governmentPosition === 'against') {
+    govUnity -= 0.15;  // Government MPs rebel more on bills the govt opposes
+  } else if (topic.governmentPosition === 'neutral') {
+    govUnity -= 0.08;  // Free vote territory
   }
 
-  if (topic.oppositionPosition === "for") {
-    oppBaseAyes = 230 + Math.floor(Math.random() * 10);
-  } else {
-    oppBaseAyes = 10 + Math.floor(Math.random() * 20);
+  // Whip enforcement bonus
+  const whipActive = parliamentState && parliamentState.whipUsedThisSession;
+  if (whipActive) {
+    govUnity += 0.15;  // Whip locks in party votes
   }
 
-  // Controversy affects rebellion (higher controversy = more rebels)
-  const rebellionFactor = topic.controversy * 0.1;
-  govBaseAyes -= Math.floor(Math.random() * rebellionFactor);
-  oppBaseAyes += Math.floor(Math.random() * rebellionFactor * 0.5);
+  // Random fluctuation (±5%)
+  govUnity += (Math.random() - 0.5) * 0.10;
+  govUnity = Math.max(0.30, Math.min(0.98, govUnity));
 
-  const totalAyes = Math.max(0, Math.min(500, govBaseAyes + oppBaseAyes));
-  const totalNays = 500 - totalAyes - Math.floor(Math.random() * 15); // Some abstain
-  const totalAbstain = 500 - totalAyes - Math.max(0, totalNays);
+  // ── STEP 2: Calculate Opposition Unity (0.0 - 1.0) ──
+  let oppUnity = 0.70 + (diffMult * 0.08);  // Opposition tighter on hard
 
-  const passed = totalAyes > 250; // Simple majority of 500
+  // Topic position modifier
+  if (topic.oppositionPosition === 'for') {
+    oppUnity -= 0.20;  // Opposition breaks ranks to vote FOR the bill
+  } else if (topic.oppositionPosition === 'neutral') {
+    oppUnity -= 0.10;
+  }
+  // If opposition is "against" → they vote NAY with high unity (default)
 
-  // ── Player's vote effect ──
+  // Controversy makes opposition MORE united (rallying effect)
+  oppUnity += (topic.controversy / 100) * 0.08;
+
+  // Random fluctuation
+  oppUnity += (Math.random() - 0.5) * 0.10;
+  oppUnity = Math.max(0.30, Math.min(0.98, oppUnity));
+
+  // ── STEP 3: Calculate Raw Votes ──
+  // Government MPs voting AYE (if govt position is "for") or NAY (if "against")
+  const govForBill = topic.governmentPosition !== 'against';
+  const oppForBill = topic.oppositionPosition === 'for';
+
+  let govAyes, govNays, oppAyes, oppNays;
+
+  if (govForBill) {
+    govAyes = Math.round(GOV_BASE_SEATS * govUnity);
+    govNays = Math.round(GOV_BASE_SEATS * (1 - govUnity) * 0.7);
+  } else {
+    govAyes = Math.round(GOV_BASE_SEATS * (1 - govUnity) * 0.5);
+    govNays = Math.round(GOV_BASE_SEATS * govUnity);
+  }
+
+  if (oppForBill) {
+    oppAyes = Math.round(OPP_BASE_SEATS * oppUnity);
+    oppNays = Math.round(OPP_BASE_SEATS * (1 - oppUnity) * 0.6);
+  } else {
+    oppAyes = Math.round(OPP_BASE_SEATS * (1 - oppUnity) * 0.4);
+    oppNays = Math.round(OPP_BASE_SEATS * oppUnity);
+  }
+
+  // ── STEP 4: Player Influence ──
+  // Player's political capital shifts a few votes
+  const playerCapital = (parliamentState && parliamentState.playerPoliticalCapital) || 50;
+  const playerInfluence = Math.round((playerCapital - 50) * 0.15);
+
+  if (playerVote === 'aye') {
+    govAyes += Math.max(0, playerInfluence);
+    if (playerInfluence < 0) govNays += Math.abs(playerInfluence);
+  } else if (playerVote === 'nay') {
+    govNays += Math.max(0, playerInfluence);
+    if (playerInfluence < 0) govAyes += Math.abs(playerInfluence);
+  }
+
+  // ── STEP 5: Final Tally ──
+  let totalAyes = Math.max(0, govAyes + oppAyes);
+  let totalNays = Math.max(0, govNays + oppNays);
+  let totalAbstain = Math.max(0, HOUSE_TOTAL_SEATS - totalAyes - totalNays);
+
+  // Normalize to 500 max
+  const rawTotal = totalAyes + totalNays + totalAbstain;
+  if (rawTotal > HOUSE_TOTAL_SEATS) {
+    const scale = HOUSE_TOTAL_SEATS / rawTotal;
+    totalAyes = Math.round(totalAyes * scale);
+    totalNays = Math.round(totalNays * scale);
+    totalAbstain = HOUSE_TOTAL_SEATS - totalAyes - totalNays;
+  }
+  totalAbstain = Math.max(0, totalAbstain);
+
+  // v1.0.2: Apply modified votes from amendment resolution
+  if (_debateState._modifiedVotes) {
+    totalAyes = _debateState._modifiedVotes.ayes;
+    totalNays = _debateState._modifiedVotes.nays;
+    totalAbstain = Math.max(0, HOUSE_TOTAL_SEATS - totalAyes - totalNays);
+    _debateState._modifiedVotes = null;  // Consume
+  }
+
+  const passed = totalAyes > Math.floor(HOUSE_TOTAL_SEATS / 2); // >250 = pass
+
+  // ═══ v1.0.2: LEGISLATIVE GRIDLOCK — AMENDMENT PHASE ═══
+  // If the bill FAILS by a narrow margin (≤20 votes), trigger amendment phase
+  const margin = totalAyes - totalNays;
+  const narrowDefeatMargin = 20;
+  const isNarrowDefeat = !passed && margin >= -narrowDefeatMargin && margin < 0;
+
+  if (isNarrowDefeat && !_debateState._amendmentResolved) {
+    console.log(`[debate.js] ═══ GRIDLOCK DETECTED: margin=${margin}, triggering amendment phase ═══`);
+
+    // Store pending vote data for resolveAmendment()
+    _debateState._pendingVote = {
+      topic, playerVote, totalAyes, totalNays, totalAbstain,
+      govUnity, oppUnity, whipActive, playerEffect: {},
+      margin, diffMult
+    };
+
+    const amendmentOptions = {
+      water_down: {
+        id: "water_down",
+        label: "Water It Down",
+        labelThai: "ลดความเข้มข้น",
+        icon: "💧",
+        description: "Remove the controversial clause to gain centrist votes.",
+        descriptionThai: "ตัดมาตราที่เป็นข้อถกเถียงเพื่อดึงเสียงกลาง",
+        tradeoff: "+30 votes from centrists, but Party Loyalty -20 and bill effectiveness halved",
+        tradeoffThai: "+30 เสียงจากกลุ่มกลาง แต่ความจงรักภักดีพรรค -20 และประสิทธิภาพร่างลดครึ่ง"
+      },
+      push_through: {
+        id: "push_through",
+        label: "Refuse to Compromise",
+        labelThai: "ไม่ยอมประนีประนอม",
+        icon: "✊",
+        description: "Stand firm. The bill fails. Suffer the political consequences.",
+        descriptionThai: "ยืนหยัด ร่างตกไป รับผลทางการเมือง",
+        tradeoff: "Bill is defeated. Political Capital -5, but base respects your principles (+3 Loyalty)",
+        tradeoffThai: "ร่างตกไป ทุนการเมือง -5 แต่ฐานเสียงเคารพหลักการ (+3 ความจงรักภักดี)"
+      },
+      pork_barrel: {
+        id: "pork_barrel",
+        label: "Buy the Votes",
+        labelThai: "ซื้อเสียง",
+        icon: "💰",
+        description: "Bribe the holdouts with pork barrel spending.",
+        descriptionThai: "ติดสินบนผู้ลังเลด้วยงบประมาณจัดสรร",
+        tradeoff: "Costs ฿80B budget, +25 votes, but 40% chance of EC Scrutiny scandal",
+        tradeoffThai: "ใช้งบ ฿80,000 ล้าน +25 เสียง แต่มีโอกาส 40% ถูก กกต. สอบสวน"
+      }
+    };
+
+    // Fire callback for UI to show amendment modal
+    _fireDebateCallback("onAmendmentPhase", {
+      topic, margin, totalAyes, totalNays,
+      votesNeeded: Math.abs(margin) + 1,
+      options: amendmentOptions
+    });
+
+    return {
+      pending: true,
+      gridlock: true,
+      topicId: topic.id,
+      topicTitle: topic.title,
+      ayes: totalAyes,
+      nays: totalNays,
+      margin: margin,
+      votesNeeded: Math.abs(margin) + 1,
+      narrative: `⚖️ GRIDLOCK! The bill fails by only ${Math.abs(margin)} votes. An amendment phase has been triggered.`,
+      options: amendmentOptions
+    };
+  }
+  // ═══ END GRIDLOCK CHECK ═══
+
+  // ── STEP 6: Player Vote Effects ──
   let playerEffect = {};
-  if (playerVote === "aye" && passed) {
-    playerEffect = { politicalCapital: +2 };
-  } else if (playerVote === "nay" && !passed) {
+  const alignment = parliamentState ? parliamentState.playerAlignment : 'opposition';
+
+  if (playerVote === 'aye' && passed) {
     playerEffect = { politicalCapital: +3 };
-  } else if (playerVote === "abstain") {
+  } else if (playerVote === 'nay' && !passed) {
+    playerEffect = { politicalCapital: +4 };
+  } else if (playerVote === 'abstain') {
+    playerEffect = { politicalCapital: -2 };
+  } else {
+    // Voted on the losing side
     playerEffect = { politicalCapital: -1 };
   }
   applyEffects(playerEffect);
 
-  // ── Build result ──
+  // ── STEP 7: Coalition Stability Impact ──
+  if (parliamentState) {
+    if (passed && topic.governmentPosition === 'for') {
+      parliamentState.coalitionStability = Math.min(100,
+        parliamentState.coalitionStability + 2);
+    } else if (!passed && topic.governmentPosition === 'for') {
+      parliamentState.coalitionStability = Math.max(0,
+        parliamentState.coalitionStability - 12);
+    }
+
+    if (whipActive) {
+      parliamentState.partyLoyalty = Math.max(0,
+        parliamentState.partyLoyalty - 5);
+      parliamentState.whipUsedThisSession = false;
+    }
+  }
+
+  // ── STEP 8: Build Result ──
+  const isLandslide = Math.abs(margin) > 100;
+  const isNarrow = Math.abs(margin) < 30;
+  const isGovCrisis = !passed && topic.governmentPosition === 'for';
+
+  let narrative;
+  if (passed && isLandslide) {
+    narrative = `Landslide victory! The bill passes ${totalAyes}-${totalNays}. ${topic.governmentPosition === 'for' ? 'The government benches erupt in applause.' : 'A stunning cross-party consensus.'}`;
+  } else if (passed && isNarrow) {
+    narrative = `Nail-biter! The bill BARELY passes ${totalAyes}-${totalNays}. ${topic.governmentPosition === 'for' ? 'The government whips breathe a sigh of relief.' : 'The opposition nearly blocked it.'}`;
+  } else if (passed) {
+    narrative = `The bill passes ${totalAyes}-${totalNays}. ${topic.governmentPosition === 'for' ? 'An expected government victory.' : 'Cross-bench support carries the day.'}`;
+  } else if (isGovCrisis) {
+    narrative = `🚨 GOVERNMENT DEFEAT! The bill is REJECTED ${totalAyes}-${totalNays}. A humiliating loss that shakes the coalition to its foundations.`;
+  } else if (!passed && isNarrow) {
+    narrative = `So close! The bill fails ${totalAyes}-${totalNays}. Just ${Math.abs(margin)} votes short. ${topic.oppositionPosition === 'against' ? 'The opposition whips celebrate a tight victory.' : ''}`;
+  } else {
+    narrative = `The bill is DEFEATED ${totalAyes}-${totalNays}. ${topic.oppositionPosition === 'against' ? 'The opposition celebrates.' : 'A rare cross-bench rejection.'}`;
+  }
+
   const result = {
     topicId: topic.id,
     topicTitle: topic.title,
     topicTitleThai: topic.titleThai,
     ayes: totalAyes,
-    nays: Math.max(0, totalNays),
-    abstain: Math.max(0, totalAbstain),
+    nays: totalNays,
+    abstain: totalAbstain,
     passed: passed,
     playerVote: playerVote,
     playerEffect: playerEffect,
-    narrative: passed
-      ? `The bill passes ${totalAyes}-${Math.max(0, totalNays)}. ${topic.governmentPosition === "for" ? "The government benches erupt in applause." : "A surprise victory for the opposition!"}`
-      : `The bill is DEFEATED ${totalAyes}-${Math.max(0, totalNays)}. ${topic.oppositionPosition === "against" ? "The opposition celebrates." : "A rare government defeat."}`
+    narrative: narrative,
+    margin: margin,
+    isGovCrisis: isGovCrisis,
+    isNarrow: isNarrow,
+    isLandslide: isLandslide,
+    govUnity: Math.round(govUnity * 100),
+    oppUnity: Math.round(oppUnity * 100),
+    whipUsed: !!whipActive,
+    amended: !!_debateState._amendmentResolved  // v1.0.2: Was this amended?
   };
 
   _debateState.voteResult = result;
@@ -2073,6 +3213,8 @@ function castVote(playerVote) {
   }
 
   // ── Push vote result to transcript ──
+  const marginLabel = isNarrow ? '(NARROW!)' : isLandslide ? '(LANDSLIDE)' : '';
+  const amendedLabel = _debateState._amendmentResolved ? ' [AMENDED]' : '';
   const voteEntry = {
     id: `vote_${Date.now()}`,
     type: "vote_result",
@@ -2082,7 +3224,7 @@ function castVote(playerVote) {
     speakerAlignment: "neutral",
     speakerColor: passed ? "#28A745" : "#DC3545",
     speakerAvatar: "🗳️",
-    text: `ผลการลงมติ: เห็นด้วย ${totalAyes} เสียง / ไม่เห็นด้วย ${Math.max(0, totalNays)} เสียง / งดออกเสียง ${Math.max(0, totalAbstain)} เสียง — ${passed ? "ที่ประชุมมีมติเห็นชอบ" : "ที่ประชุมมีมติไม่เห็นชอบ"}`,
+    text: `ผลการลงมติ: เห็นด้วย ${totalAyes} เสียง / ไม่เห็นด้วย ${totalNays} เสียง / งดออกเสียง ${totalAbstain} เสียง ${marginLabel}${amendedLabel} — ${passed ? "ที่ประชุมมีมติเห็นชอบ" : "ที่ประชุมมีมติไม่เห็นชอบ"}`,
     protestable: false,
     timestamp: Date.now()
   };
@@ -2091,18 +3233,156 @@ function castVote(playerVote) {
   _fireDebateCallback("onDialogueAdded", voteEntry);
   _fireDebateCallback("onVoteResult", result);
 
+  // ── Government Crisis News ──
+  if (isGovCrisis && typeof publishNews === 'function') {
+    publishNews('vote_defeated', {
+      topic: topic.title,
+      ayes: String(totalAyes),
+      nays: String(totalNays)
+    }, {
+      sentiment: 'negative',
+      pollContext: `Government crisis: ${topic.title} defeated`
+    });
+  }
+
   // ── Log ──
   logEvent("vote", `Vote: ${topic.title}`,
-    `${passed ? "PASSED" : "DEFEATED"} ${totalAyes}-${Math.max(0, totalNays)}. You voted ${playerVote.toUpperCase()}.`,
+    `${passed ? "PASSED" : "DEFEATED"} ${totalAyes}-${totalNays}. You voted ${playerVote.toUpperCase()}.${isGovCrisis ? ' ⚠️ GOVERNMENT CRISIS' : ''}${_debateState._amendmentResolved ? ' [AMENDED]' : ''}`,
     playerEffect);
 
   // ── Mark debate as complete ──
   _debateState.isRunning = false;
+  _debateState._amendmentResolved = false; // Reset
+  _debateState._pendingVote = null;
   if (parliamentState) {
     parliamentState.isDebateInProgress = false;
   }
 
   console.log(`[debate.js] Vote result: ${passed ? "PASSED" : "DEFEATED"} ${totalAyes}-${Math.max(0, totalNays)}`);
+
+  return result;
+}
+
+/**
+ * resolveAmendment() — v1.0.2: Resolves a gridlock amendment choice.
+ *
+ * @param {string} choice - "water_down" | "push_through" | "pork_barrel"
+ * @returns {Object} Final vote result (via re-calling castVote with modifications)
+ */
+function resolveAmendment(choice) {
+  const pending = _debateState._pendingVote;
+  if (!pending) {
+    console.error("[debate.js] No pending amendment to resolve.");
+    return { error: "No pending amendment." };
+  }
+
+  const topic = pending.topic;
+  console.log(`[debate.js] ═══ AMENDMENT RESOLVED: ${choice.toUpperCase()} ═══`);
+
+  let modifiedAyes = pending.totalAyes;
+  let modifiedNays = pending.totalNays;
+  let sideEffects = {};
+
+  switch (choice) {
+    case "water_down":
+      // Gain centrist votes, lose hardcore base
+      modifiedAyes += 30;
+      modifiedNays -= 8; // Some nays switch
+      sideEffects = {
+        partyLoyalty: -20,
+        politicalCapital: -3,
+        narrative: "You strip the controversial clauses. Centrists nod. Your base simmers with resentment.",
+        narrativeThai: "คุณตัดมาตราที่เป็นข้อถกเถียง กลุ่มกลางพยักหน้า แต่ฐานเสียงคุกรุ่นด้วยความไม่พอใจ"
+      };
+      if (parliamentState) {
+        parliamentState.partyLoyalty = Math.max(0, (parliamentState.partyLoyalty || 70) - 20);
+      }
+      applyEffects({ politicalCapital: -3 });
+      break;
+
+    case "push_through":
+      // Bill fails as-is. Principled but costly.
+      sideEffects = {
+        politicalCapital: -5,
+        partyLoyalty: +3,
+        narrative: "You refuse to bend. The bill dies on the floor. Your allies respect your conviction, but the loss stings.",
+        narrativeThai: "คุณปฏิเสธที่จะยอม ร่างตายบนพื้นสภา พันธมิตรเคารพความเชื่อมั่น แต่ความพ่ายแพ้ยังเจ็บปวด"
+      };
+      if (parliamentState) {
+        parliamentState.partyLoyalty = Math.min(100, (parliamentState.partyLoyalty || 70) + 3);
+      }
+      applyEffects({ politicalCapital: -5 });
+      // Don't modify votes — let it fail
+      _debateState._amendmentResolved = true;
+      _debateState._pendingVote = null;
+      // Re-call castVote to finalize (it'll skip gridlock since _amendmentResolved is true)
+      return castVote(pending.playerVote);
+
+    case "pork_barrel":
+      // Buy votes with budget, risk scandal
+      modifiedAyes += 25;
+      modifiedNays -= 5;
+      const budgetCost = 80;
+      const scandalRoll = Math.random();
+      const scandalTriggered = scandalRoll < 0.40;
+
+      sideEffects = {
+        budgetCost: budgetCost,
+        scandalTriggered: scandalTriggered,
+        narrative: scandalTriggered
+          ? "You pour ฿80B into pork barrel deals. Votes secured — but a leaked document triggers an EC investigation!"
+          : "You pour ฿80B into constituency projects. The holdouts quietly switch sides. No paper trail... for now.",
+        narrativeThai: scandalTriggered
+          ? "คุณใช้งบ ฿80,000 ล้านซื้อเสียง ได้เสียงมา — แต่เอกสารรั่วทำให้ กกต. สอบสวน!"
+          : "คุณใช้งบ ฿80,000 ล้านเข้าโครงการเขตเลือกตั้ง ผู้ลังเลเปลี่ยนข้าง... ยังไม่มีหลักฐาน"
+      };
+
+      // Apply budget cost
+      if (parliamentState) {
+        parliamentState.budget = Math.max(0, (parliamentState.budget || 500) - budgetCost);
+      }
+
+      // Scandal consequence
+      if (scandalTriggered) {
+        applyEffects({ politicalCapital: -10, localPopularity: -8 });
+        if (typeof publishNews === 'function') {
+          publishNews('vote_defeated', {
+            topic: 'EC Scrutiny: Suspicious Budget Transfers',
+            ayes: '', nays: ''
+          }, { sentiment: 'negative' });
+        }
+      }
+      break;
+
+    default:
+      console.error(`[debate.js] Unknown amendment choice: "${choice}"`);
+      return { error: `Unknown choice: "${choice}"` };
+  }
+
+  // Modify the pending votes and re-run
+  _debateState._amendmentResolved = true;
+
+  // Temporarily override the debate state's current tallies
+  // Re-call castVote — it will use _amendmentResolved to skip gridlock
+  // but we need to inject the modified votes. Use a hook:
+  _debateState._modifiedVotes = {
+    ayes: modifiedAyes,
+    nays: modifiedNays,
+    sideEffects: sideEffects
+  };
+  _debateState._pendingVote = null;
+
+  const result = castVote(pending.playerVote);
+
+  // Attach amendment metadata to result
+  result.amended = true;
+  result.amendmentChoice = choice;
+  result.amendmentEffects = sideEffects;
+
+  // Fire amendment result callback
+  _fireDebateCallback("onAmendmentResult", {
+    choice, sideEffects, result
+  });
 
   return result;
 }
@@ -2188,19 +3468,56 @@ function getDebateSnapshot() {
 }
 
 /**
- * getRandomDebateTopic() — Returns a random topic for quick start.
+ * getRandomDebateTopic() — Returns a topic NOT yet used this cycle.
+ * v1.0.2: Uses localStorage memory to prevent looping.
  * @returns {Object} A DEBATE_TOPICS entry
  */
 function getRandomDebateTopic() {
-  return DEBATE_TOPICS[Math.floor(Math.random() * DEBATE_TOPICS.length)];
+  let usedTopics = [];
+  try {
+    usedTopics = JSON.parse(localStorage.getItem('tps_used_debate_topics') || '[]');
+  } catch (e) { usedTopics = []; }
+
+  // Filter out already-used topics
+  let available = DEBATE_TOPICS.filter(t => !usedTopics.includes(t.id));
+
+  // If all exhausted, reset the pool
+  if (available.length === 0) {
+    console.log('[debate.js] All topics exhausted — resetting pool.');
+    usedTopics = [];
+    available = [...DEBATE_TOPICS];
+  }
+
+  // Pick random from available
+  const topic = available[Math.floor(Math.random() * available.length)];
+
+  // Mark as used
+  usedTopics.push(topic.id);
+  localStorage.setItem('tps_used_debate_topics', JSON.stringify(usedTopics));
+
+  console.log(`[debate.js] Selected topic: "${topic.id}" (${available.length - 1} remaining)`);
+  return topic;
 }
 
 /**
- * getDebateTopics() — Returns all available debate topics.
+ * getDebateTopics() — Returns all available (unused) debate topics.
  * @returns {Object[]} Array of DEBATE_TOPICS entries
  */
 function getDebateTopics() {
-  return [...DEBATE_TOPICS];
+  let usedTopics = [];
+  try {
+    usedTopics = JSON.parse(localStorage.getItem('tps_used_debate_topics') || '[]');
+  } catch (e) { usedTopics = []; }
+  const available = DEBATE_TOPICS.filter(t => !usedTopics.includes(t.id));
+  return available.length > 0 ? available : [...DEBATE_TOPICS];
+}
+
+/**
+ * resetDebateTopicMemory() — Clears the used topics list.
+ */
+function resetDebateTopicMemory() {
+  localStorage.removeItem('tps_used_debate_topics');
+  console.log('[debate.js] Topic memory reset.');
 }
 
 /**
@@ -2220,7 +3537,8 @@ function getInterpellationTopics() {
 
 window.addEventListener('tps:debate-speed-changed', (e) => {
   const speed = e.detail?.speed || 1;
-  const newInterval = Math.round(3000 / speed);
+  // v1.0.2: Base interval 4500ms (was 3000ms)
+  const newInterval = Math.round(4500 / speed);
   console.log(`[debate.js] ⚡ Debate speed changed to ${speed}× (interval: ${newInterval}ms)`);
 
   // Update the internal state
@@ -2239,17 +3557,855 @@ window.addEventListener('tps:debate-speed-changed', (e) => {
 
 
 // ──────────────────────────────────────────────────────────────────────────
+// SECTION 13.5: MID-SESSION RANDOM EVENTS (v1.0.2)
+// Chaos on the parliament floor — random crises that pause the debate.
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * MID_SESSION_EVENTS — Random crises that can erupt during debate.
+ * Each has multiple response choices with different trade-offs.
+ */
+const MID_SESSION_EVENTS = [
+  {
+    id: "phone_scandal",
+    title: "MP Caught in Phone Scandal",
+    titleThai: "ส.ส. ถูกจับได้ดูมือถือ",
+    icon: "📱",
+    description: "A coalition MP is caught watching inappropriate material on their phone during a live-broadcast session. Cameras zoom in. Social media explodes.",
+    descriptionThai: "ส.ส. ฝ่ายรัฐบาลถูกจับได้ว่าดูเนื้อหาไม่เหมาะสมทางมือถือระหว่างถ่ายทอดสด กล้องซูมเข้า โซเชียลระเบิด",
+    choices: [
+      {
+        id: "defend",
+        label: "Defend Them",
+        labelThai: "ปกป้อง",
+        icon: "🛡️",
+        description: "Stand by your colleague. 'It was a family emergency.'",
+        effects: { partyLoyalty: +5, localPopularity: -10, politicalCapital: -3 },
+        narrative: "You defend the MP publicly. Your party appreciates the loyalty, but the public is disgusted.",
+        narrativeThai: "คุณปกป้อง ส.ส. ต่อสาธารณะ พรรคชื่นชมความจงรักภักดี แต่ประชาชนขยะแขยง"
+      },
+      {
+        id: "condemn",
+        label: "Condemn on Live TV",
+        labelThai: "ประณามบนทีวี",
+        icon: "📺",
+        description: "Publicly condemn the behavior. Distance yourself immediately.",
+        effects: { partyLoyalty: -8, localPopularity: +12, politicalCapital: +5 },
+        narrative: "You condemn the MP live. The public cheers your integrity. Your party is furious at the betrayal.",
+        narrativeThai: "คุณประณาม ส.ส. ต่อหน้ากล้อง ประชาชนชื่นชมความซื่อสัตย์ พรรคโกรธที่ทรยศ"
+      },
+      {
+        id: "deflect",
+        label: "Change the Subject",
+        labelThai: "เปลี่ยนเรื่อง",
+        icon: "🔄",
+        description: "Redirect attention back to the bill. 'Let's focus on what matters.'",
+        effects: { politicalCapital: +2 },
+        narrative: "You smoothly redirect the debate. A few notice, but the moment passes without major damage.",
+        narrativeThai: "คุณเปลี่ยนเรื่องอย่างแนบเนียน บางคนสังเกต แต่ช่วงเวลานั้นผ่านไปโดยไม่เสียหายมาก"
+      }
+    ]
+  },
+  {
+    id: "protest_siege",
+    title: "Massive Protest Outside Parliament",
+    titleThai: "ม็อบใหญ่ล้อมรัฐสภา",
+    icon: "✊",
+    description: "Thousands of protesters surround Parliament, blocking all exits. They demand the session be suspended and the PM come out to negotiate.",
+    descriptionThai: "ผู้ประท้วงหลายพันคนล้อมรัฐสภา ปิดทางออกทั้งหมด เรียกร้องให้ระงับการประชุมและนายกฯ ออกมาเจรจา",
+    choices: [
+      {
+        id: "suspend",
+        label: "Vote to Suspend Session",
+        labelThai: "โหวตระงับการประชุม",
+        icon: "⏸️",
+        description: "Support suspending the session to hear the people's demands.",
+        effects: { localPopularity: +15, coalitionStability: -10, politicalCapital: -5 },
+        narrative: "Session suspended. The protesters cheer. The government is humiliated. You're a hero to the streets.",
+        narrativeThai: "ระงับการประชุม ผู้ประท้วงเฮ รัฐบาลเสียหน้า คุณเป็นฮีโร่ของท้องถนน"
+      },
+      {
+        id: "continue",
+        label: "Demand Session Continue",
+        labelThai: "เรียกร้องให้ประชุมต่อ",
+        icon: "⚡",
+        description: "The House must not bow to mob pressure. Democracy happens inside.",
+        effects: { localPopularity: -8, coalitionStability: +5, partyLoyalty: +6 },
+        narrative: "You stand firm. The establishment respects your resolve. The protesters label you 'anti-people'.",
+        narrativeThai: "คุณยืนหยัด ฝ่ายอนุรักษ์เคารพความมุ่งมั่น ผู้ประท้วงเรียกคุณว่า 'ต่อต้านประชาชน'"
+      }
+    ]
+  },
+  {
+    id: "fistfight",
+    title: "Fistfight Erupts on the Floor",
+    titleThai: "ชกต่อยกลางสภา",
+    icon: "🥊",
+    description: "Two MPs from opposing parties come to blows after a heated exchange. The Speaker calls for order. Security rushes in.",
+    descriptionThai: "ส.ส. สองคนจากฝ่ายตรงข้ามชกต่อยกันหลังโต้เถียงดุเดือด ประธานสภาเรียกร้องความสงบ เจ้าหน้าที่รักษาความปลอดภัยวิ่งเข้ามา",
+    choices: [
+      {
+        id: "break_up",
+        label: "Break Up the Fight",
+        labelThai: "เข้าห้ามทัพ",
+        icon: "🤝",
+        description: "Physically step between them and call for calm.",
+        effects: { localPopularity: +8, politicalCapital: +6 },
+        narrative: "You step between the brawling MPs. Cameras capture your bravery. 'The Peacemaker' trends on Twitter.",
+        narrativeThai: "คุณเข้าไปห้ามทัพ กล้องจับภาพความกล้าหาญ '#ผู้สร้างสันติ' ติดเทรนด์ทวิตเตอร์"
+      },
+      {
+        id: "join_chaos",
+        label: "Fan the Flames",
+        labelThai: "เติมเชื้อไฟ",
+        icon: "🔥",
+        description: "Use the chaos to loudly denounce the other side.",
+        effects: { localPopularity: -5, partyLoyalty: +8, politicalCapital: +3 },
+        narrative: "You exploit the moment, shouting accusations at the opposing bench. Your base loves it. Moderates are horrified.",
+        narrativeThai: "คุณฉวยโอกาส ตะโกนข้อกล่าวหาใส่ฝ่ายตรงข้าม ฐานเสียงชอบ กลุ่มสายกลางสยอง"
+      }
+    ]
+  },
+  {
+    id: "power_outage",
+    title: "Parliament Blackout",
+    titleThai: "ไฟดับในรัฐสภา",
+    icon: "🔌",
+    description: "The power goes out mid-debate. Rumors of sabotage spread instantly. The live broadcast cuts. MPs argue in the dark about whether to continue.",
+    descriptionThai: "ไฟดับกลางอภิปราย ข่าวลือเรื่องก่อวินาศกรรมแพร่กระจายทันที ถ่ายทอดสดตัด ส.ส. โต้เถียงในความมืดว่าจะประชุมต่อหรือไม่",
+    choices: [
+      {
+        id: "conspiracy",
+        label: "Accuse Sabotage",
+        labelThai: "กล่าวหาก่อวินาศกรรม",
+        icon: "🕵️",
+        description: "Claim the government cut power to avoid the vote. Demand investigation.",
+        effects: { localPopularity: +6, coalitionStability: -8, politicalCapital: +4 },
+        narrative: "Your sabotage accusation goes viral. The government scrambles to deny it. Trust plummets.",
+        narrativeThai: "ข้อกล่าวหาก่อวินาศกรรมแพร่กระจาย รัฐบาลรีบปฏิเสธ ความเชื่อมั่นดิ่ง"
+      },
+      {
+        id: "calm",
+        label: "Call for Patience",
+        labelThai: "เรียกร้องความอดทน",
+        icon: "🕯️",
+        description: "Light your phone flashlight and crack a joke. Wait for power to return.",
+        effects: { localPopularity: +3, politicalCapital: +2, partyLoyalty: +2 },
+        narrative: "Your calm humor wins the moment. 'The MP who made Parliament laugh in the dark' trends all night.",
+        narrativeThai: "อารมณ์ขันของคุณชนะช่วงเวลา '#ส.ส.ที่ทำสภาหัวเราะในความมืด' ติดเทรนด์ตลอดคืน"
+      }
+    ]
+  },
+  {
+    id: "bomb_threat",
+    title: "Bomb Threat Called In",
+    titleThai: "โทรขู่วางระเบิด",
+    icon: "💣",
+    description: "Security receives a bomb threat targeting the chamber. The Speaker announces an emergency recess. Panic spreads among junior MPs.",
+    descriptionThai: "รักษาความปลอดภัยได้รับแจ้งขู่วางระเบิดในห้องประชุม ประธานสภาประกาศพักฉุกเฉิน ส.ส. รุ่นเล็กตื่นตระหนก",
+    choices: [
+      {
+        id: "stay",
+        label: "Refuse to Leave",
+        labelThai: "ปฏิเสธที่จะออก",
+        icon: "🦁",
+        description: "Stay seated. 'I will not let terrorists dictate democracy.'",
+        effects: { localPopularity: +12, politicalCapital: +8, partyLoyalty: +3 },
+        narrative: "Your defiance becomes iconic. The image of you alone in the chamber goes global. Bravery... or recklessness?",
+        narrativeThai: "ความท้าทายของคุณกลายเป็นตำนาน ภาพคุณนั่งคนเดียวในสภาเผยแพร่ทั่วโลก กล้าหาญ... หรือบ้าบิ่น?"
+      },
+      {
+        id: "evacuate",
+        label: "Lead Orderly Evacuation",
+        labelThai: "นำอพยพอย่างเป็นระเบียบ",
+        icon: "🚪",
+        description: "Take charge and guide junior MPs to safety calmly.",
+        effects: { localPopularity: +5, politicalCapital: +4, partyLoyalty: +5 },
+        narrative: "You guide 30 panicking MPs to safety. Leadership under pressure. No one was harmed.",
+        narrativeThai: "คุณนำ ส.ส. 30 คนที่ตื่นตระหนกไปยังที่ปลอดภัย ภาวะผู้นำภายใต้แรงกดดัน ไม่มีใครเจ็บ"
+      }
+    ]
+  },
+  {
+    id: "leaked_audio",
+    title: "Leaked Audio Clip Goes Viral",
+    titleThai: "คลิปเสียงหลุดแพร่กระจาย",
+    icon: "🎤",
+    description: "A leaked recording of a senior minister making racist remarks surfaces on social media mid-debate. Every phone in the chamber pings simultaneously.",
+    descriptionThai: "คลิปเสียงรัฐมนตรีอาวุโสพูดเหยียดเชื้อชาติหลุดออกมาทางโซเชียลกลางอภิปราย มือถือทุกเครื่องในสภาดังพร้อมกัน",
+    choices: [
+      {
+        id: "demand_resign",
+        label: "Demand Resignation",
+        labelThai: "เรียกร้องให้ลาออก",
+        icon: "👋",
+        description: "Stand up and demand the minister resign immediately.",
+        effects: { localPopularity: +15, coalitionStability: -12, partyLoyalty: -5 },
+        narrative: "You demand resignation on the floor. The clip plays on every news channel. The minister's career hangs by a thread.",
+        narrativeThai: "คุณเรียกร้องให้ลาออกกลางสภา คลิปเล่นในทุกช่องข่าว อาชีพรัฐมนตรีห้อยอยู่บนเส้นด้าย"
+      },
+      {
+        id: "investigate",
+        label: "Call for Investigation",
+        labelThai: "เรียกร้องสอบสวน",
+        icon: "🔍",
+        description: "Demand a formal investigation before passing judgment.",
+        effects: { localPopularity: +3, politicalCapital: +5, partyLoyalty: +3 },
+        narrative: "You take the measured approach. Some praise your fairness. Others accuse you of protecting the establishment.",
+        narrativeThai: "คุณใช้แนวทางที่รอบคอบ บางคนชมความยุติธรรม บางคนกล่าวหาว่าปกป้องฝ่ายอำนาจ"
+      },
+      {
+        id: "exploit",
+        label: "Use It as Ammunition",
+        labelThai: "ใช้เป็นกระสุน",
+        icon: "💥",
+        description: "Use this to derail the government's entire agenda for the week.",
+        effects: { localPopularity: +8, coalitionStability: -15, politicalCapital: +10, partyLoyalty: -3 },
+        narrative: "You weaponize the clip. The government's agenda collapses. Victory today — but you've made powerful enemies.",
+        narrativeThai: "คุณใช้คลิปเป็นอาวุธ วาระรัฐบาลพัง ชนะวันนี้ — แต่สร้างศัตรูที่ทรงพลัง"
+      }
+    ]
+  },
+
+  // ═══ STEP 52: EXPANDED CHAOS EVENTS ════════════════════════════════════
+
+  {
+    id: "hot_mic_leak",
+    title: "Hot Mic Leak",
+    titleThai: "ไมค์หลุด",
+    icon: "🎙️",
+    description: "A government MP's microphone is accidentally left on, broadcasting a whispered conversation: 'Don't worry, the vote is rigged. We have the numbers bought.' The chamber freezes. The live broadcast captures everything.",
+    descriptionThai: "ไมโครโฟนของ ส.ส. ฝ่ายรัฐบาลเปิดค้างโดยบังเอิญ กระจายเสียงกระซิบ: 'ไม่ต้องห่วง โหวตล็อกแล้ว ซื้อเสียงไว้หมด' ห้องประชุมเงียบกริบ ถ่ายทอดสดจับได้ทุกอย่าง",
+    choices: [
+      {
+        id: "defend_mp",
+        label: "Defend the MP",
+        labelThai: "ปกป้อง ส.ส.",
+        icon: "🛡️",
+        description: "Claim it was taken out of context. Rally party support.",
+        effects: { partyLoyalty: +8, localPopularity: -12, politicalCapital: -5 },
+        narrative: "You rally to your colleague's defense: 'That was clearly a joke taken out of context.' Nobody buys it, but the party appreciates your loyalty.",
+        narrativeThai: "คุณปกป้องเพื่อนร่วมพรรค: 'นั่นเป็นแค่พูดเล่นถูกตัดบริบท' ไม่มีใครเชื่อ แต่พรรคชื่นชมความจงรักภักดี"
+      },
+      {
+        id: "condemn_mp",
+        label: "Condemn and Distance",
+        labelThai: "ประณามและตีตัวออกห่าง",
+        icon: "📢",
+        description: "Publicly condemn vote-buying. Demand an ethics investigation.",
+        effects: { partyLoyalty: -10, localPopularity: +15, politicalCapital: +8 },
+        narrative: "You stand at the podium: 'If this is true, it is an assault on democracy itself!' The gallery erupts in applause. Your own party stares daggers.",
+        narrativeThai: "คุณยืนที่แท่น: 'ถ้าเรื่องนี้จริง มันคือการทำลายประชาธิปไตย!' ผู้ชมปรบมือ พรรคจ้องด้วยสายตาอันตราย"
+      },
+      {
+        id: "blame_tech",
+        label: "Blame Technical Glitch",
+        labelThai: "โทษปัญหาเทคนิค",
+        icon: "🔧",
+        description: "Claim it was an AI deepfake or audio glitch. 50/50 gamble.",
+        effects: { localPopularity: -3, politicalCapital: +2 },
+        narrative: "You suggest the audio was manipulated. Half the press corps buys it. The other half digs deeper. A coin-flip that may haunt you later.",
+        narrativeThai: "คุณชี้ว่าเสียงถูกตัดต่อ สื่อครึ่งหนึ่งเชื่อ อีกครึ่งขุดลึกกว่าเดิม เสี่ยงที่อาจตามหลอกหลอนภายหลัง"
+      }
+    ]
+  },
+  {
+    id: "royal_motorcade",
+    title: "Royal Motorcade Delays Session",
+    titleThai: "ขบวนเสด็จทำให้ประชุมล่าช้า",
+    icon: "👑",
+    description: "A royal motorcade passes near Parliament, causing all roads to close. Half the MPs are stuck in traffic. The government demands a quorum count. If opposition MPs are late, the vote may pass unchallenged.",
+    descriptionThai: "ขบวนเสด็จผ่านใกล้รัฐสภา ถนนปิดหมด ส.ส. ครึ่งหนึ่งติดจราจร รัฐบาลเรียกร้องนับองค์ประชุม ถ้า ส.ส.ฝ่ายค้านมาไม่ทัน โหวตอาจผ่านโดยไม่มีฝ่ายค้าน",
+    choices: [
+      {
+        id: "stall_proceedings",
+        label: "Stall for Time",
+        labelThai: "ถ่วงเวลา",
+        icon: "⏰",
+        description: "Use procedural motions to delay the vote until your allies arrive.",
+        effects: { politicalCapital: -3, localPopularity: +5, coalitionStability: -5 },
+        narrative: "You file three motions in rapid succession. The Speaker is annoyed, but the delay works — your allies arrive just in time.",
+        narrativeThai: "คุณยื่นญัตติ 3 เรื่องติดต่อกัน ประธานสภาหงุดหงิด แต่การถ่วงเวลาได้ผล — พวกพ้องมาถึงทันเวลาพอดี"
+      },
+      {
+        id: "challenge_quorum",
+        label: "Challenge the Quorum Count",
+        labelThai: "ท้วงการนับองค์ประชุม",
+        icon: "📋",
+        description: "Argue the quorum count is premature and unconstitutional.",
+        effects: { politicalCapital: +5, localPopularity: +3, partyLoyalty: +4 },
+        narrative: "You cite Article 120 of the Constitution. The Speaker is forced to wait. Legal scholars on TV call your move 'masterful'.",
+        narrativeThai: "คุณอ้างมาตรา 120 ของรัฐธรรมนูญ ประธานถูกบังคับให้รอ นักกฎหมายทางทีวีชมว่า 'เป็นเซียน'"
+      },
+      {
+        id: "let_vote_proceed",
+        label: "Let the Vote Proceed",
+        labelThai: "ปล่อยให้โหวตไป",
+        icon: "🗳️",
+        description: "Accept the situation. Some battles aren't worth fighting.",
+        effects: { politicalCapital: +2, partyLoyalty: -6, localPopularity: -5 },
+        narrative: "You sit quietly. The vote proceeds with a thin chamber. Your allies who were stuck in traffic are furious at your inaction.",
+        narrativeThai: "คุณนั่งเงียบ โหวตดำเนินไปด้วยสมาชิกน้อย พวกพ้องที่ติดจราจรโกรธที่คุณไม่ทำอะไร"
+      }
+    ]
+  },
+  {
+    id: "foreign_diplomat_walkout",
+    title: "Foreign Diplomat Walkout",
+    titleThai: "ทูตต่างชาติเดินออกจากห้อง",
+    icon: "🏳️",
+    description: "The EU Ambassador, observing from the gallery, stands up and walks out mid-debate after a government MP makes comments dismissing human rights concerns. International media goes live.",
+    descriptionThai: "เอกอัครราชทูต EU ที่สังเกตการณ์จากแกลเลอรี ลุกขึ้นเดินออกกลางอภิปราย หลัง ส.ส.รัฐบาลพูดจาดูหมิ่นสิทธิมนุษยชน สื่อต่างชาติถ่ายสด",
+    choices: [
+      {
+        id: "apologize_publicly",
+        label: "Publicly Apologize to the Diplomat",
+        labelThai: "ขอโทษทูตต่อสาธารณะ",
+        icon: "🤝",
+        description: "Cross party lines to apologize on behalf of Parliament.",
+        effects: { localPopularity: +5, partyLoyalty: -8, politicalCapital: +6, coalitionStability: -5 },
+        narrative: "You walk to the gallery exit and personally apologize to the Ambassador. International praise pours in. Your party calls you a 'traitor to national sovereignty'.",
+        narrativeThai: "คุณเดินไปที่ทางออกแกลเลอรีและขอโทษเอกอัครราชทูตด้วยตนเอง นานาชาติชื่นชม พรรคเรียกคุณ 'ทรยศอธิปไตยชาติ'"
+      },
+      {
+        id: "rally_nationalism",
+        label: "Rally Nationalist Sentiment",
+        labelThai: "ปลุกกระแสชาตินิยม",
+        icon: "🇹🇭",
+        description: "'Thailand doesn't need foreign approval!' Play to the base.",
+        effects: { localPopularity: +8, partyLoyalty: +10, politicalCapital: -3, coalitionStability: +5 },
+        narrative: "You pound the desk: 'We are a sovereign nation! We will NOT be lectured by former colonial powers!' Your base roars. Foreign investment confidence wobbles.",
+        narrativeThai: "คุณทุบโต๊ะ: 'เราเป็นชาติที่มีอำนาจอธิปไตย! เราจะไม่ถูกสั่งสอนโดยอดีตเจ้าอาณานิคม!' ฐานเสียงคำราม ความเชื่อมั่นนักลงทุนต่างชาติสั่นคลอน"
+      },
+      {
+        id: "use_leverage",
+        label: "Use as Leverage Against Government",
+        labelThai: "ใช้เป็นอาวุธกดดันรัฐบาล",
+        icon: "⚖️",
+        description: "Demand the government apologize or face diplomatic consequences.",
+        effects: { localPopularity: +3, politicalCapital: +8, coalitionStability: -10 },
+        narrative: "You demand a formal government apology: 'Do you want to lose the EU trade deal over one MP's arrogance?' The PM reluctantly agrees to a statement.",
+        narrativeThai: "คุณเรียกร้องให้รัฐบาลขอโทษอย่างเป็นทางการ: 'จะเสีย FTA กับ EU เพราะความอวดดีของ ส.ส. คนเดียวหรือ?' นายกฯ ยอมออกแถลงการณ์อย่างไม่เต็มใจ"
+      }
+    ]
+  }
+];
+
+// Mid-session event tracking
+let _midSessionEventCount = 0;
+let _midSessionCooldown = 0;
+const MID_SESSION_MAX_EVENTS = 3;  // Max per debate (expanded pool, STEP 52)
+const MID_SESSION_COOLDOWN_TICKS = 3;  // Minimum ticks between events
+const MID_SESSION_CHANCE = 0.05;  // 5% per tick
+
+/**
+ * _checkMidSessionEvent() — Called each dialogue tick.
+ * 5% chance to trigger a random event, with cooldown and max-per-debate limits.
+ * @returns {boolean} true if an event was triggered (caller should skip normal dialogue)
+ * @private
+ */
+function _checkMidSessionEvent() {
+  // Cooldown tick
+  if (_midSessionCooldown > 0) {
+    _midSessionCooldown--;
+    return false;
+  }
+
+  // Max events per debate
+  if (_midSessionEventCount >= MID_SESSION_MAX_EVENTS) return false;
+
+  // Don't trigger in first 3 rounds or last 2 rounds
+  const idx = _debateState.dialogueIndex;
+  const total = _debateState.dialogueQueue.length;
+  if (idx < 3 || idx > total - 2) return false;
+
+  // Roll the dice
+  if (Math.random() > MID_SESSION_CHANCE) return false;
+
+  // Pick a random event
+  const event = MID_SESSION_EVENTS[Math.floor(Math.random() * MID_SESSION_EVENTS.length)];
+
+  console.log(`[debate.js] 🚨 MID-SESSION EVENT TRIGGERED: "${event.title}"`);
+
+  // Pause the debate
+  _debateState.isPaused = true;
+  _midSessionEventCount++;
+  _midSessionCooldown = MID_SESSION_COOLDOWN_TICKS;
+
+  // Push event to transcript
+  const lang = _getDebateLang();
+  const eventEntry = {
+    id: `mid_event_${Date.now()}`,
+    type: "mid_session_event",
+    speakerId: "system",
+    speakerName: lang === 'th' ? "⚠️ ด่วน" : "⚠️ BREAKING",
+    speakerThaiTitle: "⚠️ ด่วน",
+    speakerAlignment: "neutral",
+    speakerColor: "#f59e0b",
+    speakerAvatar: event.icon,
+    text: lang === 'th' ? (event.descriptionThai || event.description) : event.description,
+    protestable: false,
+    timestamp: Date.now()
+  };
+
+  _debateState.transcript.push(eventEntry);
+  _fireDebateCallback("onDialogueAdded", eventEntry);
+
+  // Fire event callback for UI — STEP 52: include lang-resolved fields
+  const resolvedChoices = event.choices.map(c => ({
+    ...c,
+    displayLabel: lang === 'th' ? (c.labelThai || c.label) : c.label,
+    displayDesc: lang === 'th' ? (c.descriptionThai || c.description) : c.description
+  }));
+
+  _fireDebateCallback("onMidSessionEvent", {
+    ...event,
+    displayTitle: lang === 'th' ? (event.titleThai || event.title) : event.title,
+    displayDesc: lang === 'th' ? (event.descriptionThai || event.description) : event.description,
+    resolvedChoices: resolvedChoices,
+    lang: lang
+  });
+
+  return true;
+}
+
+/**
+ * resolveMidSessionEvent() — Player resolves a mid-session event by choosing a response.
+ * @param {string} eventId — The event ID
+ * @param {string} choiceId — The chosen response ID
+ * @returns {Object} Result of the choice
+ */
+function resolveMidSessionEvent(eventId, choiceId) {
+  const event = MID_SESSION_EVENTS.find(e => e.id === eventId);
+  if (!event) return { error: `Unknown event: "${eventId}"` };
+
+  const choice = event.choices.find(c => c.id === choiceId);
+  if (!choice) return { error: `Unknown choice: "${choiceId}"` };
+
+  console.log(`[debate.js] 🚨 Mid-session event resolved: "${event.title}" → "${choice.label}"`);
+
+  // Apply effects
+  applyEffects(choice.effects);
+
+  // Push resolution to transcript
+  const lang = _getDebateLang();
+  const resolutionEntry = {
+    id: `mid_resolve_${Date.now()}`,
+    type: "mid_session_resolution",
+    speakerId: "player",
+    speakerName: (parliamentState && parliamentState.playerName) || "Player",
+    speakerThaiTitle: "ท่านสมาชิก",
+    speakerAlignment: parliamentState ? parliamentState.playerAlignment : "opposition",
+    speakerColor: "#FFD700",
+    speakerAvatar: choice.icon,
+    text: lang === 'th' ? (choice.narrativeThai || choice.narrative) : choice.narrative,
+    protestable: false,
+    timestamp: Date.now()
+  };
+
+  _debateState.transcript.push(resolutionEntry);
+  _fireDebateCallback("onDialogueAdded", resolutionEntry);
+
+  // Publish news
+  if (typeof publishNews === 'function') {
+    const playerName = (parliamentState && parliamentState.playerName) || 'Player';
+    const isPositive = (choice.effects.localPopularity || 0) > 0;
+    publishNews(isPositive ? 'speech_success' : 'speech_fail', {
+      player: playerName,
+      style: event.title,
+      target: ''
+    }, { sentiment: isPositive ? 'positive' : 'negative' });
+  }
+
+  // Log — STEP 52: bilingual title/narrative
+  const displayTitle = lang === 'th' ? (event.titleThai || event.title) : event.title;
+  const displayNarrative = lang === 'th' ? (choice.narrativeThai || choice.narrative) : choice.narrative;
+  const displayChoiceLabel = lang === 'th' ? (choice.labelThai || choice.label) : choice.label;
+  logEvent("mid_session", displayTitle, displayNarrative, choice.effects);
+
+  // Resume debate after a brief pause
+  setTimeout(() => {
+    _debateState.isPaused = false;
+    console.log("[debate.js] Debate resumed after mid-session event.");
+  }, 1500);
+
+  return {
+    success: true,
+    eventTitle: displayTitle,
+    eventTitleEN: event.title,
+    eventTitleTH: event.titleThai || event.title,
+    choiceLabel: displayChoiceLabel,
+    choiceLabelEN: choice.label,
+    choiceLabelTH: choice.labelThai || choice.label,
+    effects: choice.effects,
+    narrative: displayNarrative
+  };
+}
+
+
+// ──────────────────────────────────────────────────────────────────────────
+// SECTION 13B: INTERPELLATION SHOWDOWN (STEP 50)
+// When a queued interpellation triggers mid-debate, the player faces
+// a high-stakes rhetorical mini-game with 3 strategic choices.
+// ──────────────────────────────────────────────────────────────────────────
+
+// Showdown tracking
+let _interpShowdownCooldown = 0;
+const INTERP_SHOWDOWN_CHANCE = 0.10;  // 10% per tick
+const INTERP_SHOWDOWN_COOLDOWN_TICKS = 5;  // Minimum ticks between showdowns
+
+/**
+ * INTERPELLATION_SHOWDOWN_STANCES — The 3 strategic choices available
+ * during an Interpellation Showdown. Each has bilingual labels and
+ * distinct risk/reward profiles.
+ */
+const INTERPELLATION_SHOWDOWN_STANCES = {
+  aggressive: {
+    id: "aggressive",
+    labelEN: "Aggressive Attack",
+    labelTH: "โจมตีดุดัน",
+    descEN: "Go for the throat. Demand specifics, ridicule evasion. High risk — the Speaker may reprimand you.",
+    descTH: "เปิดฉากโจมตี เรียกร้องข้อมูล เยาะเย้ยการบ่ายเบี่ยง เสี่ยงสูง — ประธานอาจตำหนิ",
+    icon: "🔥",
+    effects: {
+      success: { localPopularity: +15, politicalCapital: +8 },
+      failure: { politicalCapital: -10, localPopularity: -3 }
+    },
+    baseSuccessRate: 35  // Hard — modified by question difficulty
+  },
+  evidence: {
+    id: "evidence",
+    labelEN: "Evidence-Based Prosecution",
+    labelTH: "งัดหลักฐานตอกกลับ",
+    descEN: "Present documents, data, and legal citations. Costs Political Capital (-5) but guarantees credibility.",
+    descTH: "นำเสนอเอกสาร ข้อมูล และข้อกฎหมาย ใช้ทุนการเมือง (-5) แต่รับประกันความน่าเชื่อถือ",
+    icon: "📋",
+    capitalCost: 5,  // Spend capital upfront
+    effects: {
+      success: { influence: +10, localPopularity: +5, politicalCapital: +3 },
+      failure: { localPopularity: +2, politicalCapital: -2 }
+    },
+    baseSuccessRate: 70  // Reliable but requires capital investment
+  },
+  diplomatic: {
+    id: "diplomatic",
+    labelEN: "Diplomatic Questioning",
+    labelTH: "ถามนำแบบประนีประนอม",
+    descEN: "Ask pointed but polite questions. Safe — builds political capital regardless of outcome.",
+    descTH: "ถามคมแต่สุภาพ ปลอดภัย — สร้างทุนการเมืองไม่ว่าผลจะเป็นอย่างไร",
+    icon: "🤝",
+    effects: {
+      success: { politicalCapital: +5, localPopularity: +3 },
+      failure: { politicalCapital: +2 }
+    },
+    baseSuccessRate: 85  // Safe option
+  }
+};
+
+/**
+ * Showdown narrative lines — bilingual, randomized per outcome.
+ */
+const INTERP_SHOWDOWN_NARRATIVES = {
+  aggressive: {
+    success: {
+      en: [
+        "The Minister's face turns white. The opposition benches erupt. Social media is ON FIRE.",
+        "You slam the evidence on the podium. The Minister is speechless. Camera shutters go wild.",
+        "The gallery gasps as the Minister fumbles for words. Your clip will lead the evening news."
+      ],
+      th: [
+        "หน้ารัฐมนตรีซีดเผือก ฝ่ายค้านส่งเสียงดังลั่น โซเชียลระเบิด",
+        "คุณฟาดหลักฐานลงบนแท่น รัฐมนตรีอ้ำอึ้ง เสียงชัตเตอร์กล้องดังไม่หยุด",
+        "ผู้ชมในแกลเลอรีอึ้ง รัฐมนตรีพูดตะกุกตะกัก คลิปคุณจะเป็นข่าวเด่นเย็นนี้"
+      ]
+    },
+    failure: {
+      en: [
+        "The Speaker slams the gavel: 'The member will withdraw that remark!' You've gone too far.",
+        "The Minister fires back with a devastating rebuttal. The government benches roar with laughter.",
+        "Your aggressive tone backfires. Even your own party allies wince. The Speaker issues a warning."
+      ],
+      th: [
+        "ประธานเคาะค้อน: 'ขอให้สมาชิกถอนคำพูด!' คุณไปไกลเกินไป",
+        "รัฐมนตรีตอบโต้อย่างรุนแรง ฝ่ายรัฐบาลหัวเราะลั่น",
+        "น้ำเสียงดุดันของคุณย้อนกลับมาทำร้ายตัวเอง แม้แต่พรรคพวกยังเบ้หน้า ประธานตักเตือน"
+      ]
+    }
+  },
+  evidence: {
+    success: {
+      en: [
+        "You produce a classified budget document. The Minister's own numbers contradict his statement. Checkmate.",
+        "Your 12-page analysis leaves no room for doubt. MPs on both sides nod reluctantly. The data speaks.",
+        "The NACC audit trail you present forces the Minister into an awkward 'I will look into it' retreat."
+      ],
+      th: [
+        "คุณชูเอกสารงบประมาณลับ ตัวเลขของรัฐมนตรีเองขัดแย้งกับคำพูด รุกฆาต",
+        "รายงานวิเคราะห์ 12 หน้าไม่เหลือที่สงสัย ส.ส.ทั้งสองฝ่ายพยักหน้าอย่างไม่เต็มใจ ข้อมูลพูดเอง",
+        "หลักฐานตรวจสอบจาก ป.ป.ช. ที่คุณนำเสนอ บังคับให้รัฐมนตรีถอยด้วย 'จะไปตรวจสอบดู'"
+      ]
+    },
+    failure: {
+      en: [
+        "The Minister's team was prepared. They counter every document with their own data. A draw at best.",
+        "Your evidence is solid, but the Minister's spin doctors reframe the narrative. The moment passes."
+      ],
+      th: [
+        "ทีมของรัฐมนตรีเตรียมมาดี ตอบโต้ทุกเอกสารด้วยข้อมูลของตน อย่างดีก็เสมอ",
+        "หลักฐานคุณแน่น แต่ทีมประชาสัมพันธ์ของรัฐมนตรีบิดเรื่องราว โมเมนต์ผ่านไป"
+      ]
+    }
+  },
+  diplomatic: {
+    success: {
+      en: [
+        "Your measured questioning earns respect from both sides. Even government MPs murmur approval.",
+        "The Minister answers honestly, caught off guard by your reasonable tone. Progress is made."
+      ],
+      th: [
+        "คำถามอย่างสุขุมของคุณได้รับความเคารพจากทั้งสองฝ่าย แม้ ส.ส.รัฐบาลยังพึมพำชื่นชม",
+        "รัฐมนตรีตอบอย่างตรงไปตรงมา ถูกจับทางด้วยน้ำเสียงที่เป็นเหตุเป็นผล มีความคืบหน้า"
+      ]
+    },
+    failure: {
+      en: [
+        "The Minister deflects with a practiced smile. Your polite approach didn't break through, but no damage done.",
+        "A safe exchange. The gallery yawns. But you've maintained your reputation as a reasonable voice."
+      ],
+      th: [
+        "รัฐมนตรีบ่ายเบี่ยงด้วยรอยยิ้มที่ฝึกมา วิธีสุภาพไม่ทะลุ แต่ไม่เสียหาย",
+        "แลกเปลี่ยนที่ปลอดภัย ผู้ชมหาว แต่คุณรักษาชื่อเสียงเป็นเสียงที่มีเหตุผล"
+      ]
+    }
+  }
+};
+
+/**
+ * _checkInterpellationShowdown() — Called each dialogue tick.
+ * 10% chance to trigger if there are pending interpellations in the queue.
+ * @returns {boolean} true if showdown was triggered
+ * @private
+ */
+function _checkInterpellationShowdown() {
+  // Cooldown tick
+  if (_interpShowdownCooldown > 0) {
+    _interpShowdownCooldown--;
+    return false;
+  }
+
+  // Must have queued interpellations
+  if (!parliamentState || !parliamentState.interpellationQueue) return false;
+  const pending = parliamentState.interpellationQueue.filter(q => q.status === 'pending');
+  if (pending.length === 0) return false;
+
+  // Don't trigger in first 4 or last 2 rounds
+  const idx = _debateState.dialogueIndex;
+  const total = _debateState.dialogueQueue.length;
+  if (idx < 4 || idx > total - 2) return false;
+
+  // Roll the dice (10%)
+  if (Math.random() > INTERP_SHOWDOWN_CHANCE) return false;
+
+  // Pick the first pending interpellation
+  const interp = pending[0];
+  interp.status = 'triggered';
+
+  console.log(`[debate.js] ⚡ INTERPELLATION SHOWDOWN TRIGGERED: "${interp.question.substring(0, 50)}..."`);
+
+  // Pause the debate
+  _debateState.isPaused = true;
+  _interpShowdownCooldown = INTERP_SHOWDOWN_COOLDOWN_TICKS;
+
+  // Store active showdown
+  _debateState._activeInterpShowdown = interp;
+
+  // Push dramatic announcement to transcript
+  const lang = _getDebateLang();
+  const announceEntry = {
+    id: `interp_showdown_${Date.now()}`,
+    type: "interpellation_showdown",
+    speakerId: "speaker_of_house",
+    speakerName: lang === 'th' ? "ประธานสภา" : "Speaker of the House",
+    speakerThaiTitle: "ท่านประธานสภา",
+    speakerAlignment: "neutral",
+    speakerColor: "#f59e0b",
+    speakerAvatar: "⚖️",
+    text: lang === 'th'
+      ? `ขอเชิญท่านสมาชิกตั้งกระทู้ถามสด — ถาม${interp.target}`
+      : `The House recognizes the member for a Live Interpellation — Questioning the ${interp.target}`,
+    protestable: false,
+    timestamp: Date.now()
+  };
+
+  _debateState.transcript.push(announceEntry);
+  _fireDebateCallback("onDialogueAdded", announceEntry);
+
+  // Fire showdown callback for UI
+  _fireDebateCallback("onInterpellationShowdown", {
+    interpellation: interp,
+    stances: INTERPELLATION_SHOWDOWN_STANCES
+  });
+
+  return true;
+}
+
+/**
+ * resolveInterpellationShowdown() — Player chooses their rhetorical strategy.
+ * Applies stat changes, pushes narrative to transcript, publishes news, resumes debate.
+ *
+ * @param {string} stanceId — "aggressive" | "evidence" | "diplomatic"
+ * @returns {Object} Showdown result
+ */
+function resolveInterpellationShowdown(stanceId) {
+  const interp = _debateState._activeInterpShowdown;
+  if (!interp) return { error: "No active interpellation showdown." };
+
+  const stance = INTERPELLATION_SHOWDOWN_STANCES[stanceId];
+  if (!stance) return { error: `Unknown stance: "${stanceId}"` };
+
+  const lang = _getDebateLang();
+  console.log(`[debate.js] ⚡ SHOWDOWN RESOLVED: stance="${stance.labelEN}"`);
+
+  // Deduct upfront capital cost (Evidence-Based)
+  if (stance.capitalCost && parliamentState) {
+    parliamentState.playerPoliticalCapital = Math.max(0,
+      (parliamentState.playerPoliticalCapital || 50) - stance.capitalCost);
+    console.log(`  → Capital cost: -${stance.capitalCost} (now ${parliamentState.playerPoliticalCapital})`);
+  }
+
+  // Calculate success (modified by question difficulty)
+  let successChance = stance.baseSuccessRate;
+  const difficultyPenalty = (interp.difficulty - 50) * 0.3;
+  successChance -= difficultyPenalty;
+
+  // Political Capital bonus
+  const capBonus = ((parliamentState?.playerPoliticalCapital || 50)) * 0.12;
+  successChance += capBonus;
+  successChance = Math.max(10, Math.min(95, successChance));
+
+  const roll = Math.random() * 100;
+  const success = roll < successChance;
+
+  console.log(`  → Chance: ${successChance.toFixed(1)}%, Roll: ${roll.toFixed(1)} → ${success ? "SUCCESS ✅" : "FAIL ❌"}`);
+
+  // Apply effects
+  const effects = success ? { ...stance.effects.success } : { ...stance.effects.failure };
+  applyEffects(effects);
+
+  // Pick narrative
+  const narratives = INTERP_SHOWDOWN_NARRATIVES[stanceId];
+  const pool = success
+    ? (narratives.success[lang] || narratives.success.en)
+    : (narratives.failure[lang] || narratives.failure.en);
+  const narrative = pool[Math.floor(Math.random() * pool.length)];
+
+  // Push question to transcript
+  const questionEntry = {
+    id: `showdown_q_${Date.now()}`,
+    type: "interpellation_question",
+    speakerId: "player",
+    speakerName: (parliamentState?.playerName) || "Player",
+    speakerThaiTitle: "ท่านสมาชิก",
+    speakerAlignment: parliamentState?.playerAlignment || "opposition",
+    speakerColor: "#FFD700",
+    speakerAvatar: stance.icon,
+    text: lang === 'th' ? (interp.questionThai || interp.question) : interp.question,
+    protestable: false,
+    timestamp: Date.now()
+  };
+
+  // Push outcome to transcript
+  const outcomeEntry = {
+    id: `showdown_result_${Date.now()}`,
+    type: "interpellation_outcome",
+    speakerId: "system",
+    speakerName: success
+      ? (lang === 'th' ? "⚡ สำเร็จ" : "⚡ DEVASTATING")
+      : (lang === 'th' ? "❌ พลาด" : "❌ DEFLECTED"),
+    speakerThaiTitle: "",
+    speakerAlignment: "neutral",
+    speakerColor: success ? "#22c55e" : "#ef4444",
+    speakerAvatar: success ? "💥" : "🛡️",
+    text: narrative,
+    protestable: false,
+    timestamp: Date.now()
+  };
+
+  _debateState.transcript.push(questionEntry);
+  _debateState.transcript.push(outcomeEntry);
+  _fireDebateCallback("onDialogueAdded", questionEntry);
+  _fireDebateCallback("onDialogueAdded", outcomeEntry);
+
+  // Mark interpellation as answered
+  interp.status = "answered";
+  interp.answeredAt = Date.now();
+  interp.result = success ? "showdown_success" : "showdown_fail";
+
+  // Update stats
+  if (parliamentState) {
+    parliamentState.weeklyStats.interpellationsFiled++;
+    parliamentState.totalStats.interpellationsFiled++;
+  }
+
+  // Clear active showdown
+  _debateState._activeInterpShowdown = null;
+
+  // Publish news
+  if (typeof publishNews === 'function') {
+    const playerName = (parliamentState?.playerName) || 'Player';
+    publishNews(success ? 'interpellation_success' : 'interpellation_fail', {
+      player: playerName,
+      target: interp.target
+    }, { sentiment: success ? 'positive' : 'negative' });
+  }
+
+  // Log event
+  logEvent("interpellation_showdown",
+    `Showdown: ${interp.target}`,
+    narrative,
+    effects);
+
+  // Fire result callback
+  _fireDebateCallback("onInterpellationResult", {
+    success, stanceId, stanceLabel: lang === 'th' ? stance.labelTH : stance.labelEN,
+    interpellation: interp, effects, narrative
+  });
+
+  // Resume debate after dramatic pause
+  setTimeout(() => {
+    _debateState.isPaused = false;
+    console.log("[debate.js] Debate resumed after interpellation showdown.");
+  }, 2000);
+
+  return {
+    success,
+    stanceId,
+    stanceLabel: lang === 'th' ? stance.labelTH : stance.labelEN,
+    target: interp.target,
+    effects,
+    narrative,
+    capitalCost: stance.capitalCost || 0
+  };
+}
+
+
+// ──────────────────────────────────────────────────────────────────────────
 // SECTION 14: MODULE INITIALIZATION LOG
 // ──────────────────────────────────────────────────────────────────────────
 
 console.log("═══════════════════════════════════════════════════════════");
-console.log("[parliament-test/debate.js] Live Debate Engine loaded.");
+console.log("[parliament-test/debate.js] Live Debate Engine loaded. (v1.0.2)");
 console.log(`  → ${DEBATE_TOPICS.length} debate topics defined`);
 console.log(`  → ${AI_SPEAKERS.length} AI speakers (${AI_SPEAKERS.filter(s=>s.alignment==="government").length} Gov / ${AI_SPEAKERS.filter(s=>s.alignment==="opposition").length} Opp)`);
 console.log(`  → ${PROTEST_REASONS.length} protest reasons`);
 console.log(`  → ${INTERPELLATION_TOPICS.length} interpellation topics`);
 console.log(`  → ${Object.keys(PLAYER_SPEECH_STANCES).length} player speech stances`);
+console.log(`  → ${Object.keys(EXTRA_DIALOGUE_BANK).length} extra dialogue banks`);
+console.log(`  → ${Object.keys(DIALOGUE_ARCHETYPES).length} dialogue archetypes (STEP 51: aggressive/technical/filler)`);
+console.log(`  → ${MID_SESSION_EVENTS.length} mid-session random events`);
 console.log("  → runDebate(), raiseProtest(), playerSpeak() ready");
 console.log("  → queueInterpellation(), resolveInterpellation() ready");
+console.log("  → resolveAmendment(), resolveMidSessionEvent() ready");
+console.log("  → resolveInterpellationShowdown() ready (STEP 50)");
 console.log("  → Live debate speed binding active (tps:debate-speed-changed)");
 console.log("═══════════════════════════════════════════════════════════");
