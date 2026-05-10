@@ -2,7 +2,6 @@
 
 > **An advanced political RPG where you navigate the full lifecycle of Thai politics — from campaign trails to parliament floors, governing crises, and leading the opposition.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg)](#license)
 [![Version](https://img.shields.io/badge/Version-1.0.2-crimson.svg)](#)
 [![Platform](https://img.shields.io/badge/Platform-Browser_(Zero_Install)-green.svg)](#getting-started)
 [![Language](https://img.shields.io/badge/Language-🇬🇧_EN_|_🇹🇭_TH-orange.svg)](#localization)
@@ -20,7 +19,7 @@ You begin as a rising political figure navigating the treacherous landscape of T
 
 ## 🎮 Play Now
 
-👉 **[Play Thailand Political Simulation](https://khotjarb.github.io/TPSFull2/)**
+👉 **[Play Thailand Political Simulation](https://khotjarb.github.io/TPSFull/)**
 
 No downloads. No installs. Just click and play.
 
