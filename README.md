@@ -361,10 +361,6 @@ Switch languages via ⚙️ Settings Gear (bottom-right) or 🔤 EN/TH Toggle (P
 
 ---
 
-## 📄 License
-
-This project is released under the **MIT License**.
-
 Built with 🇹🇭 by the TPS Development Team.
 
 ---
