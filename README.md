@@ -1,4 +1,4 @@
-# 🏛️ Thailand Political Simulation (TPS) — Version 1.0.2.5 "Multiplayer Test"
+# 🏛️ Thailand Political Simulation (TPS) — Version 1.0.2.5 "Multiplayer Test Update"
 
 > **An advanced political RPG where you navigate the full lifecycle of Thai politics — from campaign trails to parliament floors, governing crises, and leading the opposition. Now with real-time P2P Multiplayer.**
 
