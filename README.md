@@ -361,6 +361,10 @@ Switch languages via ⚙️ Settings Gear (bottom-right) or 🔤 EN/TH Toggle (P
 
 ---
 
+## 📄 License
+
+This is a personal educational project. The political events are fictionalized and simplified for gameplay purposes. No endorsement of any real political party, institution, or ideology is intended.
+
 Built with 🇹🇭 by the TPS Development Team.
 
 ---
