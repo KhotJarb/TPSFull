@@ -511,10 +511,12 @@ function _buildSettingsHTML() {
 
       <hr class="tps-sm-divider">
 
-      <!-- Wipe Save Data -->
+      <!-- Wipe Save Data / Leave Room -->
       <div class="tps-sm-section">
         <button class="tps-sm-wipe-btn" id="tps-sm-wipe">
-          🗑️ <span id="tps-sm-wipe-text">${t('settings_wipe')}</span>
+          ${(localStorage.getItem('tps_game_mode') === 'multiplayer' || new URLSearchParams(window.location.search).get('mode') === 'mp')
+            ? '🚪 <span id="tps-sm-wipe-text">Leave Room</span>'
+            : '🗑️ <span id="tps-sm-wipe-text">' + t('settings_wipe') + '</span>'}
         </button>
       </div>
 
@@ -628,27 +630,33 @@ function _bindSettingsInnerEvents() {
     });
   }
 
-  // ── Wipe Save Data ──
+  // ── Wipe Save Data / Leave Room ──
   const wipeBtn = document.getElementById('tps-sm-wipe');
   if (wipeBtn) {
     wipeBtn.addEventListener('click', () => {
-      // 1. Confirm with bilingual prompt
-      if (!confirm(t('settings_wipe_confirm'))) return;
+      const isMultiplayer = localStorage.getItem('tps_game_mode') === 'multiplayer'
+        || new URLSearchParams(window.location.search).get('mode') === 'mp';
 
-      // 2. Wipe all data (preserves language)
-      TPSGlobalState.wipeAllData();
-
-      // 3. Show success notification — bilingual alert
-      alert(t('settings_wipe_done') + '\n\n' +
-        'Save data wiped successfully. / ลบข้อมูลการเล่นเรียบร้อยแล้ว');
-
-      // 4. Hard redirect to Campaign Party Select screen.
-      //    This is the canonical "start of the game" entry point.
-      //    Using '../campaign/index.html' works from any module:
-      //      /campaign/       → ../campaign/index.html ✓
-      //      /parliament-test/ → ../campaign/index.html ✓
-      //      /main-game/      → ../campaign/index.html ✓
-      window.location.href = '../campaign/index.html';
+      if (isMultiplayer) {
+        // ── MULTIPLAYER: Leave Room ──
+        if (!confirm('Leave the room? Your game progress will be lost.\nออกจากห้อง? ความคืบหน้าในเกมจะหายไป')) return;
+        if (typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.leaveRoom) {
+          tpsMPCampaign.leaveRoom();
+        } else {
+          // Fallback: wipe all data + manual cleanup
+          TPSGlobalState.wipeAllData();
+          localStorage.removeItem('tps_mp_session');
+          localStorage.removeItem('tps_game_mode');
+          window.location.href = '../index.html';
+        }
+      } else {
+        // ── SINGLE-PLAYER: Wipe Save Data (unchanged) ──
+        if (!confirm(t('settings_wipe_confirm'))) return;
+        TPSGlobalState.wipeAllData();
+        alert(t('settings_wipe_done') + '\n\n' +
+          'Save data wiped successfully. / ลบข้อมูลการเล่นเรียบร้อยแล้ว');
+        window.location.href = '../campaign/index.html';
+      }
     });
   }
 

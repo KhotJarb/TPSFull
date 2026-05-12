@@ -26,6 +26,12 @@ let mapProjection = null;
 let mapPath = null;
 let geoData = null;
 
+// ─── MULTIPLAYER DETECTION ──────────────────────────────────────
+// Check BOTH URL param AND localStorage — the URL param is lost on
+// parliament/opposition round-trips, but localStorage persists.
+const _isMultiplayer = new URLSearchParams(window.location.search).get('mode') === 'mp'
+  || localStorage.getItem('tps_game_mode') === 'multiplayer';
+
 // ═══════════════════════════════════════════════════════════════════
 // SCREEN 1: PARTY SELECT
 // ═══════════════════════════════════════════════════════════════════
@@ -33,38 +39,131 @@ let geoData = null;
 function renderPartyCards() {
   const container = document.getElementById('party-cards');
   container.innerHTML = '';
+
+  // ── Load any custom parties from localStorage and merge into CAMPAIGN_PARTIES ──
+  _loadCustomParties();
+
+  // ── Read locked parties for multiplayer (partyIds already taken by other players) ──
+  let lockedPartyIds = [];
+  try {
+    lockedPartyIds = JSON.parse(localStorage.getItem('tps_mp_locked_parties') || '[]');
+  } catch(e) { lockedPartyIds = []; }
+
+  // ── "Create Custom Party" card — always first ──
+  const createCard = document.createElement('div');
+  createCard.className = 'party-card party-card--create';
+  createCard.style.setProperty('--pc', '#d4af37');
+  createCard.innerHTML = `
+    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#d4af37,#f5c842,#d4af37)"></div>
+    <div class="pc-create-inner">
+      <div class="pc-create-icon">✨</div>
+      <div class="pc-create-title">สร้างพรรคใหม่</div>
+      <div class="pc-create-subtitle">Create Custom Party</div>
+      <div class="pc-create-desc">Design your own political party with custom stats, ideology, color, and candidates</div>
+    </div>
+  `;
+  createCard.addEventListener('click', () => {
+    if (typeof tpsPartyCreator !== 'undefined') {
+      tpsPartyCreator.resetForm();
+      tpsPartyCreator.open();
+    } else {
+      toast('Party Creator module not loaded.', 'warning');
+    }
+  });
+  container.appendChild(createCard);
+
+  // ── Render all parties (built-in + custom) ──
   CAMPAIGN_PARTIES.forEach(p => {
+    const isLocked = lockedPartyIds.includes(p.id);
     const card = document.createElement('div');
-    card.className = 'party-card';
+    card.className = 'party-card' + (isLocked ? ' party-card--locked' : '');
     card.dataset.partyId = p.id;
     card.style.setProperty('--pc', p.color);
     card.querySelector;
+
+    const customBadge = p.isCustom ? '<span class="pc-custom-badge">CUSTOM</span>' : '';
+    const lockedOverlay = isLocked ? '<div class="pc-locked-overlay"><span class="pc-locked-icon">🔒</span><span class="pc-locked-text">Taken by another player</span></div>' : '';
+
+    // In MP mode, hide base popularity stat from party cards
+    const basePopStat = _isMultiplayer ? '' : `<span class="pc-stat">📊 ${p.basePopularity}% base</span>`;
     card.innerHTML = `
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${p.color}"></div>
+      ${lockedOverlay}
       <div class="pc-top">
         <div class="pc-dot" style="background:${p.color};color:${p.color}"></div>
-        <span class="pc-name">${p.name}</span>
+        <span class="pc-name">${p.name} ${customBadge}</span>
         <span class="pc-short">${p.shortName}</span>
       </div>
       <div class="pc-ideology">${p.ideology} · ${p.thaiName}</div>
       <div class="pc-leader">Leader: <strong>${p.leader}</strong></div>
       <div class="pc-desc">${p.description}</div>
       <div class="pc-stats">
-        <span class="pc-stat">📊 ${p.basePopularity}% base</span>
+        ${basePopStat}
         <span class="pc-stat">💰 ฿${p.campaignFunds}M</span>
         <span class="pc-stat">🏘️ Ban Yai: ${p.banYaiNetwork}%</span>
         <span class="pc-stat">📱 IO: ${p.ioStrength}%</span>
       </div>
     `;
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedPartyId = p.id;
-      document.getElementById('btn-start-campaign').disabled = false;
-    });
+
+    if (!isLocked) {
+      card.addEventListener('click', () => {
+        // In MP, check if another player already selected this party
+        if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+          if (tpsMPCampaign.isPartyLocked(p.id)) return;
+          document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedPartyId = p.id;
+          tpsMPCampaign.selectParty(p.id);
+        } else {
+          document.querySelectorAll('.party-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedPartyId = p.id;
+          document.getElementById('btn-start-campaign').disabled = false;
+        }
+      });
+    }
     container.appendChild(card);
   });
 }
+
+/**
+ * _loadCustomParties() — Loads saved custom parties from localStorage
+ * and injects them into CAMPAIGN_PARTIES if not already present.
+ */
+function _loadCustomParties() {
+  try {
+    const customs = JSON.parse(localStorage.getItem('tps_custom_parties') || '[]');
+    customs.forEach(cp => {
+      // Avoid duplicates — check by id
+      if (!CAMPAIGN_PARTIES.find(p => p.id === cp.id)) {
+        CAMPAIGN_PARTIES.push(cp);
+        console.log(`[campaign/main.js] Custom party loaded: "${cp.name}" (${cp.shortName})`);
+      }
+    });
+  } catch(e) {
+    console.warn('[campaign/main.js] Failed to load custom parties:', e);
+  }
+}
+
+// ── Listen for newly created custom parties and re-render ──
+document.addEventListener('tps:custom-party-created', (e) => {
+  const newParty = e.detail;
+  if (newParty && !CAMPAIGN_PARTIES.find(p => p.id === newParty.id)) {
+    CAMPAIGN_PARTIES.push(newParty);
+    console.log(`[campaign/main.js] New custom party injected: "${newParty.name}"`);
+  }
+  renderPartyCards();
+  // Auto-select the newly created party
+  setTimeout(() => {
+    const newCard = document.querySelector(`.party-card[data-party-id="${newParty.id}"]`);
+    if (newCard) {
+      newCard.click();
+      newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 100);
+  toast(`✨ "${newParty.name}" has been created and is ready for selection!`, 'success');
+});
+
 
 document.getElementById('btn-start-campaign').addEventListener('click', () => {
   if (!selectedPartyId) return;
@@ -174,7 +273,8 @@ function renderDashboard() {
   _updateScrutinyBar(campaignState.playerScrutiny);
 
   // ── STEP 18: Active Party Identity Indicator ──
-  const partyId = selectedPartyId || localStorage.getItem('campaign_party_id');
+  const partyId = selectedPartyId || localStorage.getItem('campaign_party_id')
+    || (campaignState && campaignState.playerPartyId);
   if (partyId) {
     const party = CAMPAIGN_PARTIES.find(p => p.id === partyId);
     if (party) {
@@ -190,6 +290,11 @@ function renderDashboard() {
   document.getElementById('btn-next-day').style.display = isCampaignOver ? 'none' : '';
   document.getElementById('btn-end-week').style.display = isCampaignOver ? 'none' : '';
   document.getElementById('btn-hold-election').style.display = isCampaignOver ? '' : 'none';
+
+  // ── MP: Force-hide 'Skip to Week End' every render ──
+  if (_isMultiplayer) {
+    document.getElementById('btn-end-week').style.display = 'none';
+  }
 
   // ── STEP 55: Per-button cost validation (disable if can't afford) ──
   _updateActionButtonStates();
@@ -306,9 +411,30 @@ function _updateActionButtonStates() {
 function renderPolls() {
   const container = document.getElementById('poll-bars');
   container.innerHTML = '';
-  const sorted = CAMPAIGN_PARTIES.map(p => ({
+
+  // In MP mode: only show player parties and normalize to 100%
+  let partiesToShow = _getPlayerParties();
+
+  let mapped = partiesToShow.map(p => ({
     ...p, share: campaignState.nationalPollShare[p.id] || 0
-  })).sort((a, b) => b.share - a.share);
+  }));
+
+  // MP: Normalize displayed shares to exactly 100%
+  if (_isMultiplayer && mapped.length > 0) {
+    const rawTotal = mapped.reduce((sum, p) => sum + p.share, 0);
+    if (rawTotal > 0) {
+      mapped = mapped.map(p => ({ ...p, share: Math.round((p.share / rawTotal) * 1000) / 10 }));
+      // Fix drift on largest
+      const normSum = mapped.reduce((s, p) => s + p.share, 0);
+      const drift = Math.round((100 - normSum) * 10) / 10;
+      if (drift !== 0) {
+        const largest = mapped.reduce((a, b) => a.share >= b.share ? a : b);
+        largest.share += drift;
+      }
+    }
+  }
+
+  const sorted = mapped.sort((a, b) => b.share - a.share);
 
   sorted.forEach(p => {
     const isPlayer = p.id === campaignState.playerPartyId;
@@ -629,6 +755,14 @@ function _showECGuillotineModal(guillotine) {
     renderDashboard();
   });
 
+  // In MP, post a system chat message about the penalty
+  if (_isMultiplayer && typeof window.tpsMPChat !== 'undefined') {
+    const partyName = CAMPAIGN_PARTIES.find(p => p.id === campaignState.playerPartyId)?.shortName || 'A party';
+    window.tpsMPChat.postSystemMessage(
+      `🚨 EC RED FLAG! ${partyName} is under investigation! -฿${penalties.legalFees}M, -${penalties.pollLoss}% polls, scrutiny → ${penalties.scrutinyReset}%`
+    );
+  }
+
   modal.style.display = 'flex';
 }
 
@@ -664,6 +798,11 @@ function renderCalendarStrip() {
 
 // ─── Next Day Button ─────────────────────────────────────────────
 document.getElementById('btn-next-day').addEventListener('click', () => {
+  // ── MULTIPLAYER: Turn barrier — signal ready instead of advancing ──
+  if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+    tpsMPCampaign.signalDayReady();
+    return;
+  }
   const result = advanceCampaignDay();
   if (!result) return;
 
@@ -704,6 +843,9 @@ document.getElementById('btn-next-day').addEventListener('click', () => {
       toast(p.message, 'warning');
     });
   }
+
+  // STEP 57: Check EC Guillotine after day advance
+  _checkAndShowGuillotine();
 
   renderDashboard();
 });
@@ -760,29 +902,126 @@ function _showParliamentModal(dayResult) {
   }
 
   modal.style.display = 'flex';
+
+  const enterBtn = document.getElementById('btn-enter-parliament');
+  const ignoreBtn = document.getElementById('btn-ignore-parliament');
+
+  // ── Reset all button styles from previous votes ──
+  enterBtn.disabled = false;
+  enterBtn.style.opacity = '';
+  enterBtn.style.outline = '';
+  ignoreBtn.disabled = false;
+  ignoreBtn.style.opacity = '';
+  ignoreBtn.style.outline = '';
+  ignoreBtn.style.pointerEvents = '';
+  ignoreBtn.title = '';
+
+  if (_isMultiplayer) {
+    // ── MP MODE: Add/update vote status indicator ──
+    let voteStatus = document.getElementById('mp-parliament-vote-status');
+    if (!voteStatus) {
+      voteStatus = document.createElement('p');
+      voteStatus.id = 'mp-parliament-vote-status';
+      voteStatus.style.cssText = 'color:var(--gold);font-size:.8rem;margin-top:10px;font-weight:600;';
+      penaltyEl.parentNode.insertBefore(voteStatus, penaltyEl.nextSibling);
+    }
+    voteStatus.textContent = '';
+    voteStatus.style.display = 'none';
+  }
 }
 
+// ── Parliament Button Handlers ──
 document.getElementById('btn-enter-parliament').addEventListener('click', () => {
+  if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+    // MP: Submit vote for "enter" and wait for all players
+    _submitParliamentVote('enter');
+    return;
+  }
+  // SP: Original immediate behavior
   const choice = handleParliamentChoice('enter');
   document.getElementById('parliament-modal').style.display = 'none';
-
   if (choice.action === 'redirect') {
-    // STEP 3 FIX: Save campaign state to localStorage BEFORE leaving
     saveCampaignState();
     toast(choice.message, 'success');
-    setTimeout(() => {
-      window.location.href = choice.target;
-    }, 800);
+    setTimeout(() => { window.location.href = choice.target; }, 800);
   }
 });
 
 document.getElementById('btn-ignore-parliament').addEventListener('click', () => {
+  if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+    // MP: Submit vote for "ignore" and wait for all players
+    _submitParliamentVote('ignore');
+    return;
+  }
+  // SP: Original immediate behavior
   const choice = handleParliamentChoice('ignore');
   document.getElementById('parliament-modal').style.display = 'none';
-
   toast(choice.message, 'warning');
   renderDashboard();
 });
+
+/**
+ * _submitParliamentVote() — MP: Submit this player's parliament choice.
+ * Disables both buttons and shows waiting status.
+ * The coordinator collects votes and resolves when all players have voted.
+ */
+function _submitParliamentVote(vote) {
+  const enterBtn = document.getElementById('btn-enter-parliament');
+  const ignoreBtn = document.getElementById('btn-ignore-parliament');
+
+  // Disable both buttons after voting
+  enterBtn.disabled = true;
+  ignoreBtn.disabled = true;
+
+  // Highlight the chosen button
+  if (vote === 'enter') {
+    enterBtn.style.outline = '2px solid var(--gold)';
+    ignoreBtn.style.opacity = '0.35';
+  } else {
+    ignoreBtn.style.outline = '2px solid var(--gold)';
+    enterBtn.style.opacity = '0.35';
+  }
+
+  // Show vote status
+  const voteStatus = document.getElementById('mp-parliament-vote-status');
+  if (voteStatus) {
+    voteStatus.style.display = '';
+    voteStatus.textContent = `⏳ You voted "${vote === 'enter' ? 'Enter' : 'Ignore'}". Waiting for other players...`;
+  }
+
+  // Send vote to coordinator
+  if (typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.signalParliamentVote) {
+    tpsMPCampaign.signalParliamentVote(vote);
+  }
+}
+
+/**
+ * _applyParliamentVoteResult() — Called by coordinator when all votes are in.
+ * Applies the majority decision to this player.
+ */
+function _applyParliamentVoteResult(result) {
+  const modal = document.getElementById('parliament-modal');
+
+  if (result.decision === 'enter') {
+    // Majority voted Enter → all go to parliament
+    const choice = handleParliamentChoice('enter');
+    modal.style.display = 'none';
+    if (choice.action === 'redirect') {
+      saveCampaignState();
+      toast(`🏛️ Majority voted to Enter Parliament (${result.enterCount}/${result.totalVotes}). Redirecting...`, 'success');
+      setTimeout(() => { window.location.href = choice.target; }, 800);
+    }
+  } else {
+    // Majority voted Ignore → all receive penalty
+    const choice = handleParliamentChoice('ignore');
+    modal.style.display = 'none';
+    toast(`🚫 Majority voted to Ignore Parliament (${result.ignoreCount}/${result.totalVotes}). All players penalized.`, 'warning');
+    renderDashboard();
+  }
+}
+
+// Expose to coordinator
+window._applyParliamentVoteResult = _applyParliamentVoteResult;
 
 // ─── Lobbyist Event Modal ────────────────────────────────────────
 function _showLobbyistModal(event) {
@@ -960,10 +1199,25 @@ function _showCampaignEventModal(event) {
 
 
 document.getElementById('btn-hold-election').addEventListener('click', () => {
+  // MP: barrier — wait for all players
+  if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+    tpsMPCampaign.signalElectionReady();
+    return;
+  }
+  // SP: immediate
+  window._triggerElection();
+});
+
+// Shared trigger — called by coordinator when all players are ready (MP), or directly (SP)
+window._triggerElection = function() {
+  // Reset button text (barrier may have changed it)
+  const btn = document.getElementById('btn-hold-election');
+  if (btn) { btn.textContent = '🗳️ Hold General Election'; btn.disabled = false; }
+
   const results = runElection();
   showScreen('screen-election');
   renderElectionResults(results);
-});
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // D3.js MAP
@@ -971,96 +1225,194 @@ document.getElementById('btn-hold-election').addEventListener('click', () => {
 
 const GEOJSON_URL = 'https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json';
 
+/**
+ * _matchProvince() — Matches a GeoJSON feature name to a THAILAND_PROVINCES entry.
+ */
+function _matchProvince(name) {
+  return THAILAND_PROVINCES.find(p =>
+    p.name.toLowerCase() === name.toLowerCase() ||
+    name.toLowerCase().includes(p.name.toLowerCase().split(' ')[0])
+  );
+}
+
+/**
+ * _getPlayerParties() — Returns the array of party objects that players
+ * have selected in the current MP room. Returns all parties in SP.
+ * Falls back to localStorage if PeerJS hasn't reconnected yet.
+ */
+function _getPlayerParties() {
+  if (_isMultiplayer) {
+    // Primary: live coordinator state
+    if (typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+      const playerPartyIds = Object.values(tpsMPCampaign.state.partySelections);
+      if (playerPartyIds.length > 0) {
+        return CAMPAIGN_PARTIES.filter(p => playerPartyIds.includes(p.id));
+      }
+    }
+    // Fallback: localStorage saved selections (survives page reloads)
+    try {
+      const saved = JSON.parse(localStorage.getItem('tps_mp_party_selections') || '{}');
+      const savedIds = Object.values(saved);
+      if (savedIds.length > 0) {
+        return CAMPAIGN_PARTIES.filter(p => savedIds.includes(p.id));
+      }
+    } catch(e) {}
+  }
+  return CAMPAIGN_PARTIES;
+}
+
+/**
+ * _weightedRandomParty() — Picks a party using weighted random selection
+ * based on nationalPollShare among the given parties.
+ * Used in MP mode to assign province colors proportionally.
+ */
+function _weightedRandomParty(parties) {
+  const weights = parties.map(p => ({
+    party: p,
+    weight: Math.max(0, campaignState.nationalPollShare[p.id] || 0)
+  }));
+  const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0);
+  if (totalWeight <= 0) return parties[Math.floor(Math.random() * parties.length)];
+  let roll = Math.random() * totalWeight;
+  for (const w of weights) {
+    roll -= w.weight;
+    if (roll <= 0) return w.party;
+  }
+  return weights[weights.length - 1].party;
+}
+
 function initMap() {
   const container = document.getElementById('map-container');
+  if (!container) { console.warn('[initMap] map-container not found'); return; }
   const svg = d3.select('#thailand-map');
-  const width = container.clientWidth || 400;
-  const height = container.clientHeight || 400;
-  svg.attr('viewBox', `0 0 ${width} ${height}`);
 
-  // Render legend
-  const legend = document.getElementById('map-legend');
-  legend.innerHTML = CAMPAIGN_PARTIES.map(p =>
-    `<span class="leg-item"><span class="leg-dot" style="background:${p.color}"></span>${p.shortName}</span>`
-  ).join('');
+  // Deferred layout: wait for the container to have real pixel dimensions
+  function _doInit() {
+    const width = container.clientWidth || container.getBoundingClientRect().width || 400;
+    const height = container.clientHeight || container.getBoundingClientRect().height || 400;
+    if (width < 10 || height < 10) {
+      console.log('[initMap] Container has no dimensions yet — retrying in 200ms...');
+      setTimeout(_doInit, 200);
+      return;
+    }
+    svg.attr('viewBox', `0 0 ${width} ${height}`);
+    console.log(`[initMap] Container dimensions: ${width}×${height}`);
 
-  d3.json(GEOJSON_URL).then(data => {
-    geoData = data;
-    mapProjection = d3.geoMercator().fitSize([width, height], data);
-    mapPath = d3.geoPath().projection(mapProjection);
+    // Render legend (MP: only player parties)
+    const legendParties = _getPlayerParties();
+    const legend = document.getElementById('map-legend');
+    if (legend) {
+      legend.innerHTML = legendParties.map(p =>
+        `<span class="leg-item"><span class="leg-dot" style="background:${p.color}"></span>${p.shortName}</span>`
+      ).join('');
+    }
 
-    svg.selectAll('path')
-      .data(data.features)
-      .join('path')
-      .attr('d', mapPath)
-      .attr('fill', '#141c36')
-      .attr('stroke', 'rgba(212,175,55,0.15)')
-      .attr('stroke-width', 0.5)
-      .attr('class', 'map-province')
-      .on('mouseenter', function(event, d) {
-        d3.select(this).attr('stroke', 'var(--gold)').attr('stroke-width', 1.5);
-        showMapTooltip(event, d);
-      })
-      .on('mouseleave', function() {
-        d3.select(this).attr('stroke', 'rgba(212,175,55,0.15)').attr('stroke-width', 0.5);
-        hideMapTooltip();
-      })
-      .on('click', function(event, d) {
-        const name = d.properties.name || d.properties.NAME_1 || '';
-        const prov = THAILAND_PROVINCES.find(p =>
-          p.name.toLowerCase() === name.toLowerCase() ||
-          name.toLowerCase().includes(p.name.toLowerCase().split(' ')[0])
-        );
-        if (prov && currentAction === 'rally') {
-          document.getElementById('target-dropdown').value = prov.id;
-        }
-      });
+    d3.json(GEOJSON_URL).then(data => {
+      geoData = data;
+      mapProjection = d3.geoMercator().fitSize([width, height], data);
+      mapPath = d3.geoPath().projection(mapProjection);
 
-    updateMap();
-  }).catch(err => {
-    console.warn('Failed to load GeoJSON:', err);
-    svg.append('text').attr('x', width/2).attr('y', height/2)
-      .attr('text-anchor', 'middle').attr('fill', '#6b748a').attr('font-size', '12')
-      .text('Map data unavailable — using data tables');
-  });
+      svg.selectAll('path')
+        .data(data.features)
+        .join('path')
+        .attr('d', mapPath)
+        .attr('fill', '#141c36')
+        .attr('stroke', 'rgba(212,175,55,0.15)')
+        .attr('stroke-width', 0.5)
+        .attr('class', 'map-province')
+        .on('mouseenter', function(event, d) {
+          d3.select(this).attr('stroke', 'var(--gold)').attr('stroke-width', 1.5);
+          showMapTooltip(event, d);
+        })
+        .on('mouseleave', function() {
+          d3.select(this).attr('stroke', 'rgba(212,175,55,0.15)').attr('stroke-width', 0.5);
+          hideMapTooltip();
+        })
+        .on('click', function(event, d) {
+          const name = d.properties.name || d.properties.NAME_1 || '';
+          const prov = _matchProvince(name);
+          if (prov && currentAction === 'rally') {
+            document.getElementById('target-dropdown').value = prov.id;
+          }
+        });
+
+      updateMap();
+      console.log(`[initMap] Map rendered: ${data.features.length} features.`);
+    }).catch(err => {
+      console.warn('Failed to load GeoJSON:', err);
+      svg.append('text').attr('x', width/2).attr('y', height/2)
+        .attr('text-anchor', 'middle').attr('fill', '#6b748a').attr('font-size', '12')
+        .text('Map data unavailable — using data tables');
+    });
+  }
+
+  // Use requestAnimationFrame + short delay to guarantee layout paint
+  requestAnimationFrame(() => setTimeout(_doInit, 60));
 }
 
 function updateMap() {
   if (!geoData) return;
   const svg = d3.select('#thailand-map');
+  const playerParties = _getPlayerParties();
+  const isMP = _isMultiplayer && playerParties.length > 0;
+
   svg.selectAll('.map-province').attr('fill', function(d) {
     const name = d.properties.name || d.properties.NAME_1 || '';
-    const prov = THAILAND_PROVINCES.find(p =>
-      p.name.toLowerCase() === name.toLowerCase() ||
-      name.toLowerCase().includes(p.name.toLowerCase().split(' ')[0])
-    );
+    const prov = _matchProvince(name);
     if (!prov) return '#141c36';
-    // Color by leading party
-    let maxLean = 0, leadParty = null;
-    for (const pid in prov.politicalLean) {
-      const val = (prov.politicalLean[pid] || 0) + (campaignState.nationalPollShare[pid] || 0) * 0.3;
-      if (val > maxLean) { maxLean = val; leadParty = pid; }
+
+    if (isMP) {
+      // ── MP: Weighted random coloring based on poll proportions ──
+      // Each province is randomly assigned to a player party proportional
+      // to that party's nationalPollShare. Population/districts influence
+      // the weight slightly — larger provinces are a bit more predictable.
+      const popFactor = Math.min(1.0, (prov.basePop || 500) / 2000); // 0.25–1.0
+      const winner = _weightedRandomParty(playerParties);
+      // Opacity scales with population (bigger province = more visible)
+      const alpha = Math.round(0x55 + popFactor * 0x55).toString(16).padStart(2, '0');
+      return winner.color + alpha;
+    } else {
+      // ── SP: Original behavior — color by leading party using politicalLean ──
+      let maxLean = 0, leadParty = null;
+      for (const pid in prov.politicalLean) {
+        const val = (prov.politicalLean[pid] || 0) + (campaignState.nationalPollShare[pid] || 0) * 0.3;
+        if (val > maxLean) { maxLean = val; leadParty = pid; }
+      }
+      const party = CAMPAIGN_PARTIES.find(p => p.id === leadParty);
+      return party ? party.color + '88' : '#141c36';
     }
-    const party = CAMPAIGN_PARTIES.find(p => p.id === leadParty);
-    return party ? party.color + '88' : '#141c36';
   });
 }
 
 function showMapTooltip(event, d) {
   const tip = document.getElementById('map-tooltip');
   const name = d.properties.name || d.properties.NAME_1 || 'Unknown';
-  const prov = THAILAND_PROVINCES.find(p =>
-    p.name.toLowerCase() === name.toLowerCase() ||
-    name.toLowerCase().includes(p.name.toLowerCase().split(' ')[0])
-  );
+  const prov = _matchProvince(name);
   let html = `<strong style="color:var(--gold)">${name}</strong>`;
   if (prov) {
-    html += `<br><span style="color:var(--text3)">${prov.districts} districts · Pop: ${prov.basePop}k</span>`;
-    const lean = prov.politicalLean;
-    const sorted = Object.entries(lean).sort((a,b) => b[1] - a[1]);
-    const top = sorted[0];
-    const topParty = CAMPAIGN_PARTIES.find(p => p.id === top[0]);
-    if (topParty) html += `<br>Leading: <span style="color:${topParty.color}">${topParty.shortName}</span> (${top[1]}%)`;
+    html += `<br><span style="color:var(--text3)">${prov.districts} districts · Pop: ${(prov.basePop || 0).toLocaleString()}k</span>`;
+
+    if (_isMultiplayer) {
+      // ── MP tooltip: Show poll breakdown for player parties ──
+      const playerParties = _getPlayerParties();
+      const entries = playerParties.map(p => ({
+        party: p,
+        share: campaignState.nationalPollShare[p.id] || 0
+      })).sort((a, b) => b.share - a.share);
+      const total = entries.reduce((s, e) => s + e.share, 0);
+      html += `<br><span style="font-size:.65rem;color:var(--text3)">─── Player Polls ───</span>`;
+      entries.forEach(e => {
+        const pct = total > 0 ? Math.round((e.share / total) * 1000) / 10 : 0;
+        html += `<br><span style="color:${e.party.color}">${e.party.shortName}</span>: <strong>${pct}%</strong>`;
+      });
+    } else {
+      // ── SP tooltip: Original behavior ──
+      const lean = prov.politicalLean;
+      const sorted = Object.entries(lean).sort((a,b) => b[1] - a[1]);
+      const top = sorted[0];
+      const topParty = CAMPAIGN_PARTIES.find(p => p.id === top[0]);
+      if (topParty) html += `<br>Leading: <span style="color:${topParty.color}">${topParty.shortName}</span> (${top[1]}%)`;
+    }
   }
   tip.innerHTML = html;
   tip.style.display = 'block';
@@ -1143,13 +1495,48 @@ function renderDonut(summary) {
 }
 
 document.getElementById('btn-to-coalition').addEventListener('click', () => {
-  showScreen('screen-coalition');
-  renderCoalition();
+  // MP: barrier — wait for all players
+  if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+    tpsMPCampaign.signalCoalitionReady();
+    return;
+  }
+  // SP: immediate
+  window._triggerCoalition();
 });
+
+// Shared trigger — called by coordinator when all players are ready (MP), or directly (SP)
+window._triggerCoalition = function() {
+  // Reset button text (barrier may have changed it)
+  const btn = document.getElementById('btn-to-coalition');
+  if (btn) { btn.textContent = 'Proceed to Coalition Formation →'; btn.disabled = false; }
+
+  showScreen('screen-coalition');
+
+  // In MP, store election seat results for coordinator's seat calculation
+  if (_isMultiplayer && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+    const seatMap = {};
+    const elParties = typeof _getElectionParties === 'function' ? _getElectionParties() : CAMPAIGN_PARTIES;
+    elParties.forEach(p => { seatMap[p.id] = campaignState.totalSeats[p.id] || 0; });
+    tpsMPCampaign.storeElectionResults(seatMap);
+  }
+
+  renderCoalition();
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // SCREEN 4: COALITION
 // ═══════════════════════════════════════════════════════════════════
+
+// ── MP Coalition State (local to this client) ──
+let _mpCoalitionState = {
+  formationLeaderPartyId: null,
+  sortedParties: [],
+  attempt: 1,
+  maxAttempts: 2,
+  leaderIndex: 0, // 0 = 1st place, 1 = 2nd place
+  selectedInvites: {}, // partyId → boolean (checkboxes)
+  phase: 'waiting', // 'leader_select' | 'waiting_responses' | 'invited' | 'waiting' | 'result'
+};
 
 function renderCoalition() {
   const coal = coalitionPhase();
@@ -1159,6 +1546,13 @@ function renderCoalition() {
   document.getElementById('seats-needed').textContent = coal.targetSeats;
   updateCoalitionMeter();
 
+  // ── MP MODE: Interactive P2P Coalition ──
+  if (coal.isMP && _isMultiplayer) {
+    _renderMPCoalition(coal);
+    return;
+  }
+
+  // ── SP MODE: Original AI offers ──
   const container = document.getElementById('coalition-offers');
   container.innerHTML = '';
   coal.offers.forEach(offer => {
@@ -1182,6 +1576,376 @@ function renderCoalition() {
       <span class="oc-status"></span>
     `;
     container.appendChild(card);
+  });
+
+  // Show finalize button for SP
+  document.getElementById('btn-finalize-coalition').style.display = '';
+}
+
+function _renderMPCoalition(coal) {
+  const container = document.getElementById('coalition-offers');
+  container.innerHTML = '';
+
+  // Hide SP finalize button
+  document.getElementById('btn-finalize-coalition').style.display = 'none';
+
+  const myPartyId = campaignState.playerPartyId;
+
+  // Determine formation leader — start with most seats
+  _mpCoalitionState.sortedParties = coal.sortedParties;
+  if (!_mpCoalitionState.formationLeaderPartyId) {
+    _mpCoalitionState.formationLeaderPartyId = coal.sortedParties[0].id;
+    _mpCoalitionState.leaderIndex = 0;
+    _mpCoalitionState.attempt = 1;
+  }
+
+  const isLeader = (myPartyId === _mpCoalitionState.formationLeaderPartyId);
+  const leaderParty = coal.sortedParties.find(p => p.id === _mpCoalitionState.formationLeaderPartyId);
+
+  if (isLeader) {
+    // ── LEADER VIEW: Select & Invite ──
+    _mpCoalitionState.phase = 'leader_select';
+    const otherParties = coal.sortedParties.filter(p => p.id !== myPartyId);
+
+    container.innerHTML = `
+      <div style="text-align:center;margin-bottom:1rem;">
+        <div style="font-size:1.3rem;font-weight:700;color:var(--gold);">👑 You are the Formation Leader</div>
+        <div style="font-size:.85rem;color:var(--text3);margin-top:.3rem;">
+          Select parties to invite to your coalition, then send the invitation.<br>
+          Attempt ${_mpCoalitionState.attempt} of ${_mpCoalitionState.maxAttempts}
+        </div>
+      </div>
+      <div id="mp-invite-cards" style="display:flex;flex-direction:column;gap:.75rem;"></div>
+      <div style="text-align:center;margin-top:1.2rem;">
+        <button id="btn-send-invites" class="btn btn-gold btn-lg" disabled>📨 Send Coalition Invitations</button>
+      </div>
+      <div id="mp-coalition-status" style="text-align:center;margin-top:.8rem;color:var(--text3);font-size:.85rem;"></div>
+    `;
+
+    const cardsContainer = document.getElementById('mp-invite-cards');
+    otherParties.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'offer-card';
+      card.style.cursor = 'pointer';
+      card.style.transition = 'all .2s';
+      card.id = `mp-invite-${p.id}`;
+      card.innerHTML = `
+        <div class="oc-top" style="align-items:center;">
+          <input type="checkbox" id="chk-${p.id}" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer;">
+          <div class="oc-dot" style="background:${p.color}"></div>
+          <span class="oc-name">${p.name}</span>
+          <span class="oc-seats">${p.seats} <span class="oc-seats-label">seats</span></span>
+        </div>
+      `;
+      card.addEventListener('click', (e) => {
+        if (e.target.tagName === 'INPUT') return; // Let checkbox handle itself
+        const chk = document.getElementById(`chk-${p.id}`);
+        chk.checked = !chk.checked;
+        _mpCoalitionState.selectedInvites[p.id] = chk.checked;
+        card.style.outline = chk.checked ? '2px solid var(--gold)' : '';
+        _updateInviteButton();
+      });
+      const chk = card.querySelector('input');
+      chk.addEventListener('change', () => {
+        _mpCoalitionState.selectedInvites[p.id] = chk.checked;
+        card.style.outline = chk.checked ? '2px solid var(--gold)' : '';
+        _updateInviteButton();
+      });
+      cardsContainer.appendChild(card);
+    });
+
+    document.getElementById('btn-send-invites').addEventListener('click', () => {
+      const selected = Object.entries(_mpCoalitionState.selectedInvites)
+        .filter(([_, v]) => v)
+        .map(([id]) => id);
+      if (selected.length === 0) return;
+
+      tpsMPCampaign.sendCoalitionInvite(myPartyId, selected, _mpCoalitionState.attempt);
+      _mpCoalitionState.phase = 'waiting_responses';
+      document.getElementById('btn-send-invites').disabled = true;
+      document.getElementById('btn-send-invites').textContent = '⏳ Waiting for responses...';
+      document.getElementById('mp-coalition-status').textContent =
+        `Invitations sent to ${selected.length} party(ies). Waiting for responses...`;
+    });
+  } else {
+    // ── NON-LEADER VIEW: Waiting ──
+    _mpCoalitionState.phase = 'waiting';
+    container.innerHTML = `
+      <div style="text-align:center;padding:2rem;">
+        <div style="font-size:2rem;margin-bottom:.5rem;">⏳</div>
+        <div style="font-size:1.1rem;font-weight:600;color:var(--text1);">
+          Waiting for ${leaderParty ? leaderParty.name : 'the formation leader'}...
+        </div>
+        <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem;">
+          ${leaderParty ? leaderParty.name : 'The leading party'} is forming a coalition.<br>
+          You may receive an invitation to join.
+        </div>
+        <div id="mp-coalition-status" style="margin-top:1rem;color:var(--gold);font-weight:600;"></div>
+      </div>
+    `;
+  }
+}
+
+function _updateInviteButton() {
+  const btn = document.getElementById('btn-send-invites');
+  if (!btn) return;
+  const count = Object.values(_mpCoalitionState.selectedInvites).filter(Boolean).length;
+  btn.disabled = count === 0;
+  btn.textContent = count > 0 ? `📨 Send Invitations (${count} party${count > 1 ? 'ies' : ''})` : '📨 Send Coalition Invitations';
+}
+
+// ── MP Coalition Handlers (called by coordinator) ──
+
+window._handleCoalitionInvite = function(d) {
+  const myPartyId = campaignState.playerPartyId;
+  // Am I one of the invited parties?
+  if (d.invitedPartyIds.includes(myPartyId)) {
+    _mpCoalitionState.phase = 'invited';
+    const leaderParty = _mpCoalitionState.sortedParties.find(p => p.id === d.leaderPartyId);
+    const container = document.getElementById('coalition-offers');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="text-align:center;padding:1.5rem;">
+        <div style="font-size:2rem;margin-bottom:.5rem;">🤝</div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--gold);margin-bottom:.5rem;">
+          Coalition Invitation
+        </div>
+        <div style="font-size:.95rem;color:var(--text2);margin-bottom:1.2rem;line-height:1.6;">
+          <strong style="color:${leaderParty?.color || 'var(--gold)'}">${leaderParty?.name || d.leaderPartyId}</strong>
+          has invited your party to join their coalition government.
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:center;">
+          <button id="btn-accept-coalition" class="btn btn-gold btn-lg">✅ Accept</button>
+          <button id="btn-reject-coalition" class="btn btn-danger btn-lg">❌ Reject</button>
+        </div>
+        <div id="mp-coalition-status" style="margin-top:1rem;color:var(--text3);font-size:.85rem;"></div>
+      </div>
+    `;
+
+    document.getElementById('btn-accept-coalition').addEventListener('click', () => {
+      tpsMPCampaign.sendCoalitionResponse(myPartyId, true);
+      container.innerHTML = `
+        <div style="text-align:center;padding:2rem;">
+          <div style="font-size:2rem;">✅</div>
+          <div style="font-size:1.1rem;font-weight:600;color:var(--green);">You accepted the coalition invitation!</div>
+          <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem;">Waiting for other parties to respond...</div>
+          <div id="mp-coalition-status" style="margin-top:1rem;"></div>
+        </div>`;
+    });
+
+    document.getElementById('btn-reject-coalition').addEventListener('click', () => {
+      tpsMPCampaign.sendCoalitionResponse(myPartyId, false);
+      container.innerHTML = `
+        <div style="text-align:center;padding:2rem;">
+          <div style="font-size:2rem;">❌</div>
+          <div style="font-size:1.1rem;font-weight:600;color:var(--red);">You rejected the coalition invitation.</div>
+          <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem;">Waiting for results...</div>
+          <div id="mp-coalition-status" style="margin-top:1rem;"></div>
+        </div>`;
+    });
+  }
+  // If I'm the leader, show waiting status
+  if (d.leaderPartyId === myPartyId) {
+    const statusEl = document.getElementById('mp-coalition-status');
+    if (statusEl) statusEl.textContent = `Invitations sent. Waiting for ${d.invitedPartyIds.length} response(s)...`;
+  }
+};
+
+window._handleCoalitionResponseUpdate = function(d) {
+  const statusEl = document.getElementById('mp-coalition-status');
+  if (statusEl) {
+    statusEl.textContent = `Responses: ${d.count} / ${d.expected}`;
+  }
+};
+
+window._handleCoalitionResult = function(d) {
+  const container = document.getElementById('coalition-offers');
+  if (!container) return;
+
+  const myPartyId = campaignState.playerPartyId;
+  const isInCoalition = d.allCoalitionParties?.includes(myPartyId);
+
+  if (d.success) {
+    // ── COALITION FORMED ──
+    campaignState.coalitionPartners = d.allCoalitionParties.filter(pid => pid !== myPartyId);
+    d.allCoalitionParties.forEach(pid => {
+      if (!campaignState.coalitionPartners.includes(pid) && pid !== myPartyId) {
+        campaignState.coalitionPartners.push(pid);
+      }
+    });
+    recalcCoalitionSeats();
+    updateCoalitionMeter();
+
+    container.innerHTML = `
+      <div style="text-align:center;padding:2rem;">
+        <div style="font-size:2.5rem;margin-bottom:.5rem;">🏛️</div>
+        <div style="font-size:1.3rem;font-weight:700;color:var(--gold);margin-bottom:.5rem;">
+          COALITION FORMED!
+        </div>
+        <div style="font-size:1rem;color:var(--text2);margin-bottom:1rem;">
+          Total coalition seats: <strong style="color:var(--green);">${d.totalSeats}</strong> / 500
+        </div>
+        <button id="btn-mp-finalize" class="btn btn-gold btn-lg">Finalize Coalition & Check Result</button>
+      </div>`;
+
+    document.getElementById('btn-mp-finalize').addEventListener('click', () => {
+      // Determine win/loss based on whether this player is in the coalition
+      if (isInCoalition) {
+        campaignState.gameResult = 'victory';
+        const result = {
+          result: 'victory',
+          seats: d.totalSeats,
+          needed: MAJORITY_THRESHOLD,
+          surplus: d.totalSeats - MAJORITY_THRESHOLD,
+          message: `🏛️ VICTORY! Your coalition has ${d.totalSeats} seats — you will form the next government of Thailand!`
+        };
+        showScreen('screen-result');
+        renderResult(result);
+      } else {
+        campaignState.gameResult = 'opposition';
+        const result = {
+          result: 'opposition',
+          seats: campaignState.totalSeats[myPartyId] || 0,
+          needed: MAJORITY_THRESHOLD,
+          deficit: MAJORITY_THRESHOLD - (campaignState.totalSeats[myPartyId] || 0),
+          message: `📉 You were not included in the coalition. You are banished to the opposition benches.`
+        };
+        showScreen('screen-result');
+        renderResult(result);
+      }
+    });
+  } else {
+    // ── COALITION FAILED ──
+    const isLeader = (myPartyId === d.leaderPartyId);
+    if (isLeader && _mpCoalitionState.attempt < _mpCoalitionState.maxAttempts) {
+      // Leader gets another attempt
+      _mpCoalitionState.attempt++;
+      _mpCoalitionState.selectedInvites = {};
+      container.innerHTML = `
+        <div style="text-align:center;padding:1.5rem;">
+          <div style="font-size:2rem;margin-bottom:.5rem;">⚠️</div>
+          <div style="font-size:1.1rem;font-weight:600;color:var(--amber);">
+            Coalition failed! (${d.totalSeats} seats — need 251)
+          </div>
+          <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem;">
+            Attempt ${_mpCoalitionState.attempt} of ${_mpCoalitionState.maxAttempts} — Try again.
+          </div>
+          <button id="btn-retry-coalition" class="btn btn-gold btn-md" style="margin-top:1rem;">🔄 Try Again</button>
+        </div>`;
+      document.getElementById('btn-retry-coalition').addEventListener('click', () => {
+        const coal = coalitionPhase();
+        _renderMPCoalition(coal);
+      });
+    } else if (isLeader && _mpCoalitionState.attempt >= _mpCoalitionState.maxAttempts) {
+      // Pass to next party
+      const nextIndex = _mpCoalitionState.leaderIndex + 1;
+      if (nextIndex < _mpCoalitionState.sortedParties.length) {
+        const nextParty = _mpCoalitionState.sortedParties[nextIndex];
+        _mpCoalitionState.leaderIndex = nextIndex;
+        _mpCoalitionState.formationLeaderPartyId = nextParty.id;
+        _mpCoalitionState.attempt = 1;
+        _mpCoalitionState.selectedInvites = {};
+        tpsMPCampaign.sendCoalitionTurnPass(nextParty.id);
+
+        container.innerHTML = `
+          <div style="text-align:center;padding:2rem;">
+            <div style="font-size:2rem;">🔄</div>
+            <div style="font-size:1.1rem;font-weight:600;color:var(--amber);">
+              Formation right passes to <span style="color:${nextParty.color}">${nextParty.name}</span>
+            </div>
+            <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem;">Waiting...</div>
+            <div id="mp-coalition-status" style="margin-top:1rem;"></div>
+          </div>`;
+      } else {
+        // All parties exhausted → minority government
+        tpsMPCampaign.sendCoalitionMinority(myPartyId);
+        _showMinorityGovernment();
+      }
+    } else {
+      // Non-leader: show failure + waiting
+      container.innerHTML = `
+        <div style="text-align:center;padding:2rem;">
+          <div style="font-size:2rem;">⚠️</div>
+          <div style="font-size:1.1rem;font-weight:600;color:var(--amber);">
+            Coalition attempt failed (${d.totalSeats} seats — need 251)
+          </div>
+          <div style="font-size:.85rem;color:var(--text3);margin-top:.5rem;">Waiting for next attempt...</div>
+          <div id="mp-coalition-status" style="margin-top:1rem;"></div>
+        </div>`;
+    }
+  }
+};
+
+window._handleCoalitionTurnPass = function(d) {
+  _mpCoalitionState.formationLeaderPartyId = d.nextLeaderPartyId;
+  _mpCoalitionState.attempt = 1;
+  _mpCoalitionState.selectedInvites = {};
+
+  const nextIdx = _mpCoalitionState.sortedParties.findIndex(p => p.id === d.nextLeaderPartyId);
+  if (nextIdx >= 0) _mpCoalitionState.leaderIndex = nextIdx;
+
+  const coal = coalitionPhase();
+  _renderMPCoalition(coal);
+};
+
+window._handleCoalitionMinority = function(d) {
+  _showMinorityGovernment();
+};
+
+function _showMinorityGovernment() {
+  const container = document.getElementById('coalition-offers');
+  if (!container) return;
+
+  const myPartyId = campaignState.playerPartyId;
+  const leaderPartyId = _mpCoalitionState.formationLeaderPartyId || _mpCoalitionState.sortedParties[0]?.id;
+  const leaderParty = _mpCoalitionState.sortedParties.find(p => p.id === leaderPartyId);
+  const isLeader = (myPartyId === leaderPartyId);
+
+  // Minority = leader governs alone
+  campaignState.coalitionPartners = [];
+  recalcCoalitionSeats();
+  updateCoalitionMeter();
+
+  container.innerHTML = `
+    <div style="text-align:center;padding:2rem;">
+      <div style="font-size:2.5rem;margin-bottom:.5rem;">⚖️</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--amber);margin-bottom:.5rem;">
+        MINORITY GOVERNMENT
+      </div>
+      <div style="font-size:.95rem;color:var(--text2);margin-bottom:1rem;line-height:1.6;">
+        No coalition could be formed. <strong style="color:${leaderParty?.color || 'var(--gold)'}">${leaderParty?.name || 'The leading party'}</strong>
+        will govern as a minority government with ${campaignState.totalSeats[leaderPartyId] || 0} seats.
+      </div>
+      <button id="btn-mp-minority-finalize" class="btn btn-gold btn-lg">
+        ${isLeader ? 'Enter Government House →' : 'Continue to Opposition →'}
+      </button>
+    </div>`;
+
+  document.getElementById('btn-mp-minority-finalize').addEventListener('click', () => {
+    if (isLeader) {
+      campaignState.gameResult = 'victory';
+      const result = {
+        result: 'victory',
+        seats: campaignState.totalSeats[myPartyId] || 0,
+        needed: MAJORITY_THRESHOLD,
+        surplus: (campaignState.totalSeats[myPartyId] || 0) - MAJORITY_THRESHOLD,
+        message: `⚖️ MINORITY GOVERNMENT! You will govern with ${campaignState.totalSeats[myPartyId] || 0} seats — a fragile position.`
+      };
+      showScreen('screen-result');
+      renderResult(result);
+    } else {
+      campaignState.gameResult = 'opposition';
+      const result = {
+        result: 'opposition',
+        seats: campaignState.totalSeats[myPartyId] || 0,
+        needed: MAJORITY_THRESHOLD,
+        deficit: MAJORITY_THRESHOLD - (campaignState.totalSeats[myPartyId] || 0),
+        message: `📉 You were not included in the government. You join the opposition.`
+      };
+      showScreen('screen-result');
+      renderResult(result);
+    }
   });
 }
 
@@ -1380,6 +2144,10 @@ function _checkReturnFromParliament() {
   } catch (e) {
     console.warn('[campaign/main.js] Could not consume parliament return data:', e);
   }
+
+  // Set globals for dashboard rendering
+  selectedPartyId = campaignState.playerPartyId || localStorage.getItem('campaign_party_id');
+  selectedDifficulty = localStorage.getItem('tps_difficulty') || 'normal';
 
   // Skip to dashboard
   showScreen('screen-campaign');
@@ -1660,3 +2428,51 @@ function _initDifficultySelector() {
     });
   });
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MULTIPLAYER: Day-advanced event listener
+// When the MP coordinator advances the day (all players ready),
+// it dispatches this event so main.js can process the day result.
+// ═══════════════════════════════════════════════════════════════════════════
+window.addEventListener('tps:mp-day-advanced', (e) => {
+  const result = e.detail;
+  if (!result) return;
+
+  if (result.type === 'campaign_end') {
+    toast(result.message, 'warning');
+    document.getElementById('btn-next-day').style.display = 'none';
+    document.getElementById('btn-end-week').style.display = 'none';
+    document.getElementById('btn-hold-election').style.display = '';
+    renderDashboard();
+    return;
+  }
+
+  if (result.isParliament) {
+    _showParliamentModal(result);
+  } else {
+    const randomEvt = (typeof rollCampaignEvent === 'function')
+      ? rollCampaignEvent(CampaignCalendar.getWeek()) : null;
+    if (randomEvt) {
+      _showCampaignEventModal(randomEvt);
+    } else {
+      const event = rollLobbyistEvent(25);
+      if (event) {
+        _showLobbyistModal(event);
+      } else {
+        toast(`☀️ ${result.dayName} (${result.dayNameThai}) — ${result.dayType.label}`, 'info');
+      }
+    }
+  }
+
+  if (result.statPenalties && result.statPenalties.length > 0) {
+    result.statPenalties.forEach(p => toast(p.message, 'warning'));
+  }
+
+  // STEP 57: Check EC Guillotine after MP day advance
+  _checkAndShowGuillotine();
+
+  renderDashboard();
+  // Reset the Next Day button text
+  const ndBtn = document.getElementById('btn-next-day');
+  if (ndBtn) { ndBtn.textContent = '☀️ Next Day →'; ndBtn.disabled = false; }
+});

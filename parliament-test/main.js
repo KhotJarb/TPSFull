@@ -1,4 +1,4 @@
-﻿// ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
 // THAILAND POLITICAL SIMULATION — /parliament-test/main.js
 // v.1.0.1 Test: "The Parliament RPG" — UI Orchestration & DOM Bindings
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1580,6 +1580,19 @@ function _showReturnToMacroButton() {
         console.log(`  → Bills:      ${(parliamentState.activeBills || []).length}`);
       }
 
+      // ── MULTIPLAYER: Turn barrier — wait for all players ──
+      const _isMPMode = localStorage.getItem('tps_game_mode') === 'multiplayer'
+        || new URLSearchParams(window.location.search).get('mode') === 'mp';
+
+      if (_isMPMode && typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.signalReturnReady) {
+        btnCampaign.disabled = true;
+        btnCampaign.querySelector('.action-btn__label').textContent = '⏳ Waiting for other players...';
+        tpsMPCampaign.signalReturnReady();
+        // The redirect will be triggered by the coordinator when all are ready
+        return;
+      }
+
+      // ── SINGLE-PLAYER: Immediate redirect (unchanged) ──
       // Step 2: Flag for campaign to bypass Party Select screen
       localStorage.setItem('returnFromParliament', 'true');
       showToast("success", "📋 Returning to Campaign HQ with session results...");
@@ -2884,7 +2897,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ──────────────────────────────────────────────────────────────────────────
-// SECTION 16: MODULE INITIALIZATION LOG
+// ──────────────────────────────────────────────────────────────────────────
+// SECTION 16: MULTIPLAYER — Return to Campaign (called by MP coordinator)
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * _doReturnToCampaign() — Called by the MP coordinator when ALL players
+ * have pressed "Return to Campaign". Performs the actual redirect.
+ */
+function _doReturnToCampaign() {
+  localStorage.setItem('returnFromParliament', 'true');
+  showToast("success", "📋 All players ready! Returning to Campaign HQ...");
+  const session = JSON.parse(localStorage.getItem('tps_mp_session') || '{}');
+  const room = session.roomCode || '';
+  setTimeout(() => {
+    window.location.href = `../campaign/index.html?mode=mp&room=${room}`;
+  }, 800);
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// SECTION 17: MODULE INITIALIZATION LOG
 // ──────────────────────────────────────────────────────────────────────────
 
 console.log("═══════════════════════════════════════════════════════════");

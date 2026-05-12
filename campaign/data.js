@@ -190,21 +190,50 @@ function initCampaignState(playerPartyId) {
   localStorage.removeItem('tps_legacy_funds');
 
   // ── STEP 67: Read balance mode from localStorage ──
-  const balanceMode = localStorage.getItem('tps_balance_mode') || 'default';
+  let balanceMode = localStorage.getItem('tps_balance_mode') || 'default';
+
+  // ── MP MODE: Force Sovereign Equality — no Historical Realism in MP ──
+  const _isMPMode = localStorage.getItem('tps_game_mode') === 'multiplayer';
+  if (_isMPMode) {
+    balanceMode = 'equality';
+    console.log('[campaign/data.js] MP mode detected — forcing Sovereign Equality.');
+  }
+
   campaignState.balanceMode = balanceMode;
   console.log(`[campaign/data.js] Balance mode: ${balanceMode}`);
 
+  // ── Determine which parties are "active" (in MP: only player-selected) ──
+  let activePartyIds = null; // null = all parties
+  if (_isMPMode) {
+    // Primary: live coordinator state
+    if (typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+      activePartyIds = Object.values(tpsMPCampaign.state.partySelections);
+    }
+    // Fallback: localStorage saved selections (survives page reloads)
+    if (!activePartyIds || activePartyIds.length === 0) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('tps_mp_party_selections') || '{}');
+        activePartyIds = Object.values(saved);
+      } catch(e) {}
+    }
+    console.log('[campaign/data.js] MP active party IDs:', activePartyIds);
+  }
+
   if (balanceMode === 'equality') {
-    // ── Sovereign Equality: ~20% each with ±2% random variation ──
+    // ── Sovereign Equality: Equal distribution among active parties ──
+    const targetParties = activePartyIds && activePartyIds.length > 0
+      ? CAMPAIGN_PARTIES.filter(p => activePartyIds.includes(p.id))
+      : CAMPAIGN_PARTIES;
+
     const rawPolls = {};
     let rawTotal = 0;
-    CAMPAIGN_PARTIES.forEach(p => {
+    targetParties.forEach(p => {
       const variation = (Math.random() * 4) - 2; // -2.0 to +2.0
       rawPolls[p.id] = 20 + variation;
       rawTotal += rawPolls[p.id];
     });
     // Normalize to exactly 100%
-    CAMPAIGN_PARTIES.forEach(p => {
+    targetParties.forEach(p => {
       campaignState.nationalPollShare[p.id] = Math.round(((rawPolls[p.id] / rawTotal) * 100) * 10) / 10;
     });
     // Fix any floating-point drift — adjust largest party
@@ -218,6 +247,16 @@ function initCampaignState(playerPartyId) {
 
     // Flatten starting funds to level playing field
     campaignState.playerFunds = 1000;
+
+    // In MP: set non-player parties to 0%
+    if (_isMPMode && activePartyIds && activePartyIds.length > 0) {
+      CAMPAIGN_PARTIES.forEach(p => {
+        if (!activePartyIds.includes(p.id)) {
+          campaignState.nationalPollShare[p.id] = 0;
+        }
+      });
+    }
+
     console.log('[campaign/data.js] Equality polls:', JSON.stringify(campaignState.nationalPollShare));
   } else {
     // ── Historical Realism: use hardcoded basePopularity ──

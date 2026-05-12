@@ -127,7 +127,11 @@ const DOM = {
   // STEP 34: Pre-Month Lock targets
   pmActionsPanel: document.getElementById("pm-actions-panel"),
   legislationSection: document.getElementById("legislation-section"),
-  idleDescription: document.getElementById("idle-description")
+  idleDescription: document.getElementById("idle-description"),
+
+  // STEP 215: Ministry Control
+  ministryControlPanel: document.getElementById("ministry-control-panel"),
+  ministryControlContainer: document.getElementById("ministry-control-container")
 };
 
 // ─── STEP 34: MONTH STATE FLAG ──────────────────────────────
@@ -722,10 +726,15 @@ function handleEndTurn() {
   if (typeof tickPMActionCooldowns === 'function') {
     tickPMActionCooldowns();
   }
+  // STEP 215: Reset ministry per-turn flags for the new month
+  if (typeof resetMinistryTurns === 'function') {
+    resetMinistryTurns();
+  }
 
   // STEP 40: Update phase badge immediately when the month advances
   updatePowerDecayIndicator();
   renderPMActions();
+  renderMinistryControl(); // STEP 215
 }
 
 // ─── HANDLE NEXT MONTH ─────────────────────────────────────
@@ -767,6 +776,12 @@ function unlockMonth() {
     DOM.pmActionsPanel.classList.add('month-unlocked');
   }
 
+  // 1B. STEP 215: Unlock Ministry Control panel
+  if (DOM.ministryControlPanel) {
+    DOM.ministryControlPanel.classList.remove('locked-pre-month');
+    DOM.ministryControlPanel.classList.add('month-unlocked');
+  }
+
   // 2. Unlock Legislation section
   if (DOM.legislationSection) {
     DOM.legislationSection.classList.remove('locked-pre-month');
@@ -783,16 +798,10 @@ function unlockMonth() {
     DOM.btnStartMonth.style.display = 'none';
   }
 
-  // 5. Change idle description text
-  if (DOM.idleDescription) {
-    DOM.idleDescription.innerHTML = `
-      <span class="month-active-badge">
-        <span class="pulse-dot"></span>
-        Month is Active
-      </span>
-      Manage your actions or propose legislation.
-    `;
-  }
+  // 5. Idle description — no longer modified here.
+  // The crisis panel takes over immediately when the month begins,
+  // so the "Month is Active" badge is unnecessary and caused bugs
+  // with the propose-bills system.
 
   // STEP 40: Sync phase badge data when it becomes visible
   updatePowerDecayIndicator();
@@ -811,6 +820,12 @@ function relockMonth() {
   if (DOM.pmActionsPanel) {
     DOM.pmActionsPanel.classList.remove('month-unlocked');
     DOM.pmActionsPanel.classList.add('locked-pre-month');
+  }
+
+  // 1B. STEP 215: Re-lock Ministry Control panel
+  if (DOM.ministryControlPanel) {
+    DOM.ministryControlPanel.classList.remove('month-unlocked');
+    DOM.ministryControlPanel.classList.add('locked-pre-month');
   }
 
   // 2. Re-lock Legislation section
@@ -952,6 +967,232 @@ function handlePMAction(actionId) {
   updateStatusBar();
   updateEventLog();
   renderPMActions();
+  renderMinistryControl(); // STEP 215
+  updatePowerDecayIndicator();
+}
+
+// ─── STEP 215: MINISTRY CONTROL UI ─────────────────────────────
+
+/**
+ * renderMinistryControl() — Dynamically injects ministry cards into the UI.
+ * Shows each ministry as a card with party alignment, policy name, cost, and status.
+ */
+function renderMinistryControl() {
+  const container = DOM.ministryControlContainer;
+  if (!container || !govState.ministries || govState.ministries.length === 0) return;
+
+  let html = `<div class="ministry-control__title">🏛️ Ministry Control <span class="ministry-control__title-th">การจัดการกระทรวง</span></div>`;
+  html += `<div class="ministry-control__grid">`;
+
+  govState.ministries.forEach(min => {
+    const status = (typeof getMinistryStatus === 'function') ? getMinistryStatus(min.id) : min;
+    const isOwn = status.isOwnParty;
+    const isBribed = status.isBribed;
+    const acted = status.actedThisTurn;
+
+    // Resolve holding party for color
+    const holdingParty = (typeof getPartyById === 'function' && status.holdingPartyId)
+      ? getPartyById(status.holdingPartyId)
+      : null;
+    const partyColor = holdingParty ? holdingParty.color : (isOwn ? '#3b82f6' : '#8b5cf6');
+    const partyLabel = isOwn ? 'พรรคของคุณ' : (holdingParty ? holdingParty.shortName : 'พรรคร่วม');
+
+    // Status text
+    let statusBadge = '';
+    if (acted) {
+      statusBadge = `<span class="ministry-card__status acted">ดำเนินการแล้ว</span>`;
+    } else if (!isOwn && isBribed) {
+      statusBadge = `<span class="ministry-card__status bribed">ควบคุมได้</span>`;
+    } else if (!isOwn) {
+      statusBadge = `<span class="ministry-card__status locked">ต้องติดสินบน</span>`;
+    } else {
+      statusBadge = `<span class="ministry-card__status ready">พร้อมสั่งการ</span>`;
+    }
+
+    // Tier badge
+    const tierColors = { A: '#fbbf24', B: '#60a5fa', C: '#9ca3af' };
+    const tierColor = tierColors[status.tier] || '#9ca3af';
+
+    html += `
+    <div class="ministry-card ${acted ? 'ministry-card--acted' : ''} ${isOwn ? 'ministry-card--own' : 'ministry-card--coalition'}"
+         data-ministry-id="${min.id}"
+         onclick="handleMinistryClick('${min.id}')"
+         style="--party-color: ${partyColor}">
+      <div class="ministry-card__header">
+        <span class="ministry-card__icon">${status.icon || '🏢'}</span>
+        <div class="ministry-card__title-group">
+          <div class="ministry-card__name">${status.name}</div>
+          <div class="ministry-card__name-en">${status.nameEN}</div>
+        </div>
+        <span class="ministry-card__tier" style="color:${tierColor}">T${status.tier}</span>
+      </div>
+      <div class="ministry-card__body">
+        <div class="ministry-card__policy">${status.actionName}</div>
+        <div class="ministry-card__meta">
+          <span class="ministry-card__cost">฿${status.budgetCost}B</span>
+          <span class="ministry-card__gain">+${status.approvalGain}%</span>
+        </div>
+      </div>
+      <div class="ministry-card__footer">
+        <span class="ministry-card__party" style="border-color: ${partyColor}; color: ${partyColor}">${isOwn ? '🏛️' : '🤝'} ${partyLabel}</span>
+        ${statusBadge}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+/**
+ * handleMinistryClick(minId) — Opens the ministry action modal.
+ * Shows different options depending on whether it's own-party or coalition.
+ */
+function handleMinistryClick(minId) {
+  if (!govState.ministries) return;
+  const min = govState.ministries.find(m => m.id === minId);
+  if (!min) return;
+
+  if (min.actedThisTurn) {
+    showToast('กระทรวงนี้ดำเนินการไปแล้วในเดือนนี้', 'warning');
+    return;
+  }
+
+  // Resolve holding party
+  const holdingParty = (typeof getPartyById === 'function' && min.holdingPartyId)
+    ? getPartyById(min.holdingPartyId) : null;
+  const partyColor = holdingParty ? holdingParty.color : (min.isOwnParty ? '#3b82f6' : '#8b5cf6');
+  const partyName = holdingParty ? holdingParty.name : (min.isOwnParty ? 'พรรคของคุณ' : 'พรรคร่วมรัฐบาล');
+
+  // Corruption earnings estimate
+  const corruptEstimate = '50–100';
+
+  let actionsHtml = '';
+
+  // ── OWN PARTY or BRIBED: Show Execute Policy + Corrupt ──
+  if (min.isOwnParty || min.isBribed) {
+    actionsHtml = `
+      <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.75rem;">
+        <button class="btn btn-primary btn-md" id="modal-ministry-policy" style="text-align:left; padding:0.6rem 1rem;">
+          <div style="font-weight:700;">📜 ดำเนินนโยบาย — ${min.actionName}</div>
+          <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-top:0.2rem;">ใช้งบ ฿${min.budgetCost}B → คะแนนนิยม +${min.approvalGain}%</div>
+        </button>
+        <button class="btn btn-danger btn-md" id="modal-ministry-corrupt" style="text-align:left; padding:0.6rem 1rem;">
+          <div style="font-weight:700;">💰 คอร์รัปชันงบประมาณ</div>
+          <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-top:0.2rem;">เข้ากองทุนพรรค +฿${corruptEstimate}M | ความเสี่ยงสูง!</div>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="modal-ministry-cancel">ยกเลิก</button>
+      </div>
+    `;
+  }
+  // ── COALITION PARTY (NOT BRIBED): Show Bribe option ──
+  else {
+    actionsHtml = `
+      <div style="margin-top:0.75rem; padding:0.6rem; background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.2); border-radius:6px;">
+        <div style="font-size:0.78rem; color:var(--text-secondary); line-height:1.5;">
+          ⚠️ นี่คือกระทรวงของ <strong style="color:${partyColor}">${partyName}</strong><br>
+          คุณไม่สามารถสั่งการได้โดยตรง — ต้อง "ยัดเงิน" ก่อน
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:0.6rem; margin-top:0.75rem;">
+        <button class="btn btn-primary btn-md" id="modal-ministry-bribe" style="text-align:left; padding:0.6rem 1rem; background:linear-gradient(135deg, #7c3aed, #a855f7);">
+          <div style="font-weight:700;">🤫 ยัดเงิน — ซื้อสิทธิ์สั่งการ 1 เทิร์น</div>
+          <div style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin-top:0.2rem;">ใช้งบ ฿${typeof MINISTRY_BRIBE_COST !== 'undefined' ? MINISTRY_BRIBE_COST : 40}B จากงบแผ่นดิน</div>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="modal-ministry-cancel">ยกเลิก</button>
+      </div>
+    `;
+  }
+
+  const bribedTag = min.isBribed ? `<span style="display:inline-block;font-size:0.6rem;font-weight:700;background:rgba(16,185,129,0.12);color:#10b981;padding:2px 8px;border-radius:4px;margin-left:6px;">ติดสินบนแล้ว</span>` : '';
+
+  const html = `
+    <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.75rem;">
+      <span style="font-size:1.5rem;">${min.icon || '🏢'}</span>
+      <div>
+        <h3 style="margin:0; font-size:1.05rem; color:var(--text-primary);">${min.name}${bribedTag}</h3>
+        <div style="font-size:0.72rem; color:var(--text-muted);">${min.nameEN} — ${min.portfolio}</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:0.4rem; align-items:center; margin-bottom:0.5rem;">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${partyColor};"></span>
+      <span style="font-size:0.72rem;color:var(--text-secondary);">${min.isOwnParty ? '🏛️ พรรคของคุณ — Own Party' : `🤝 ${partyName}`}</span>
+    </div>
+    ${actionsHtml}
+  `;
+
+  showModal(html);
+
+  // Wire up action buttons
+  const policyBtn = document.getElementById('modal-ministry-policy');
+  const corruptBtn = document.getElementById('modal-ministry-corrupt');
+  const bribeBtn = document.getElementById('modal-ministry-bribe');
+  const cancelBtn = document.getElementById('modal-ministry-cancel');
+
+  if (policyBtn) {
+    policyBtn.addEventListener('click', () => {
+      hideModal();
+      const result = executeMinistryAction(minId, 'policy');
+      _showMinistryResult(result);
+    });
+  }
+
+  if (corruptBtn) {
+    corruptBtn.addEventListener('click', () => {
+      hideModal();
+      const result = executeMinistryAction(minId, 'corrupt');
+      _showMinistryResult(result);
+    });
+  }
+
+  if (bribeBtn) {
+    bribeBtn.addEventListener('click', () => {
+      hideModal();
+      const result = executeMinistryAction(minId, 'bribe');
+      _showMinistryResult(result);
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', hideModal);
+  }
+}
+
+/**
+ * _showMinistryResult(result) — Displays the result of a ministry action.
+ */
+function _showMinistryResult(result) {
+  if (!result.success) {
+    showToast(result.message, 'warning');
+    return;
+  }
+
+  // Build effect chips
+  let effectsHtml = '';
+  if (result.effects) {
+    const entries = Object.entries(result.effects).filter(([k, v]) => typeof v === 'number' && v !== 0);
+    effectsHtml = entries.map(([key, val]) => {
+      const sign = val > 0 ? '+' : '';
+      const isGood = (key === 'unrest') ? val < 0 : val > 0;
+      const cls = isGood ? 'effect-positive' : 'effect-negative';
+      const labels = { budget: 'Budget', popularity: 'Approval', unrest: 'Unrest', growth: 'GDP' };
+      return `<span class="effect-chip ${cls}">${labels[key] || key}: ${sign}${val}</span>`;
+    }).join(' ');
+  }
+
+  const html = `
+    <h3 style="margin-bottom:0.5rem; font-size:1.1rem; color:var(--gold-400)">${result.message}</h3>
+    ${effectsHtml ? `<div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.75rem;">${effectsHtml}</div>` : ''}
+    ${result.narrative ? `<div class="diplo-narrative">${result.narrative}</div>` : ''}
+  `;
+
+  showModal(html);
+
+  // Refresh all UI
+  updateStatusBar();
+  updateEventLog();
+  renderPMActions();
+  renderMinistryControl();
   updatePowerDecayIndicator();
 }
 
@@ -1092,10 +1333,17 @@ function initGame(loadSave = false) {
   updateEventLog();
   renderDiplomacyContacts(); // v1.0.2
   renderPMActions(); // v1.0.2
+  renderMinistryControl(); // STEP 215
   updatePowerDecayIndicator(); // v1.0.2
 
   // ── STEP 25: Populate Active Party Identity Indicator ──
   _populateMainGamePartyIndicator();
+
+  // STEP 215: Initialize ministry data (restores from save or waits for cabinet)
+  if (typeof initMinistries === 'function') {
+    initMinistries();
+    renderMinistryControl();
+  }
 
   // v1.0.2: On new game, show Cabinet Formation before gameplay
   if (!loadSave && !getCabinetState().isFormed) {
@@ -1173,12 +1421,20 @@ window.addEventListener('tpsLangChanged', () => {
 
 // ─── EVENT LISTENERS ────────────────────────────────────────
 
-// Start screen
-// STEP 23: "New Game" redirects to campaign party selection, then returns
+// STEP 23: "New Game" — behavior depends on entry mode
 DOM.btnNewGame.addEventListener("click", () => {
-  console.log('[main-game/main.js] STEP 23 — Redirecting to Campaign for party selection...');
-  // Redirect to campaign with return_to=cabinet so campaign knows to bounce back
-  window.location.href = '../campaign/index.html?return_to=cabinet';
+  const entryMode = localStorage.getItem('game_entry_mode');
+
+  if (entryMode === 'campaign_finished') {
+    // Coming from campaign election win — party is already selected
+    // Skip party select, go directly to government dashboard
+    console.log('[main-game/main.js] Campaign party already set — skipping party select, launching game directly.');
+    initGame(false);
+  } else {
+    // Quick Start (no campaign) — redirect to campaign for party selection
+    console.log('[main-game/main.js] STEP 23 — Redirecting to Campaign for party selection...');
+    window.location.href = '../campaign/index.html?return_to=cabinet';
+  }
 });
 DOM.btnLoadGame.addEventListener("click", () => initGame(true));
 
@@ -1201,13 +1457,18 @@ DOM.btnCloseVote.addEventListener("click", () => {
     // Outcome was showing — re-show outcome panel
     DOM.outcomePanel.style.display = "block";
     activePanelState = 'outcome';
+  } else if (preVoteState === 'report') {
+    // Monthly report was showing — restore it so player can click "Next Month"
+    DOM.reportPanel.style.display = "block";
+    activePanelState = 'report';
   } else {
-    // Default: return to idle
+    // Default: return to idle (pre-month state)
     DOM.idlePanel.style.display = "flex";
     activePanelState = 'idle';
   }
 
   renderPMActions();
+  renderMinistryControl(); // STEP 215
   updatePowerDecayIndicator();
 });
 
@@ -1932,6 +2193,7 @@ function closeCabinetRoom() {
   hideAllMainPanels();
   DOM.idlePanel.style.display = "flex";
   renderPMActions(); // v1.0.2
+  renderMinistryControl(); // STEP 215
   updatePowerDecayIndicator(); // v1.0.2
 }
 
@@ -2222,6 +2484,12 @@ function handleCabinetFormation() {
   // Update all UI
   updateStatusBar();
   renderParliament();
+
+  // STEP 215: Initialize Ministry Control state after cabinet is formed
+  if (typeof initMinistries === 'function') {
+    initMinistries();
+    renderMinistryControl();
+  }
 }
 
 // Cabinet button listeners

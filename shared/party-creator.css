@@ -1,0 +1,523 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   TPS — shared/party-creator.css
+   Custom Party Creator Modal — Dark-Themed, Gold-Accented Form
+   ═══════════════════════════════════════════════════════════════════════ */
+
+
+/* ── OVERLAY ────────────────────────────────────────────────────── */
+.pc-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(5, 8, 22, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+  overflow-y: auto;
+}
+.pc-overlay.active {
+  display: flex;
+}
+
+
+/* ── MAIN CARD ──────────────────────────────────────────────────── */
+.pc-card {
+  width: 100%;
+  max-width: 560px;
+  background: linear-gradient(145deg, #0d1225 0%, #131b35 50%, #0a0f1f 100%);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: 18px;
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(212, 175, 55, 0.06) inset;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gold accent bar */
+.pc-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #d4af37 0%, #f5c842 50%, #d4af37 100%);
+}
+
+/* ── HEADER ─────────────────────────────────────────────────────── */
+.pc-header {
+  padding: 28px 28px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+.pc-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #e8eaf0;
+  letter-spacing: -0.02em;
+}
+.pc-header h2 .pc-icon {
+  font-size: 1.3rem;
+  margin-right: 6px;
+}
+.pc-header .pc-subtitle {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #d4af37;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+.pc-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #9ba3b8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.pc-close-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ff6b7a;
+}
+
+
+/* ── FORM BODY ──────────────────────────────────────────────────── */
+.pc-body {
+  padding: 24px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* ── FORM GROUP ─────────────────────────────────────────────────── */
+.pc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pc-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c5c9d6;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.pc-label .pc-hint {
+  font-weight: 400;
+  color: #6b7280;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+
+/* ── TEXT INPUT ──────────────────────────────────────────────────── */
+.pc-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #e8eaf0;
+  font-size: 0.92rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.pc-input::placeholder {
+  color: #4b5563;
+}
+.pc-input:focus {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.08);
+}
+.pc-input--short {
+  max-width: 140px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+.pc-input--funds {
+  max-width: 140px;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+
+/* ── COLOR PICKER ───────────────────────────────────────────────── */
+.pc-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pc-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.pc-color-preview {
+  flex: 1;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.3s;
+}
+input[type="color"].pc-color-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+
+/* ── RANGE SLIDER ───────────────────────────────────────────────── */
+.pc-range-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pc-range-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  transition: background 0.2s;
+}
+.pc-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 2px solid #1a2340;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.pc-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.6);
+}
+.pc-range-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d4af37;
+  border: 2px solid #1a2340;
+  cursor: pointer;
+}
+.pc-range-value {
+  min-width: 42px;
+  text-align: right;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #d4af37;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ideology label with icon */
+.pc-ideology-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #c5c9d6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pc-ideology-icon {
+  font-size: 1rem;
+}
+
+
+/* ── TEXTAREA ───────────────────────────────────────────────────── */
+.pc-textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #e8eaf0;
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.pc-textarea::placeholder {
+  color: #4b5563;
+}
+.pc-textarea:focus {
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+
+/* ── CANDIDATE LIST ─────────────────────────────────────────────── */
+.pc-candidates-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+.pc-candidates-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pc-candidates-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #c5c9d6;
+}
+.pc-candidates-count {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+.pc-btn-add-candidate {
+  width: 100%;
+  padding: 10px 16px;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  color: #d4af37;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.pc-btn-add-candidate:hover {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+.pc-candidate-empty {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #4b5563;
+  padding: 8px 0 2px;
+}
+
+/* Candidate row */
+.pc-candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.pc-candidate-row:last-child {
+  border-bottom: none;
+}
+.pc-candidate-num {
+  font-size: 0.7rem;
+  color: #6b7280;
+  min-width: 22px;
+}
+.pc-candidate-name {
+  flex: 1;
+  font-size: 0.82rem;
+  color: #e8eaf0;
+}
+.pc-candidate-remove {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+  color: #ff6b7a;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.pc-candidate-remove:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Candidate input modal inline */
+.pc-candidate-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.pc-candidate-input-row .pc-input {
+  flex: 1;
+}
+.pc-btn-candidate-confirm {
+  padding: 8px 14px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 8px;
+  color: #4ade80;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.pc-btn-candidate-confirm:hover {
+  background: rgba(34, 197, 94, 0.25);
+}
+.pc-btn-candidate-random {
+  padding: 8px 14px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 8px;
+  color: #a78bfa;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.pc-btn-candidate-random:hover {
+  background: rgba(139, 92, 246, 0.22);
+}
+
+
+/* ── BALANCE METER ──────────────────────────────────────────────── */
+.pc-balance-bar {
+  margin-top: 4px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+.pc-balance-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.pc-balance-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.pc-balance-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+.pc-balance-fill.balanced {
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+}
+.pc-balance-fill.slightly-op {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+.pc-balance-fill.overpowered {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+.pc-balance-status {
+  text-align: right;
+  font-size: 0.68rem;
+  font-weight: 700;
+  margin-top: 4px;
+  transition: color 0.3s;
+}
+.pc-balance-status.balanced   { color: #4ade80; }
+.pc-balance-status.slightly-op { color: #fbbf24; }
+.pc-balance-status.overpowered { color: #f87171; }
+
+
+/* ── CTA BUTTON ─────────────────────────────────────────────────── */
+.pc-submit-btn {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: inherit;
+  color: #0a0f1f;
+  background: linear-gradient(135deg, #d4af37 0%, #f5c842 50%, #d4af37 100%);
+  background-size: 200% 200%;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.3s;
+  box-shadow:
+    0 4px 15px rgba(212, 175, 55, 0.25),
+    0 0 0 1px rgba(212, 175, 55, 0.3) inset;
+  animation: pc-shimmer 3s ease-in-out infinite;
+}
+.pc-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 25px rgba(212, 175, 55, 0.35),
+    0 0 0 1px rgba(212, 175, 55, 0.4) inset;
+}
+.pc-submit-btn:active {
+  transform: translateY(1px);
+}
+.pc-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@keyframes pc-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+
+/* ── DIVIDER ────────────────────────────────────────────────────── */
+.pc-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+  margin: 4px 0;
+}
+
+
+/* ── RESPONSIVE ─────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .pc-card {
+    border-radius: 12px;
+  }
+  .pc-header, .pc-body {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .pc-header h2 {
+    font-size: 1.25rem;
+  }
+  .pc-candidate-input-row {
+    flex-direction: column;
+  }
+}

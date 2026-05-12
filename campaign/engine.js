@@ -654,17 +654,45 @@ function executeAction(actionId, target) {
  * _normalizePolls() — Ensures all national poll shares sum to 100%.
  * Called after any action that modifies poll shares (Zero-Sum enforcement).
  * STEP 72: Uses 1-decimal precision to preserve fractional poll values.
+ * MP MODE: Only normalizes among player-selected parties (non-player = 0%).
  * @private
  */
 function _normalizePolls() {
+  // Determine which parties to normalize
+  let targetParties = CAMPAIGN_PARTIES;
+  const _isMPNorm = localStorage.getItem('tps_game_mode') === 'multiplayer';
+  if (_isMPNorm) {
+    // Primary: live coordinator state
+    let playerPartyIds = [];
+    if (typeof tpsMPCampaign !== 'undefined' && tpsMPCampaign.isMP) {
+      playerPartyIds = Object.values(tpsMPCampaign.state.partySelections);
+    }
+    // Fallback: localStorage saved selections
+    if (playerPartyIds.length === 0) {
+      try {
+        const saved = JSON.parse(localStorage.getItem('tps_mp_party_selections') || '{}');
+        playerPartyIds = Object.values(saved);
+      } catch(e) {}
+    }
+    if (playerPartyIds.length > 0) {
+      targetParties = CAMPAIGN_PARTIES.filter(p => playerPartyIds.includes(p.id));
+      // Ensure non-player parties stay at 0
+      CAMPAIGN_PARTIES.forEach(p => {
+        if (!playerPartyIds.includes(p.id)) {
+          campaignState.nationalPollShare[p.id] = 0;
+        }
+      });
+    }
+  }
+
   let total = 0;
-  CAMPAIGN_PARTIES.forEach(p => {
+  targetParties.forEach(p => {
     total += campaignState.nationalPollShare[p.id] || 0;
   });
   if (total <= 0) return;
 
   // Normalize with 1-decimal precision
-  CAMPAIGN_PARTIES.forEach(p => {
+  targetParties.forEach(p => {
     campaignState.nationalPollShare[p.id] =
       Math.round(((campaignState.nationalPollShare[p.id] || 0) / total * 100) * 10) / 10;
   });
@@ -673,7 +701,7 @@ function _normalizePolls() {
   let newTotal = 0;
   let largestId = null;
   let largestVal = -1;
-  CAMPAIGN_PARTIES.forEach(p => {
+  targetParties.forEach(p => {
     const val = campaignState.nationalPollShare[p.id] || 0;
     newTotal += val;
     if (val > largestVal) { largestVal = val; largestId = p.id; }
@@ -1102,6 +1130,34 @@ function calculatePerformanceIndex() {
 
 
 // ──────────────────────────────────────────────────────────────────
+// HELPER: _getElectionParties()
+// In MP, only player-selected parties participate in the election.
+// In SP, all CAMPAIGN_PARTIES participate.
+// ──────────────────────────────────────────────────────────────────
+
+function _getElectionParties() {
+  const isMP = localStorage.getItem('tps_game_mode') === 'multiplayer'
+    || new URLSearchParams(window.location.search).get('mode') === 'mp';
+
+  if (!isMP) return CAMPAIGN_PARTIES;
+
+  // MP: only parties selected by players in the room
+  let partySelections = {};
+  try { partySelections = JSON.parse(localStorage.getItem('tps_mp_party_selections') || '{}'); } catch(e) {}
+
+  const selectedIds = [...new Set(Object.values(partySelections))];
+  if (selectedIds.length === 0) return CAMPAIGN_PARTIES; // fallback
+
+  const parties = selectedIds
+    .map(id => CAMPAIGN_PARTIES.find(p => p.id === id))
+    .filter(Boolean);
+
+  console.log('[engine.js] MP Election Parties:', parties.map(p => p.shortName).join(', '));
+  return parties;
+}
+
+
+// ──────────────────────────────────────────────────────────────────
 // SECTION 2: runElection()
 // Simulates 400 constituency races + 100 party-list seats
 // ──────────────────────────────────────────────────────────────────
@@ -1120,6 +1176,9 @@ function calculatePerformanceIndex() {
  * @returns {Object} Full election results
  */
 function runElection() {
+  // ── MP: Only player-selected parties compete ──
+  const electionParties = _getElectionParties();
+
   // ── STEP 69: Calculate Performance Index for 50/50 algorithm ──
   const perfIndex = calculatePerformanceIndex();
   const playerId = campaignState.playerPartyId;
@@ -1137,7 +1196,7 @@ function runElection() {
 
   // Build per-party perfShare lookup for quick access
   const perfShareMap = {};
-  CAMPAIGN_PARTIES.forEach(p => {
+  electionParties.forEach(p => {
     if (p.id === playerId) {
       perfShareMap[p.id] = perfIndex.playerShare;
     } else {
@@ -1152,7 +1211,7 @@ function runElection() {
   );
 
   // Initialize result containers
-  CAMPAIGN_PARTIES.forEach(p => {
+  electionParties.forEach(p => {
     results.constituency[p.id] = { seats: 0, districtWins: [] };
     results.partyList[p.id] = { seats: 0, votes: 0, quota: 0, remainder: 0 };
     results.total[p.id] = 0;
@@ -1166,7 +1225,7 @@ function runElection() {
   DISTRICTS.forEach(district => {
     const scores = {};
 
-    CAMPAIGN_PARTIES.forEach(party => {
+    electionParties.forEach(party => {
       // 1. Base lean score (political lean of the district)
       let score = district.politicalLean[party.id] || 15;
 
@@ -1252,7 +1311,7 @@ function runElection() {
   // Calculate national party-list votes for each party
   let totalPartyListVotes = 0;
 
-  CAMPAIGN_PARTIES.forEach(party => {
+  electionParties.forEach(party => {
     // Base votes from national poll share and party-list strength
     const pollShare = campaignState.nationalPollShare[party.id] || 15;
     const plStrength = party.partyListStrength || 15;
@@ -1276,7 +1335,7 @@ function runElection() {
   let seatsAllocated = 0;
   const remainders = [];
 
-  CAMPAIGN_PARTIES.forEach(party => {
+  electionParties.forEach(party => {
     const votes = results.partyList[party.id].votes;
     const autoSeats = Math.floor(votes / quota);
     const remainder = votes - (autoSeats * quota);
@@ -1307,13 +1366,13 @@ function runElection() {
   // 1. Calculate raw constituency + party-list from Phases 1 & 2
   //    These are the "mechanical" results — kept for reference
   const mechanicalSeats = {};
-  CAMPAIGN_PARTIES.forEach(party => {
+  electionParties.forEach(party => {
     mechanicalSeats[party.id] = results.constituency[party.id].seats + results.partyList[party.id].seats;
   });
 
   // 2. Calculate 50/50 final vote share for each party
   const fiftyFiftyData = [];
-  CAMPAIGN_PARTIES.forEach(party => {
+  electionParties.forEach(party => {
     const pollShare = campaignState.nationalPollShare[party.id] || 15;
     const perfShare = perfShareMap[party.id] || 15;
 
@@ -1378,7 +1437,7 @@ function runElection() {
 
   console.log('[STEP 70] 50/50 Final Seat Allocation:');
   fiftyFiftyData.forEach(d => {
-    const party = CAMPAIGN_PARTIES.find(p => p.id === d.partyId);
+    const party = electionParties.find(p => p.id === d.partyId);
     console.log(`  ${party?.shortName || d.partyId}: Poll=${d.pollShare.toFixed(1)}% + Perf=${d.perfShare.toFixed(1)}% → FinalVote=${d.finalVoteShare.toFixed(1)}% → ${d.floorSeats} seats`);
   });
   console.log(`  Total: ${fiftyFiftyData.reduce((s, d) => s + d.floorSeats, 0)} / ${TOTAL_SEATS}`);
@@ -1431,27 +1490,64 @@ function coalitionPhase() {
   const results = campaignState.electionResults;
   if (!results) return { error: "Election not yet held." };
 
+  const electionParties = _getElectionParties();
   const playerPartyId = campaignState.playerPartyId;
   const playerSeats = results.total[playerPartyId];
 
   // Sort parties by seat count (descending)
-  const sortedParties = CAMPAIGN_PARTIES
-    .map(p => ({ ...p, seats: results.total[p.id] }))
+  const sortedParties = electionParties
+    .map(p => ({ ...p, seats: results.total[p.id] || 0 }))
     .sort((a, b) => b.seats - a.seats);
 
   const isLargestParty = sortedParties[0].id === playerPartyId;
 
-  // If player is NOT the largest party, coalition is harder
+  // ── MP MODE: Interactive P2P Coalition ──
+  const isMP = localStorage.getItem('tps_game_mode') === 'multiplayer'
+    || new URLSearchParams(window.location.search).get('mode') === 'mp';
+
+  if (isMP) {
+    // In MP, coalition is negotiated between players via the coordinator.
+    // coalitionPhase just returns the ranked party data for the UI to render.
+    const mpOffers = sortedParties.filter(p => p.id !== playerPartyId).map(p => ({
+      partyId: p.id,
+      partyName: p.name,
+      shortName: p.shortName,
+      color: p.color,
+      ideology: p.ideology,
+      seats: p.seats,
+      // No AI willingness — player decides
+      willingness: null,
+      ministryDemands: [],
+      conditions: [],
+      accepted: false,
+      rejected: false
+    }));
+
+    campaignState.coalitionOffers = mpOffers;
+
+    return {
+      isMP: true,
+      playerSeats,
+      isLargestParty,
+      targetSeats: MAJORITY_THRESHOLD,
+      seatsNeeded: Math.max(0, MAJORITY_THRESHOLD - playerSeats),
+      sortedParties, // Full ranked list for formation leader logic
+      formationLeader: sortedParties[0], // Party with most seats starts
+      offers: mpOffers
+    };
+  }
+
+  // ── SP MODE: AI Willingness System (unchanged) ──
   const coalitionOffers = [];
 
-  CAMPAIGN_PARTIES.forEach(party => {
+  electionParties.forEach(party => {
     if (party.id === playerPartyId) return;
 
     const partySeats = results.total[party.id];
     if (partySeats === 0) return;
 
     // Ideology compatibility score
-    const playerParty = CAMPAIGN_PARTIES.find(p => p.id === playerPartyId);
+    const playerParty = electionParties.find(p => p.id === playerPartyId);
     const compat = calculateIdeologyCompat(playerParty.ideology, party.ideology);
 
     // Willingness to join (0-100)
@@ -1479,7 +1575,6 @@ function coalitionPhase() {
     // Pick most prestigious ministries they want
     const demands = MINISTRIES
       .filter(m => {
-        // Filter by ideology preference
         if (party.ideology === "royalist") return ["defense", "interior", "justice"].includes(m.id) || m.prestige >= 6;
         if (party.ideology === "populist") return ["commerce", "agriculture", "transport", "health"].includes(m.id) || m.prestige >= 6;
         if (party.ideology === "progressive") return ["education", "digital", "justice", "foreign"].includes(m.id) || m.prestige >= 7;
@@ -1666,7 +1761,7 @@ function winGame() {
     const fiftyFiftyMap = {};
     fiftyFifty.forEach(d => { fiftyFiftyMap[d.partyId] = d; });
 
-    const electionData = CAMPAIGN_PARTIES.map(p => ({
+    const electionData = _getElectionParties().map(p => ({
       id: p.id,
       name: p.name,
       shortName: p.shortName,
@@ -1748,20 +1843,26 @@ function becomeOpposition() {
 function getElectionSummary() {
   if (!campaignState.electionResults) return null;
   const r = campaignState.electionResults;
+  const parties = _getElectionParties();
 
-  return CAMPAIGN_PARTIES.map(p => ({
-    partyId: p.id,
-    partyName: p.name,
-    shortName: p.shortName,
-    color: p.color,
-    constituencySeats: r.constituency[p.id].seats,
-    partyListSeats: r.partyList[p.id].seats,
-    totalSeats: r.total[p.id],
-    partyListVotes: r.partyList[p.id].votes,
-    banYaiPenalty: Math.round(r.banYaiPenalties[p.id]),
-    isPlayer: p.id === campaignState.playerPartyId,
-    inCoalition: campaignState.coalitionPartners.includes(p.id) || p.id === campaignState.playerPartyId
-  })).sort((a, b) => b.totalSeats - a.totalSeats);
+  return parties.map(p => {
+    // Guard against missing data for parties not in this election
+    const constData = r.constituency[p.id] || { seats: 0, districtWins: [] };
+    const plData = r.partyList[p.id] || { seats: 0, votes: 0 };
+    return {
+      partyId: p.id,
+      partyName: p.name,
+      shortName: p.shortName,
+      color: p.color,
+      constituencySeats: constData.seats,
+      partyListSeats: plData.seats,
+      totalSeats: r.total[p.id] || 0,
+      partyListVotes: plData.votes,
+      banYaiPenalty: Math.round(r.banYaiPenalties[p.id] || 0),
+      isPlayer: p.id === campaignState.playerPartyId,
+      inCoalition: campaignState.coalitionPartners.includes(p.id) || p.id === campaignState.playerPartyId
+    };
+  }).sort((a, b) => b.totalSeats - a.totalSeats);
 }
 
 /**

@@ -1061,6 +1061,301 @@ function resetPMActions() {
 }
 
 
+// ─── STEP 214: MINISTRY CONTROL SYSTEM ──────────────────────────────────
+// Provides interactive ministry management during the governing phase.
+// Ministries are owned by parties based on cabinet formation allocations.
+// Own-party ministries: Execute Policy or Corrupt.
+// Coalition-party ministries: Must Bribe first, then Execute Policy.
+// ────────────────────────────────────────────────────────────────────────
+
+/**
+ * govState — Namespace for Ministry Control state.
+ * Holds the ministries array, personal funds tracker, and action log.
+ */
+if (typeof govState === 'undefined') { window.govState = {}; }
+
+/**
+ * MINISTRY_ACTIONS — Defines unique policy actions per ministry portfolio.
+ * Each ministry gets a Thai-named policy, a budget cost, and an approval gain.
+ * These map to the ministry IDs defined in cabinet.js MINISTRIES[].
+ */
+const MINISTRY_ACTIONS = {
+  interior:   { actionName: 'พัฒนาโครงสร้างพื้นฐานชนบท',    actionNameEN: 'Develop Rural Infrastructure',        budgetCost: 150, approvalGain: 4 },
+  transport:  { actionName: 'สร้างรถไฟความเร็วสูง',            actionNameEN: 'Build High-Speed Rail',               budgetCost: 200, approvalGain: 5 },
+  commerce:   { actionName: 'ส่งเสริมการส่งออกสินค้าไทย',      actionNameEN: 'Boost Thai Export Program',           budgetCost: 120, approvalGain: 3 },
+  finance:    { actionName: 'แจกเงินกระตุ้นเศรษฐกิจ',          actionNameEN: 'Economic Stimulus Handout',           budgetCost: 500, approvalGain: 8 },
+  education:  { actionName: 'ปฏิรูปหลักสูตรการศึกษา',          actionNameEN: 'Curriculum Reform Initiative',        budgetCost: 100, approvalGain: 3 },
+  health:     { actionName: 'ขยายสิทธิ์บัตรทอง 30 บาท',       actionNameEN: 'Expand 30-Baht Health Scheme',        budgetCost: 180, approvalGain: 6 },
+  digital:    { actionName: 'พัฒนาแพลตฟอร์มรัฐบาลดิจิทัล',    actionNameEN: 'Digital Government Platform',         budgetCost: 100, approvalGain: 3 },
+  agriculture:{ actionName: 'อุดหนุนราคาข้าวและยางพารา',       actionNameEN: 'Rice & Rubber Price Subsidy',         budgetCost: 160, approvalGain: 5 },
+  culture:    { actionName: 'อนุรักษ์โบราณสถานแห่งชาติ',       actionNameEN: 'National Heritage Preservation',      budgetCost: 60,  approvalGain: 2 },
+  tourism:    { actionName: 'แคมเปญ Amazing Thailand ใหม่',   actionNameEN: 'New Amazing Thailand Campaign',       budgetCost: 80,  approvalGain: 3 },
+  labor:      { actionName: 'ปรับค่าแรงขั้นต่ำทั่วประเทศ',      actionNameEN: 'Nationwide Minimum Wage Increase',   budgetCost: 140, approvalGain: 4 },
+  social_dev: { actionName: 'เพิ่มเบี้ยยังชีพผู้สูงอายุ',        actionNameEN: 'Elderly Welfare Stipend Increase',   budgetCost: 100, approvalGain: 3 }
+};
+
+/** Base bribe cost to gain temporary control of a coalition ministry */
+const MINISTRY_BRIBE_COST = 40;
+
+/**
+ * initMinistries() — Builds govState.ministries from cabinet.js MINISTRIES[].
+ *
+ * Reads cabinetState.allocations to determine which party holds each ministry.
+ * Compares against the player's core party ID to set isOwnParty.
+ * Initializes per-turn flags (actedThisTurn, isBribed).
+ *
+ * Call this AFTER cabinet formation is finalized (i.e., after finalizeCabinet()).
+ */
+function initMinistries() {
+  const coreId = (typeof getPlayerCorePartyId === 'function') ? getPlayerCorePartyId() : null;
+  const allocations = (typeof cabinetState !== 'undefined') ? cabinetState.allocations : {};
+
+  // Attempt to restore from localStorage first (for save/load)
+  const savedMinistries = localStorage.getItem('tps_gov_ministries');
+  if (savedMinistries) {
+    try {
+      govState.ministries = JSON.parse(savedMinistries);
+      console.log(`[engine.js] STEP 214 — Ministries restored from localStorage (${govState.ministries.length} entries).`);
+      return;
+    } catch (e) {
+      console.warn('[engine.js] STEP 214 — Failed to parse saved ministries, rebuilding...', e);
+    }
+  }
+
+  // Build fresh ministry data from MINISTRIES (cabinet.js) + MINISTRY_ACTIONS
+  if (typeof MINISTRIES === 'undefined') {
+    console.error('[engine.js] STEP 214 — MINISTRIES array not found! cabinet.js must load first.');
+    govState.ministries = [];
+    return;
+  }
+
+  govState.ministries = MINISTRIES.map(m => {
+    const action = MINISTRY_ACTIONS[m.id] || {
+      actionName: 'ดำเนินนโยบาย',
+      actionNameEN: 'Execute Policy',
+      budgetCost: 100,
+      approvalGain: 3
+    };
+    const holdingPartyId = allocations[m.id] || null;
+    const isOwn = holdingPartyId === coreId || holdingPartyId === 'player' || holdingPartyId === null;
+
+    return {
+      id: m.id,
+      name: m.nameThai || m.name,
+      nameEN: m.name,
+      portfolio: m.id.toUpperCase(),
+      tier: m.tier,
+      icon: m.icon,
+      holdingPartyId: holdingPartyId,
+      isOwnParty: isOwn,
+      actionName: action.actionName,
+      actionNameEN: action.actionNameEN,
+      budgetCost: action.budgetCost,
+      approvalGain: action.approvalGain,
+      isBribed: false,
+      actedThisTurn: false
+    };
+  });
+
+  // Persist
+  saveMinistryState();
+
+  console.log(`[engine.js] STEP 214 — Ministries initialized (${govState.ministries.length} entries).`);
+  govState.ministries.forEach(m => {
+    console.log(`  ${m.icon} ${m.nameEN}: ${m.isOwnParty ? '🔵 Own Party' : '🟣 Coalition'} | ${m.actionNameEN} (฿${m.budgetCost}B → +${m.approvalGain}%)`);
+  });
+}
+
+/**
+ * resetMinistryTurns() — Resets per-turn ministry flags.
+ *
+ * Call this at the start of each new month (inside handleNextMonth or advanceMonth).
+ * Clears actedThisTurn and isBribed so the player can use ministries again.
+ */
+function resetMinistryTurns() {
+  if (!govState.ministries) return;
+  govState.ministries.forEach(m => {
+    m.actedThisTurn = false;
+    m.isBribed = false;
+  });
+  saveMinistryState();
+  console.log('[engine.js] STEP 214 — Ministry turns reset for new month.');
+}
+
+/**
+ * executeMinistryAction(minId, actionType) — Processes a ministry interaction.
+ *
+ * @param {string} minId — Ministry ID (e.g., 'transport', 'finance')
+ * @param {string} actionType — 'policy' | 'corrupt' | 'bribe'
+ * @returns {Object} Result { success, message, effects, narrative }
+ */
+function executeMinistryAction(minId, actionType) {
+  const min = govState.ministries ? govState.ministries.find(m => m.id === minId) : null;
+  if (!min) return { success: false, message: 'Ministry not found.' };
+
+  if (min.actedThisTurn) {
+    return { success: false, message: `${min.name} ดำเนินการไปแล้วในเดือนนี้`, messageEN: `${min.nameEN} has already acted this month.` };
+  }
+
+  // ── BRIBE (Coalition Ministry) ──
+  if (actionType === 'bribe') {
+    if (min.isOwnParty) {
+      return { success: false, message: 'ไม่ต้องติดสินบนกระทรวงของพรรคตัวเอง!', messageEN: 'Cannot bribe your own ministry!' };
+    }
+    if (min.isBribed) {
+      return { success: false, message: 'ติดสินบนไปแล้ว ตอนนี้สั่งการได้', messageEN: 'Already bribed — you can now issue orders.' };
+    }
+
+    // Check personal/party funds from gameState
+    if (gameState.budget < MINISTRY_BRIBE_COST) {
+      return { success: false, message: `งบประมาณไม่พอจ่ายสินบน! (ต้องการ ฿${MINISTRY_BRIBE_COST}B)`, messageEN: `Insufficient budget for bribe! (Need ฿${MINISTRY_BRIBE_COST}B)` };
+    }
+
+    gameState.budget -= MINISTRY_BRIBE_COST;
+    min.isBribed = true;
+    saveMinistryState();
+
+    // Find the holding party for narrative flavor
+    const holdingParty = (typeof getPartyById === 'function' && min.holdingPartyId) ? getPartyById(min.holdingPartyId) : null;
+    const partyLabel = holdingParty ? holdingParty.shortName : 'พรรคร่วม';
+
+    return {
+      success: true,
+      message: `ยัดเงินสำเร็จ! ควบคุม ${min.name} ได้แล้ว`,
+      messageEN: `Bribe successful! You now control ${min.nameEN}.`,
+      effects: { budget: -MINISTRY_BRIBE_COST },
+      narrative: `คุณส่งคนไปพบรัฐมนตรีจาก${partyLabel}อย่างลับๆ ฿${MINISTRY_BRIBE_COST}B ถูกโอนเข้าบัญชีส่วนตัว ตอนนี้คุณสั่งการกระทรวงนี้ได้ 1 เทิร์น`,
+      narrativeEN: `You sent an envoy to meet the ${partyLabel} minister privately. ฿${MINISTRY_BRIBE_COST}B was quietly transferred. You now have control for this turn.`,
+      actionType: 'bribe'
+    };
+  }
+
+  // ── EXECUTE POLICY (Own Party or Bribed Coalition) ──
+  if (actionType === 'policy') {
+    if (!min.isOwnParty && !min.isBribed) {
+      return { success: false, message: 'ต้องติดสินบนก่อนจึงจะสั่งการกระทรวงของพรรคร่วมได้!', messageEN: 'Must bribe coalition ministry before issuing orders!' };
+    }
+    if (gameState.budget < min.budgetCost) {
+      return { success: false, message: `งบประมาณแผ่นดินไม่พอ! (ต้องการ ฿${min.budgetCost}B)`, messageEN: `Insufficient national budget! (Need ฿${min.budgetCost}B)` };
+    }
+
+    // Apply effects
+    gameState.budget -= min.budgetCost;
+    gameState.popularity = clamp(gameState.popularity + min.approvalGain, 0, 100);
+    min.actedThisTurn = true;
+    saveMinistryState();
+
+    // Record in event history
+    gameState.eventHistory.push({
+      turn: gameState.turn,
+      eventId: `ministry_policy_${min.id}`,
+      eventTitle: `${min.icon} ${min.actionNameEN}`,
+      eventTitleTH: `${min.icon} ${min.actionName}`,
+      eventTitleEN: `${min.icon} ${min.actionNameEN}`,
+      choiceLabel: 'Ministry Policy',
+      effects: { budget: -min.budgetCost, popularity: min.approvalGain },
+      partyEffects: {}
+    });
+
+    return {
+      success: true,
+      message: `ดำเนินนโยบาย ${min.actionName} สำเร็จ!`,
+      messageEN: `Policy "${min.actionNameEN}" executed successfully!`,
+      effects: { budget: -min.budgetCost, popularity: min.approvalGain },
+      narrative: `กระทรวง${min.name}ดำเนินนโยบาย "${min.actionName}" ใช้งบ ฿${min.budgetCost}B ประชาชนชื่นชม คะแนนนิยมเพิ่มขึ้น`,
+      narrativeEN: `The ${min.nameEN} executed "${min.actionNameEN}" using ฿${min.budgetCost}B from the national budget. Public approval rises.`,
+      actionType: 'policy'
+    };
+  }
+
+  // ── CORRUPT (Own Party Only) ──
+  if (actionType === 'corrupt') {
+    if (!min.isOwnParty && !min.isBribed) {
+      return { success: false, message: 'ต้องควบคุมกระทรวงก่อนจึงจะคอร์รัปชันได้!', messageEN: 'Must control the ministry to siphon funds!' };
+    }
+
+    const corruptAmount = Math.floor(Math.random() * 51) + 50; // 50-100M
+    const approvalPenalty = 2;
+    const unrestGain = 3;
+
+    // Apply effects: gain budget (siphoned as "party funds"), but lose approval & gain unrest
+    gameState.budget += corruptAmount; // The money goes into the national budget as a proxy for party funds
+    gameState.popularity = clamp(gameState.popularity - approvalPenalty, 0, 100);
+    gameState.unrest = clamp(gameState.unrest + unrestGain, 0, 100);
+    min.actedThisTurn = true;
+    saveMinistryState();
+
+    // Record in event history
+    gameState.eventHistory.push({
+      turn: gameState.turn,
+      eventId: `ministry_corrupt_${min.id}`,
+      eventTitle: `💰 Corruption: ${min.nameEN}`,
+      eventTitleTH: `💰 คอร์รัปชัน: ${min.name}`,
+      eventTitleEN: `💰 Corruption: ${min.nameEN}`,
+      choiceLabel: 'Corruption',
+      effects: { budget: corruptAmount, popularity: -approvalPenalty, unrest: unrestGain },
+      partyEffects: {}
+    });
+
+    return {
+      success: true,
+      message: `ลักลอบโอนงบเข้าพรรค ฿${corruptAmount}M!`,
+      messageEN: `Siphoned ฿${corruptAmount}M from ${min.nameEN}!`,
+      effects: { budget: corruptAmount, popularity: -approvalPenalty, unrest: unrestGain },
+      narrative: `คุณสั่งรัฐมนตรีลอบโอนงบจาก${min.name} ฿${corruptAmount}M เข้ากองทุนพรรค ระวัง — ถ้าถูกจับได้จะเกิดวิกฤตร้ายแรง`,
+      narrativeEN: `You ordered the minister to siphon ฿${corruptAmount}M from the ${min.nameEN} budget into party coffers. Be warned — if caught, this could trigger a devastating scandal.`,
+      actionType: 'corrupt',
+      corruptAmount
+    };
+  }
+
+  return { success: false, message: 'Unknown action type.' };
+}
+
+/**
+ * getMinistryStatus(minId) — Returns current status of a ministry for UI rendering.
+ * @param {string} minId — Ministry ID
+ * @returns {Object|null}
+ */
+function getMinistryStatus(minId) {
+  if (!govState.ministries) return null;
+  const min = govState.ministries.find(m => m.id === minId);
+  if (!min) return null;
+
+  // Resolve the holding party object for display
+  const holdingParty = (typeof getPartyById === 'function' && min.holdingPartyId)
+    ? getPartyById(min.holdingPartyId)
+    : null;
+
+  return {
+    ...min,
+    holdingPartyName: holdingParty ? holdingParty.name : 'พรรคของคุณ',
+    holdingPartyShortName: holdingParty ? holdingParty.shortName : '—',
+    holdingPartyColor: holdingParty ? holdingParty.color : '#3b82f6',
+    canAct: !min.actedThisTurn,
+    canExecute: (min.isOwnParty || min.isBribed) && !min.actedThisTurn,
+    needsBribe: !min.isOwnParty && !min.isBribed
+  };
+}
+
+/**
+ * saveMinistryState() — Persists ministry data to localStorage.
+ */
+function saveMinistryState() {
+  if (govState.ministries) {
+    localStorage.setItem('tps_gov_ministries', JSON.stringify(govState.ministries));
+  }
+}
+
+/**
+ * clearMinistryState() — Wipes ministry data (for new game or wipe save).
+ */
+function clearMinistryState() {
+  govState.ministries = [];
+  localStorage.removeItem('tps_gov_ministries');
+}
+
+
 // ─── SAVE / LOAD ────────────────────────────────────────────
 
 /**
@@ -1072,9 +1367,11 @@ function saveGame() {
     parties: parties,
     laws: laws,
     usedEventIds: usedEventIds,
+    ministries: govState.ministries || [],  // STEP 214: Persist ministry control state
     savedAt: new Date().toISOString()
   };
   localStorage.setItem("tps_save", JSON.stringify(saveData));
+  saveMinistryState();  // STEP 214: Also persist to separate key
   return true;
 }
 
@@ -1092,6 +1389,11 @@ function loadGame() {
     parties = saveData.parties;
     laws = saveData.laws;
     usedEventIds = saveData.usedEventIds || [];
+    // STEP 214: Restore ministry control state
+    if (saveData.ministries && saveData.ministries.length > 0) {
+      govState.ministries = saveData.ministries;
+      saveMinistryState();
+    }
     return true;
   } catch (e) {
     console.error("Failed to load save:", e);
@@ -1104,6 +1406,7 @@ function loadGame() {
  */
 function deleteSave() {
   localStorage.removeItem("tps_save");
+  clearMinistryState();  // STEP 214: Wipe ministry data on game end
 }
 
 /**

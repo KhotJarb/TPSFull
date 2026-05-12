@@ -18,6 +18,9 @@
     rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="shared/multiplayer.css">
+  <!-- PeerJS: Free P2P browser connections (no server cost) -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 
 <body>
@@ -196,6 +199,33 @@
         </div>
       </a>
 
+      <!-- MULTIPLAYER: Session Lobby (Green/Blue Theme) -->
+      <button class="menu-btn menu-btn-secondary" id="btn-multiplayer"
+         style="--btn-accent: #22c55e; --btn-accent-dim: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.25); background: linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(34,197,94,0.02) 100%); cursor:pointer;"
+         onmouseover="this.style.borderColor='rgba(34,197,94,0.5)';this.style.background='linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.04) 100%)'"
+         onmouseout="this.style.borderColor='rgba(34,197,94,0.25)';this.style.background='linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(34,197,94,0.02) 100%)'">
+        <div class="btn-shine"></div>
+        <div class="btn-content">
+          <div class="btn-icon-wrap" style="background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.25);">
+            <svg viewBox="0 0 24 24" class="btn-svg-icon" fill="none" stroke="#22c55e" stroke-width="1.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <div class="btn-text">
+            <span class="btn-label" style="color: #22c55e;">Multiplayer Lobby</span>
+            <span class="btn-desc" style="color: #86efac;">Host or join a room — play with friends in real-time multiplayer sessions</span>
+          </div>
+          <div class="btn-arrow" style="color: #22c55e;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </button>
+
     </nav>
 
     <!-- Info strip — key game stats -->
@@ -232,9 +262,110 @@
   <!-- ═══════════════════════════════════════════════════════════════ -->
   <!-- Scripts                                                          -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- Shared: Localization & Settings Engine -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- MULTIPLAYER SESSION MODAL                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div id="multiplayer-modal" class="mp-overlay">
+    <div class="mp-modal">
+
+      <!-- Header -->
+      <div class="mp-header">
+        <span class="mp-header__icon">🌐</span>
+        <span class="mp-header__title">Multiplayer Session</span>
+        <button id="mp-close-btn" class="mp-header__close">&times;</button>
+      </div>
+
+      <!-- Dashboard Cards -->
+      <div class="mp-dashboard">
+        <div class="mp-dash-card mp-dash-card--status idle" id="mp-status-card">
+          <div class="mp-dash-card__label">STATUS</div>
+          <div class="mp-dash-card__value" id="mp-dash-status">Disconnected</div>
+        </div>
+        <div class="mp-dash-card">
+          <div class="mp-dash-card__label">SEAT</div>
+          <div class="mp-dash-card__value" id="mp-dash-seat">—</div>
+        </div>
+        <div class="mp-dash-card">
+          <div class="mp-dash-card__label">ROOM STATE</div>
+          <div class="mp-dash-card__value" id="mp-dash-roomstate">idle</div>
+        </div>
+        <div class="mp-dash-card">
+          <div class="mp-dash-card__label">TURNS</div>
+          <div class="mp-dash-card__value" id="mp-dash-turns">8/8</div>
+        </div>
+      </div>
+
+      <!-- Scrollable Body -->
+      <div class="mp-modal__body">
+
+        <!-- Quick Steps -->
+        <div class="mp-section">
+          <div class="mp-section__title">QUICK STEPS</div>
+          <div class="mp-quicksteps__desc">
+            1) Host room, 2) Copy Join Key, 3) Friends paste key and tap Join, 4) Ready + start, 5) Party lock and play.
+          </div>
+          <div class="mp-quicksteps__row">
+            <input type="text" class="mp-room-code-input" id="mp-room-code-display" value="No room" readonly>
+            <button class="mp-copy-btn" id="mp-btn-copy-code">Copy Code</button>
+            <button class="mp-copy-btn" id="mp-btn-copy-key">Copy Join Key</button>
+            <button class="mp-copy-btn" id="mp-btn-copy-link">Copy Invite Link</button>
+          </div>
+        </div>
+
+        <!-- Server Status -->
+        <div class="mp-section">
+          <div class="mp-section__title">SERVER</div>
+          <div class="mp-server__text">
+            Configured for auto-connect. Players can host/join directly.
+          </div>
+        </div>
+
+        <!-- Lobby Actions -->
+        <div class="mp-section">
+          <div class="mp-section__title">LOBBY ACTIONS</div>
+          <div class="mp-actions__inputs">
+            <input type="text" class="mp-input" id="mp-input-name" placeholder="Player Name" maxlength="20">
+            <input type="text" class="mp-input" id="mp-input-code" placeholder="Room code, Join Key, or invite link" maxlength="40">
+          </div>
+          <div class="mp-actions__row">
+            <button class="mp-btn mp-btn--primary" id="mp-btn-host">Host Room</button>
+            <button class="mp-btn mp-btn--primary" id="mp-btn-join">Join Room</button>
+            <button class="mp-btn" id="mp-btn-matchmaking">Matchmaking</button>
+          </div>
+          <div class="mp-actions__row">
+            <button class="mp-btn mp-btn--success" id="mp-btn-ready" disabled>Set Ready</button>
+            <button class="mp-btn mp-btn--danger" id="mp-btn-leave" disabled>Leave Room</button>
+          </div>
+          <div class="mp-actions__row">
+            <button class="mp-btn mp-btn--gold" id="mp-btn-start" disabled>Start Match (Host)</button>
+          </div>
+        </div>
+
+        <!-- Player List -->
+        <div class="mp-section">
+          <div class="mp-section__title">PLAYERS</div>
+          <div class="mp-players__list" id="mp-player-list">
+            <div class="mp-player-row mp-player-row--empty">
+              <span class="mp-player-row__seat">Seat 1:</span>
+              <span class="mp-player-row__name">Empty</span>
+              <span class="mp-player-row__status not-ready">—</span>
+              <span class="mp-player-count">0/8</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end .mp-modal__body -->
+
+      <!-- Toast Container -->
+      <div class="mp-toast-container" id="mp-toast-container"></div>
+
+    </div><!-- end .mp-modal -->
+  </div><!-- end #multiplayer-modal -->
+
+  <!-- Scripts -->
   <script src="shared/localization.js"></script>
   <script src="shared/settings.js"></script>
+  <script src="shared/multiplayer.js"></script>
 
   <script>
     // ─── Generate floating gold particles ──────────────────────────
@@ -291,8 +422,15 @@
           el.style.transform = 'translateY(0)';
         }, 150 + i * 100);
       });
+
+      // Wire multiplayer button
+      const mpBtn = document.getElementById('btn-multiplayer');
+      if (mpBtn && typeof tpsMultiplayer !== 'undefined') {
+        mpBtn.addEventListener('click', () => tpsMultiplayer.open());
+      }
     });
   </script>
+  <script src="shared/mp-chat.js"></script>
 
 </body>
 

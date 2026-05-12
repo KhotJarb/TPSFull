@@ -11,6 +11,9 @@
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://d3js.org/topojson.v3.min.js"></script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../shared/party-creator.css">
+  <!-- PeerJS: Free P2P browser connections (no server cost) -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -85,6 +88,29 @@
             </span>
           </label>
         </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <!-- MULTIPLAYER: Player Status Bar + Ready (hidden in SP)      -->
+      <!-- ════════════════════════════════════════════════════════════ -->
+      <div id="mp-party-controls" class="mp-party-controls" style="display:none;">
+        <div class="mp-party-controls__header">
+          <span class="mp-party-controls__icon">🎮</span>
+          <span class="mp-party-controls__title">Multiplayer Lobby</span>
+          <span class="mp-party-controls__room" id="mp-room-badge">Room: ---</span>
+        </div>
+        <div id="mp-player-status-bar" class="mp-player-status-bar">
+          <!-- Dynamic: player badges rendered by mp-campaign-coordinator.js -->
+        </div>
+        <div class="mp-action-row">
+          <button id="btn-mp-ready" class="btn btn-gold btn-lg mp-ready-btn" disabled>
+            ✋ Set Ready
+          </button>
+          <button id="btn-mp-start-campaign" class="btn btn-gold btn-lg" disabled>
+            🚀 Begin Campaign →
+          </button>
+        </div>
+        <div id="mp-waiting-text" class="mp-waiting-text" style="display:none;"></div>
       </div>
 
       <button id="btn-start-campaign" class="btn btn-gold btn-lg" disabled data-i18n="campaign_begin">
@@ -388,6 +414,99 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- CUSTOM PARTY CREATOR MODAL                                  -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="pc-overlay" class="pc-overlay">
+    <div class="pc-card">
+      <div class="pc-header">
+        <h2><span class="pc-icon">✨</span> สร้างพรรคใหม่</h2>
+        <span class="pc-subtitle">Create Custom Party</span>
+        <button id="pc-close-btn" class="pc-close-btn">&times;</button>
+      </div>
+      <div class="pc-body">
+        <div class="pc-group">
+          <label class="pc-label">ชื่อพรรค (Thai Name)</label>
+          <input type="text" class="pc-input" id="pc-thai-name" placeholder="พรรคของฉัน" maxlength="60">
+        </div>
+        <div class="pc-group">
+          <label class="pc-label">English Name</label>
+          <input type="text" class="pc-input" id="pc-eng-name" placeholder="My Party" maxlength="60">
+        </div>
+        <div class="pc-group">
+          <label class="pc-label">Short Code <span class="pc-hint">(3 letters)</span></label>
+          <input type="text" class="pc-input pc-input--short" id="pc-short-code" placeholder="MYP" maxlength="3">
+        </div>
+        <div class="pc-divider"></div>
+        <div class="pc-group">
+          <label class="pc-label">Party Color</label>
+          <div class="pc-color-row">
+            <div class="pc-color-swatch" id="pc-color-swatch" style="background:#f97316" title="Click to change color"></div>
+            <input type="color" class="pc-color-input" id="pc-color-input" value="#f97316">
+            <div class="pc-color-preview" id="pc-color-preview" style="background:#f97316"></div>
+          </div>
+        </div>
+        <div class="pc-divider"></div>
+        <div class="pc-group" id="pc-group-base-pop">
+          <label class="pc-label">Base Popularity <span class="pc-hint">(1-35%)</span></label>
+          <div class="pc-range-row">
+            <input type="range" class="pc-range-slider" id="pc-slider-pop" min="1" max="35" value="10">
+            <span class="pc-range-value" id="pc-value-pop">10%</span>
+          </div>
+        </div>
+        <div class="pc-group">
+          <label class="pc-label">BanYai Power <span class="pc-hint">(0-100)</span></label>
+          <div class="pc-range-row">
+            <input type="range" class="pc-range-slider" id="pc-slider-banyai" min="0" max="100" value="20">
+            <span class="pc-range-value" id="pc-value-banyai">20</span>
+          </div>
+        </div>
+        <div class="pc-divider"></div>
+        <div class="pc-group">
+          <div class="pc-ideology-label">
+            Ideology: <span class="pc-ideology-icon" id="pc-ideology-icon">⚖️</span> <span id="pc-ideology-label">Centrist</span>
+          </div>
+          <div class="pc-range-row">
+            <input type="range" class="pc-range-slider" id="pc-slider-ideology" min="0" max="100" value="50">
+            <span class="pc-range-value" id="pc-value-ideology">50</span>
+          </div>
+        </div>
+        <div class="pc-group">
+          <label class="pc-label">Political Capital <span class="pc-hint">(Campaign Funds ฿M, max 1500)</span></label>
+          <input type="number" class="pc-input pc-input--funds" id="pc-funds" value="800" min="100" max="1500" step="50">
+        </div>
+        <div class="pc-group">
+          <label class="pc-label">Description</label>
+          <textarea class="pc-textarea" id="pc-description" placeholder="Your party's story..." maxlength="300"></textarea>
+        </div>
+        <div class="pc-divider"></div>
+        <div class="pc-balance-bar">
+          <div class="pc-balance-label"><span>Power Budget</span><span>Balance Check</span></div>
+          <div class="pc-balance-track">
+            <div class="pc-balance-fill balanced" id="pc-balance-fill" style="width: 50%"></div>
+          </div>
+          <div class="pc-balance-status balanced" id="pc-balance-status">✅ BALANCED (50/130)</div>
+        </div>
+        <div class="pc-divider"></div>
+        <div class="pc-candidates-section">
+          <div class="pc-candidates-header">
+            <span class="pc-candidates-title">👤 Custom Candidates (<span id="pc-candidate-count">0 added</span>)</span>
+          </div>
+          <button class="pc-btn-add-candidate" id="pc-btn-add-candidate">+ Add Candidate Names</button>
+          <div id="pc-candidate-input-row" class="pc-candidate-input-row" style="display:none;">
+            <input type="text" class="pc-input" id="pc-candidate-name-input" placeholder="Enter candidate name..." maxlength="50">
+            <button class="pc-btn-candidate-confirm" id="pc-btn-candidate-confirm">✓ Add</button>
+            <button class="pc-btn-candidate-random" id="pc-btn-candidate-random">🎲 Random</button>
+          </div>
+          <div id="pc-candidate-list">
+            <div class="pc-candidate-empty">No custom candidates. Auto-generated names will be used.</div>
+          </div>
+        </div>
+        <button class="pc-submit-btn" id="pc-btn-submit">✨ Create Party &amp; Play</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast-container" class="toast-container"></div>
 
@@ -401,6 +520,9 @@
   <script src="timeline.js"></script>
   <script src="engine.js"></script>
   <script src="events.js"></script>
+  <script src="../shared/party-creator.js"></script>
   <script src="main.js"></script>
+  <script src="mp-campaign-coordinator.js"></script>
+  <script src="../shared/mp-chat.js"></script>
 </body>
 </html>
